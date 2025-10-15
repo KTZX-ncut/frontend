@@ -1,0 +1,125 @@
+name: Publish Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: '打包环境 (如 prod.hw120、production、staging)'
+        required: true
+        default: 'production'
+      server:
+        description: '部署目标 (如 main、staging、hw120)'
+        required: true
+        default: 'main'
+
+jobs:
+  publish:
+    name: Publish to server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build
+        working-directory: apps/main-project
+        run: pnpm run build -- --mode prod.hw120
+
+      - name: Upload dist to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          port: ${{ secrets.SERVER_PORT }}
+          key: ${{ secrets.SERVER_KEY }}
+          source: 'dist/*'
+          target: ${{ secrets.DEPLOY_PATH }}
+          strip_components: 1
+
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_KEY }}
+          port: 22
+          script: |
+            cd ${{ secrets.DEPLOY_PATH }}
+            ./restart_nginx.sh
+
+# name: Publish Package
+
+# on:
+#   workflow_dispatch: # 手动触发
+#     inputs:
+#       mode: # 你想传给 pnpm 的构建 mode
+#         description: '打包环境 (如 prod.hw120、production、staging)'
+#         required: true
+#         default: 'production'
+#       server: # 你可以多加一些参数，比如部署目标服务器
+#         description: '部署目标 (如 main、staging、hw120)'
+#         required: true
+#         default: 'main'
+
+# jobs:
+#   publish:
+#     name: Publish to server
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       # 1. 拉取代码
+#       - name: Checkout repository
+#         uses: actions/checkout@v3
+
+#       # 2. 安装 Node
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v3
+#         with:
+#           node-version: 20
+#           registry-url: https://registry.npmjs.org/
+
+#         # 3. 安装 pnpm
+#       - name: Install pnpm
+#         run: npm install -g pnpm
+
+#       - name: Install dependencies
+#         run: |
+#           pnpm install --no-frozen-lockfile
+
+#       - name: Build
+#         working-directory: apps/main-project
+#         run: pnpm run build -- --mode prod.hw120
+
+#       - name: upload dist to server
+#         uses: appleboy/scp-action@v0.1.7
+#         with:
+#           host: ${{ secrets.SERVER_HOST }}
+#           username: ${{ secrets.SERVER_USER }}
+#           port: ${{ secrets.SERVER_PORT }}
+#           key: ${{ secrets.SERVER_PASSWORD }}
+#           source: 'dist/*'
+#           target: ${{ secrets.DEPLOY_PATH }}
+#           strip_components: 1
+
+#       - name: Deploy on server
+#         uses: appleboy/ssh-action@v1.2.0
+#         with:
+#           host: ${{ secrets.HOST }}
+#           username: ${{ secrets.USERNAME }}
+#           key: ${{ secrets.SSH_PRIVATE_KEY }}
+#           port: 22
+#           script: |
+#             cd ${{ secrets.DEPLOY_PATH }}
+#             ./restart_nginx.sh
