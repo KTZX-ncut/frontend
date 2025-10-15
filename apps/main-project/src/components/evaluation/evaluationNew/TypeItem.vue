@@ -6,17 +6,86 @@
       :show-close="true"
       :close-on-click-modal="true"
       style="width: 50vw; padding-top: 0; height: 78vh"
+      v-model="isShow"
       @close="handleBack"
-      v-model="isItemShow"
       @open="handleShow"
-      @opened="handleShow"
     >
-      <h2 style="margin-top: 0">已绑定的考核项</h2>
-      <div class="wrapper">
+      <!-- 标题与操作按钮 -->
+      <div
+        class="flex justify-start items-center gap-4 mb-4"
+        style="user-select: none;"
+      >
+        <el-button
+          type="primary"
+          size="small"
+          @click.stop="handleToggle"
+        >
+          {{ isBindingMode ? '返回查看' : '绑定' }}
+        </el-button>
+        <h2 style="margin: 0">
+          {{ isBindingMode ? '请选择需要绑定的考核项' : '已绑定的考核项' }}
+        </h2>
+      </div>
+
+      <!-- ========== ✅ 查看模式（支持批量删除） ========== -->
+      <div v-if="!isBindingMode">
+        <div class="flex justify-between items-center mb-3">
+          <h2 style="margin: 0">已绑定的考核项</h2>
+          <el-button
+            type="danger"
+            size="small"
+            :disabled="!multipleSelection.length"
+            @click="handleBatchDelete"
+          >
+            取消绑定
+          </el-button>
+        </div>
+
+        <el-table
+          ref="bindTableRef"
+          :data="bindList"
+          v-loading="loading"
+          border
+          style="width: 100%"
+          @selection-change="handleSelectionChange"
+        >
+          <el-table-column type="selection" width="55" />
+          <el-table-column prop="itemName" label="考核项名称" />
+          <el-table-column prop="itemType" label="类型" />
+        </el-table>
+
+        <div v-if="!bindList.length" class="text-center text-gray-400 mt-4">
+          暂无已绑定考核项
+        </div>
+      </div>
+
+      <!-- ========== 绑定模式（原逻辑保留） ========== -->
+      <div v-else>
+        <div class="flex items-center justify-between gap-6 mb-4 mt-4">
+          <el-input
+            title="考核项"
+            style="width: 240px"
+            disabled
+            :placeholder="props.categoryName"
+          />
+          <el-tree-select
+            v-model="itemType"
+            :props="typeProps"
+            :data="typeOptions"
+            :render-after-expand="false"
+            style="width: 240px"
+            :check-on-click-node="true"
+            node-key="type"
+            placeholder="请选择类别"
+            @node-click="data => mapping(data.type)"
+          />
+        </div>
+
         <div class="h-[400px] overflow-auto">
           <el-table
+            ref="tableRef"
             v-loading="loading"
-            :data="bindList"
+            :data="filterData"
             @select="handleSelect"
             @selectAll="handleSelectAll"
             style="width: 100%"
@@ -24,38 +93,20 @@
             <el-table-column type="selection" width="55" />
             <el-table-column label="作业/实验名称">
               <template #default="scope">
-                <div style="display: flex; align-items: center">
-                  <span>{{ scope.row.itemName }}</span>
-                </div>
+                <span>{{ scope.row.itemName }}</span>
               </template>
             </el-table-column>
             <el-table-column label="类别">
               <template #default="scope">
-                <div style="display: flex; align-items: center">
-                  <span>{{ scope.row.itemType }}</span>
-                </div>
-              </template>
-            </el-table-column>
-            <el-table-column label="描述">
-              <template #default="scope">
-                <div style="display: flex; align-items: center">
-                  <span>{{ scope.row.itemDescription }}</span>
-                </div>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作">
-              <template #default="scope">
-                <el-button size="small" type="danger" @click="handleDelete(scope)">
-                  删除
-                </el-button>
+                <span>{{ scope.row.itemType }}</span>
               </template>
             </el-table-column>
           </el-table>
         </div>
+
         <div class="mt-4">
-          <el-button style="margin-right: 10px" @click="handleBack">关闭</el-button>
-          <!-- 添加内联样式 -->
-          <el-button type="success" @click="handleDelAll">批量删除</el-button>
+          <el-button style="margin-right: 10px" @click="handleToggle">返回查看</el-button>
+          <el-button type="success" @click="submitUpload">绑定</el-button>
         </div>
       </div>
     </el-dialog>
@@ -63,70 +114,166 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { storeToRefs } from 'pinia';
-import useItem from '../../../stores/useItem';
-import { ElMessage } from 'element-plus';
+import { ref, onBeforeUnmount, onMounted, computed } from 'vue'
+import { storeToRefs } from 'pinia'
+import useItem from '../../../stores/useItem'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import _ from 'lodash'
 
-/* ********************变量定义******************** */
-// props定义
+/* ========== props ========== */
 const props = defineProps({
-  classroomId: {
-    type: String,
-    default: ''
-  }
-});
-// 普通变量
-// pinia状态管理
-const delList = ref([]);
-const itemStore = useItem();
-const { setItemShow, fetchDelBind, fetchGetBind } = itemStore;
-const { isItemShow, bindList, courseId, categoryId, objectiveId } = storeToRefs(itemStore);
+  classroomId: { type: String, default: '' },
+  categoryName: { type: String, default: '考核项' }
+})
 
+/* ========== 状态定义 ========== */
+const filterData = ref([])
+const bindList = ref([])
+const tableRef = ref()
+const itemType = ref('')
+const inputList = ref([])
+const loading = ref(false)
+const isBindingMode = ref(false)
+
+/* ✅ 新增批量删除相关状态 */
+const multipleSelection = ref([])
+const bindTableRef = ref(null)
+
+/* ========== 引入 store ========== */
+const itemStore = useItem()
+const { isShow, testList, categoryId, objectiveId, courseId } = storeToRefs(itemStore)
+const { setShow, fetchBind, fetchTest, fetchGetBind, fetchDelBind } = itemStore
+
+/* ========== 树配置与下拉类型 ========== */
+const typeProps = { children: node => node.children, label: node => node.type }
+const typeOptions = computed(() => {
+  const all = [...(testList.value.testPaper || []), ...(testList.value.practice || [])]
+  return _.uniqBy(all.map(i => ({ type: i.itemType })), 'type')
+})
+
+/* ========== classroomId 自动识别 ========== */
+const classroomId = ref('')
+onMounted(() => {
+  if (props.classroomId) classroomId.value = props.classroomId
+  else {
+    const token = sessionStorage.getItem('token') || localStorage.getItem('token')
+    if (token) classroomId.value = token
+  }
+  console.log('✅ 当前 classroomId:', classroomId.value)
+})
+
+/* ========== 加载数据 ========== */
 const handleShow = async () => {
-  // console.log('show');
-  await fetchGetBind(courseId.value, -1, 1, categoryId.value, objectiveId.value);
-};
+  console.log('➡️ 打开查看弹窗，加载已绑定数据...')
+  loading.value = true
+  await fetchTest({ classroomId: classroomId.value })
+  await fetchGetBind(courseId.value, -1, 1, categoryId.value, objectiveId.value)
+  bindList.value = itemStore.bindList
+  loading.value = false
+  isBindingMode.value = false
+}
 
-const handleBack = () => {
-  setItemShow(false);
-};
-
-const handleDelAll = async () => {
-  if (!delList.value.length) {
-    ElMessage.info('未选择考核项');
-    return;
+/* ========== 模式切换 ========== */
+const handleToggle = () => {
+  console.log('🟢 点击切换绑定模式')
+  isBindingMode.value = !isBindingMode.value
+  if (isBindingMode.value) {
+    mapping(itemType.value || '作业')
+  } else {
+    bindList.value = itemStore.bindList
   }
-  const data = await fetchDelBind(delList.value);
-  if (data.msg === 'success') {
-    await fetchGetBind(courseId.value, -1, 1, categoryId.value, objectiveId.value);
-    ElMessage.success('删除成功');
-    return;
+}
+
+/* ========== 类型映射逻辑 ========== */
+const mapping = type => {
+  switch (type) {
+    case '作业':
+      filterData.value = testList.value.testPaper || []
+      break
+    case '实验':
+      filterData.value = testList.value.practice || []
+      break
+    default:
+      filterData.value = []
   }
-  ElMessage.error('删除失败');
-};
+}
 
-const handleDelete = async scope => {
-  console.log(scope);
-  let delList = [scope.row.id];
-  const data = await fetchDelBind(delList);
-  if (data.msg === 'success') {
-    await fetchGetBind(courseId.value, -1, 1, categoryId.value, objectiveId.value);
-    return ElMessage.success('删除成功');
-  }
-  ElMessage.error('删除失败');
-};
-
-const handleSelect = selection => {
-  delList.value = selection.map(i => i.id);
-  console.log(delList.value);
-};
-
+/* ========== 多选绑定 ========== */
 const handleSelectAll = selection => {
-  delList.value = selection.map(i => i.id);
-  console.log(delList.value);
-};
-/* ********************方法定义******************** */
+  inputList.value = selection.map(i => ({
+    ...i,
+    categoryId: categoryId.value,
+    objectiveId: objectiveId.value
+  }))
+}
+const handleSelect = selection => {
+  inputList.value = selection.map(i => ({
+    ...i,
+    categoryId: categoryId.value,
+    objectiveId: objectiveId.value
+  }))
+}
+
+/* ========== 提交绑定 ========== */
+const submitUpload = async () => {
+  if (!inputList.value.length) {
+    ElMessage.info('未选择任何考核项')
+    return
+  }
+  const { code, msg } = await fetchBind(inputList.value)
+  if (code === 200) {
+    ElMessage.success('绑定成功')
+    await fetchGetBind(courseId.value, -1, 1, categoryId.value, objectiveId.value)
+    bindList.value = itemStore.bindList
+    isBindingMode.value = false
+  } else {
+    ElMessage.error(msg)
+  }
+}
+
+/* ========== ✅ 批量删除逻辑 ========== */
+const handleSelectionChange = (selection) => {
+  multipleSelection.value = selection
+}
+
+const handleBatchDelete = async () => {
+  if (!multipleSelection.value.length) {
+    ElMessage.info('请先选择要取消绑定的考核项')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要取消选中的 ${multipleSelection.value.length} 个绑定项吗？`,
+      '提示',
+      { type: 'warning' }
+    )
+
+    const ids = multipleSelection.value.map(item => item.id)
+    const res = await fetchDelBind(ids)
+    if (res.code === 200) {
+      ElMessage.success('批量取消绑定成功')
+      await fetchGetBind(courseId.value, -1, 1, categoryId.value, objectiveId.value)
+      bindList.value = itemStore.bindList
+      multipleSelection.value = []
+    } else {
+      ElMessage.error(res.msg)
+    }
+  } catch {
+    ElMessage.info('已取消操作')
+  }
+}
+
+/* ========== 返回关闭 ========== */
+const handleBack = () => setShow(false)
+onBeforeUnmount(() => (itemType.value = ''))
 </script>
 
-<style lang="less" scoped></style>
+<style scoped lang="less">
+.text-center {
+  text-align: center;
+}
+.text-gray-400 {
+  color: #aaa;
+}
+</style>

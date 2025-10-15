@@ -406,7 +406,18 @@ const routes = [
       {
         path: pathHeader + '/exp/scoreList',
         component: () => import('../views/page/grade/list/index.vue')
-      }
+      },
+      {
+        path: 'external-data/type-manage', // 达成性评价模型-外部数据类型新建
+        name: 'ExternalDataTypeCreate',
+        component: () => import('../components/evaluation/evaluationNew/ExternalDataTypeCreate.vue')
+      },
+      {
+        path: 'external-data/data-import', // 达成性评价模型-外部数据导入功能
+        name: 'ExternalDataImport',
+        component: () => import('../components/evaluation/evaluationNew/ExternalDataImport.vue')
+      },
+
     ]
   },
 

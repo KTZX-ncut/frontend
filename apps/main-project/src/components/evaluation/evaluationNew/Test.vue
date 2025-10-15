@@ -84,6 +84,7 @@ import useCourseAim from '../../../stores/useCourseAim';
 import useEvaluationNew from '../../../stores/useEvaluationNew';
 import { ElMessage } from 'element-plus';
 import _, { update } from 'lodash';
+const loading = ref(false)
 
 /* ********************变量定义******************** */
 // props定义
