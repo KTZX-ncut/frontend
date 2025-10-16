@@ -4,11 +4,8 @@ import { bindTypeAim, delbindType, getbindType, getCourseId, getTest } from '../
 import { updateAim } from '../api/evaluationNew';
 
 const useItem = defineStore('item', () => {
-  const testList = ref({
-    testPaper: [],
-    practice: []
-  });
 
+const testList = ref([]);
   const courseId = ref();
   const isShow = ref(false);
   const categoryId = ref();

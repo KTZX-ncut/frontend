@@ -1,3 +1,11 @@
+/**
+ * TypeItem.vue
+ * 功能：绑定与查看考核项合并版
+ * 模式切换：isBindingMode (true=绑定, false=查看)
+ * - 查看模式：展示已绑定项，可单选/多选删除
+ * - 绑定模式：筛选类别、选择待绑定项、批量绑定
+ */
+
 <template>
   <div class="inner">
     <el-dialog
