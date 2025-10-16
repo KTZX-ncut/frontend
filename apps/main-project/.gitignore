@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+".env"   
+".env.local" 
+# 环境配置文件（敏感信息）
+.env               # 基础环境文件
+.env.local         # 本地环境文件
+.env.development.local  # 开发环境本地文件
+.env.test.local     # 测试环境本地文件
+.env.production.local  # 生产环境本地文件
+.env.*.local        # 匹配所有带环境后缀的本地文件
