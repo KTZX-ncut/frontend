@@ -1,11 +1,3 @@
-/**
- * TypeItem.vue
- * 功能：绑定与查看考核项合并版
- * 模式切换：isBindingMode (true=绑定, false=查看)
- * - 查看模式：展示已绑定项，可单选/多选删除
- * - 绑定模式：筛选类别、选择待绑定项、批量绑定
- */
-
 <template>
   <div class="inner">
     <el-dialog
@@ -13,21 +5,17 @@
       :destroy-on-close="true"
       :show-close="true"
       :close-on-click-modal="true"
-      style="width: 50vw; padding-top: 0; height: 78vh"
+      style="width: 50vw; padding-top: 0; height: 78vh; overflow: auto"
       v-model="isShow"
       @close="handleBack"
       @open="handleShow"
     >
       <!-- 标题与操作按钮 -->
       <div
-        class="flex justify-start items-center gap-4 mb-4"
-        style="user-select: none;"
+        class="flex justify-start items-center gap-4 mb-4 overflow-auto"
+        style="user-select: none"
       >
-        <el-button
-          type="primary"
-          size="small"
-          @click.stop="handleToggle"
-        >
+        <el-button type="primary" size="small" @click.stop="handleToggle">
           {{ isBindingMode ? '返回查看' : '绑定' }}
         </el-button>
         <h2 style="margin: 0">
@@ -36,7 +24,7 @@
       </div>
 
       <!-- ========== ✅ 查看模式（支持批量删除） ========== -->
-      <div v-if="!isBindingMode">
+      <div class="overflow-auto" v-if="!isBindingMode">
         <div class="flex justify-between items-center mb-3">
           <h2 style="margin: 0">已绑定的考核项</h2>
           <el-button
@@ -62,9 +50,7 @@
           <el-table-column prop="itemType" label="类型" />
         </el-table>
 
-        <div v-if="!bindList.length" class="text-center text-gray-400 mt-4">
-          暂无已绑定考核项
-        </div>
+        <div v-if="!bindList.length" class="text-center text-gray-400 mt-4">暂无已绑定考核项</div>
       </div>
 
       <!-- ========== 绑定模式（原逻辑保留） ========== -->
@@ -122,89 +108,93 @@
 </template>
 
 <script setup>
-import { ref, onBeforeUnmount, onMounted, computed } from 'vue'
-import { storeToRefs } from 'pinia'
-import useItem from '../../../stores/useItem'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import _ from 'lodash'
+import '../../../assets/css/taildwind.css';
+import { ref, onBeforeUnmount, onMounted, computed } from 'vue';
+import { storeToRefs } from 'pinia';
+import useItem from '../../../stores/useItem';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import _ from 'lodash';
 
 /* ========== props ========== */
 const props = defineProps({
   classroomId: { type: String, default: '' },
   categoryName: { type: String, default: '考核项' }
-})
+});
 
 /* ========== 状态定义 ========== */
-const filterData = ref([])
-const bindList = ref([])
-const tableRef = ref()
-const itemType = ref('')
-const inputList = ref([])
-const loading = ref(false)
-const isBindingMode = ref(false)
+const filterData = ref([]);
+const bindList = ref([]);
+const tableRef = ref();
+const itemType = ref('');
+const inputList = ref([]);
+const loading = ref(false);
+const isBindingMode = ref(false);
 
 /* ✅ 新增批量删除相关状态 */
-const multipleSelection = ref([])
-const bindTableRef = ref(null)
+const multipleSelection = ref([]);
+const bindTableRef = ref(null);
 
 /* ========== 引入 store ========== */
-const itemStore = useItem()
-const { isShow, testList, categoryId, objectiveId, courseId } = storeToRefs(itemStore)
-const { setShow, fetchBind, fetchTest, fetchGetBind, fetchDelBind } = itemStore
+const itemStore = useItem();
+const { isShow, testList, categoryId, objectiveId, courseId } = storeToRefs(itemStore);
+const { setShow, fetchBind, fetchTest, fetchGetBind, fetchDelBind } = itemStore;
 
 /* ========== 树配置与下拉类型 ========== */
-const typeProps = { children: node => node.children, label: node => node.type }
+const typeProps = { children: node => node.children, label: node => node.type };
 const typeOptions = computed(() => {
-  const all = [...(testList.value.testPaper || []), ...(testList.value.practice || [])]
-  return _.uniqBy(all.map(i => ({ type: i.itemType })), 'type')
-})
+  const all = [...(testList.value.testPaper || []), ...(testList.value.practice || [])];
+  return _.uniqBy(
+    all.map(i => ({ type: i.itemType })),
+    'type'
+  );
+});
 
 /* ========== classroomId 自动识别 ========== */
-const classroomId = ref('')
+const classroomId = ref('');
 onMounted(() => {
-  if (props.classroomId) classroomId.value = props.classroomId
+  if (props.classroomId) classroomId.value = props.classroomId;
   else {
-    const token = sessionStorage.getItem('token') || localStorage.getItem('token')
-    if (token) classroomId.value = token
+    const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+    if (token) classroomId.value = token;
   }
-  console.log('✅ 当前 classroomId:', classroomId.value)
-})
+  console.log('✅ 当前 classroomId:', classroomId.value);
+});
 
 /* ========== 加载数据 ========== */
 const handleShow = async () => {
-  console.log('➡️ 打开查看弹窗，加载已绑定数据...')
-  loading.value = true
-  await fetchTest({ classroomId: classroomId.value })
-  await fetchGetBind(courseId.value, -1, 1, categoryId.value, objectiveId.value)
-  bindList.value = itemStore.bindList
-  loading.value = false
-  isBindingMode.value = false
-}
+  console.log('➡️ 打开查看弹窗，加载已绑定数据...');
+  loading.value = true;
+  await fetchTest({ classroomId: classroomId.value });
+  await fetchGetBind(courseId.value, -1, 1, categoryId.value, objectiveId.value);
+  bindList.value = itemStore.bindList;
+  loading.value = false;
+  isBindingMode.value = false;
+};
 
 /* ========== 模式切换 ========== */
 const handleToggle = () => {
-  console.log('🟢 点击切换绑定模式')
-  isBindingMode.value = !isBindingMode.value
+  console.log('🟢 点击切换绑定模式');
+  isBindingMode.value = !isBindingMode.value;
   if (isBindingMode.value) {
-    mapping(itemType.value || '作业')
+    mapping(itemType.value || '作业');
   } else {
-    bindList.value = itemStore.bindList
+    bindList.value = itemStore.bindList;
   }
-}
+};
 
 /* ========== 类型映射逻辑 ========== */
 const mapping = type => {
   switch (type) {
     case '作业':
-      filterData.value = testList.value.testPaper || []
-      break
+      filterData.value = testList.value.testPaper || [];
+      break;
     case '实验':
-      filterData.value = testList.value.practice || []
-      break
+      filterData.value = testList.value.practice || [];
+      break;
     default:
-      filterData.value = []
+      filterData.value = [];
   }
-}
+};
 
 /* ========== 多选绑定 ========== */
 const handleSelectAll = selection => {
@@ -212,42 +202,42 @@ const handleSelectAll = selection => {
     ...i,
     categoryId: categoryId.value,
     objectiveId: objectiveId.value
-  }))
-}
+  }));
+};
 const handleSelect = selection => {
   inputList.value = selection.map(i => ({
     ...i,
     categoryId: categoryId.value,
     objectiveId: objectiveId.value
-  }))
-}
+  }));
+};
 
 /* ========== 提交绑定 ========== */
 const submitUpload = async () => {
   if (!inputList.value.length) {
-    ElMessage.info('未选择任何考核项')
-    return
+    ElMessage.info('未选择任何考核项');
+    return;
   }
-  const { code, msg } = await fetchBind(inputList.value)
+  const { code, msg } = await fetchBind(inputList.value);
   if (code === 200) {
-    ElMessage.success('绑定成功')
-    await fetchGetBind(courseId.value, -1, 1, categoryId.value, objectiveId.value)
-    bindList.value = itemStore.bindList
-    isBindingMode.value = false
+    ElMessage.success('绑定成功');
+    await fetchGetBind(courseId.value, -1, 1, categoryId.value, objectiveId.value);
+    bindList.value = itemStore.bindList;
+    isBindingMode.value = false;
   } else {
-    ElMessage.error(msg)
+    ElMessage.error(msg);
   }
-}
+};
 
 /* ========== ✅ 批量删除逻辑 ========== */
-const handleSelectionChange = (selection) => {
-  multipleSelection.value = selection
-}
+const handleSelectionChange = selection => {
+  multipleSelection.value = selection;
+};
 
 const handleBatchDelete = async () => {
   if (!multipleSelection.value.length) {
-    ElMessage.info('请先选择要取消绑定的考核项')
-    return
+    ElMessage.info('请先选择要取消绑定的考核项');
+    return;
   }
 
   try {
@@ -255,26 +245,26 @@ const handleBatchDelete = async () => {
       `确定要取消选中的 ${multipleSelection.value.length} 个绑定项吗？`,
       '提示',
       { type: 'warning' }
-    )
+    );
 
-    const ids = multipleSelection.value.map(item => item.id)
-    const res = await fetchDelBind(ids)
+    const ids = multipleSelection.value.map(item => item.id);
+    const res = await fetchDelBind(ids);
     if (res.code === 200) {
-      ElMessage.success('批量取消绑定成功')
-      await fetchGetBind(courseId.value, -1, 1, categoryId.value, objectiveId.value)
-      bindList.value = itemStore.bindList
-      multipleSelection.value = []
+      ElMessage.success('批量取消绑定成功');
+      await fetchGetBind(courseId.value, -1, 1, categoryId.value, objectiveId.value);
+      bindList.value = itemStore.bindList;
+      multipleSelection.value = [];
     } else {
-      ElMessage.error(res.msg)
+      ElMessage.error(res.msg);
     }
   } catch {
-    ElMessage.info('已取消操作')
+    ElMessage.info('已取消操作');
   }
-}
+};
 
 /* ========== 返回关闭 ========== */
-const handleBack = () => setShow(false)
-onBeforeUnmount(() => (itemType.value = ''))
+const handleBack = () => setShow(false);
+onBeforeUnmount(() => (itemType.value = ''));
 </script>
 
 <style scoped lang="less">
