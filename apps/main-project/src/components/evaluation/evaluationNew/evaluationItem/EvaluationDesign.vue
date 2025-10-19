@@ -27,11 +27,12 @@
       <el-input class="mb-2" v-model="addData.score" placeholder="分数" />
       <el-input v-model="addData.percent" placeholder="百分比" />
     </el-popover>
-    <el-button @click="handleDelAll" type="danger" style="margin-left: 0.8vw">删除</el-button>
+    <!-- <el-button @click="handleDelAll" type="danger" style="margin-left: 0.8vw">删除</el-button> -->
     <el-button @click="handleSaveAll" type="danger" style="margin-left: 0.8vw">保存</el-button>
     <el-button @click="handleBatchUpdate" type="primary" style="margin-left: 0.8vw"
       >批量更新</el-button
     >
+    <el-button @click="handleRefresh" type="primary" style="margin-left: 0.8vw">刷新</el-button>
     <div style="margin-left: auto; display: flex; align-items: center">
       <span :style="{ color: isPercentValid ? '#67C23A' : '#F56C6C' }">
         百分比总和: {{ totalPercent }}%
@@ -55,6 +56,14 @@
             <span>{{ scope.row.categoryName }}</span>
             <el-tag v-if="scope.row.isLocal" type="warning" size="small" style="margin-left: 8px">
               未保存
+            </el-tag>
+            <el-tag
+              v-if="isAutoDistributed[scope.row.id]"
+              type="info"
+              size="small"
+              style="margin-left: 8px"
+            >
+              未更新
             </el-tag>
           </div>
         </template>
@@ -151,9 +160,16 @@ const generateUUI = () => {
 
 const percentMap = ref({});
 
+// 跟踪哪些项目的百分比是自动分配的（未更新到后端）
+const isAutoDistributed = ref({});
+
 // 更新百分比的方法
 const updatePercent = (id, value) => {
   percentMap.value[id] = value;
+  // 手动修改百分比时，清除自动分配标记
+  if (isAutoDistributed.value[id]) {
+    delete isAutoDistributed.value[id];
+  }
 };
 
 // 本地新增的数据列表
@@ -287,6 +303,10 @@ const handleHide = async scope => {
 
   if (data.code === 200) {
     await fetchType({ courseId, current: 1, size: -1 });
+    // 重新初始化百分比映射，以后端数据为准
+    typeList.value.forEach(t => {
+      percentMap.value[t.id] = t.percent * 100;
+    });
     ElMessage.success('修改成功');
   } else {
     ElMessage.error(data.msg);
@@ -356,6 +376,10 @@ const handleDelAll = async () => {
       const newPercents = autoDistributePercent(remainingItems.length);
       remainingItems.forEach((item, index) => {
         percentMap.value[item.id] = newPercents[index];
+        // 标记为自动分配（未更新到后端），但排除本地新增项
+        if (!item.isLocal) {
+          isAutoDistributed.value[item.id] = true;
+        }
       });
     }
 
@@ -409,6 +433,8 @@ const handleSaveAll = async () => {
       typeList.value.forEach(t => {
         percentMap.value[t.id] = t.percent * 100;
       });
+      // 清除所有自动分配标记
+      isAutoDistributed.value = {};
       ElMessage.success('保存成功');
     } else {
       ElMessage.error('部分数据保存失败');
@@ -422,6 +448,14 @@ const handleSaveAll = async () => {
 
 // 批量更新百分比
 const handleBatchUpdate = async () => {
+  // 检查是否存在未保存的本地项目
+  if (localAddedItems.value.length > 0) {
+    ElMessage.error(
+      `当前存在${localAddedItems.value.length}个未保存的本地项目，请先保存后再进行批量更新`
+    );
+    return;
+  }
+
   // 验证百分比总和是否为100%
   if (!isPercentValid.value) {
     ElMessage.error(`百分比总和必须为100%，当前总和为${totalPercent.value}%`);
@@ -470,6 +504,8 @@ const handleBatchUpdate = async () => {
           percentMap.value[item.id] = 0;
         }
       });
+      // 清除所有自动分配标记
+      isAutoDistributed.value = {};
       ElMessage.success('批量更新成功');
     } else {
       ElMessage.error('部分数据更新失败');
@@ -506,6 +542,10 @@ const handleDelete = async scope => {
           const newPercents = autoDistributePercent(remainingItems.length);
           remainingItems.forEach((item, index) => {
             percentMap.value[item.id] = newPercents[index];
+            // 标记为自动分配（未更新到后端），但排除本地新增项
+            if (!item.isLocal) {
+              isAutoDistributed.value[item.id] = true;
+            }
           });
         }
 
@@ -526,6 +566,10 @@ const handleDelete = async scope => {
         const newPercents = autoDistributePercent(remainingItems.length);
         remainingItems.forEach((item, index) => {
           percentMap.value[item.id] = newPercents[index];
+          // 标记为自动分配（未更新到后端），但排除本地新增项
+          if (!item.isLocal) {
+            isAutoDistributed.value[item.id] = true;
+          }
         });
       }
 
@@ -588,6 +632,37 @@ const handelAdd = async () => {
   addData.percent = 0;
 
   ElMessage.success('已添加到列表，点击保存按钮提交');
+};
+
+// 刷新表单状态
+const handleRefresh = async () => {
+  try {
+    loading.value = true;
+
+    // 清空本地新增的数据
+    localAddedItems.value = [];
+
+    // 重新获取服务器数据
+    await fetchType({ courseId, current: 1, size: -1 });
+
+    // 重新初始化百分比映射，以后端数据为准
+    percentMap.value = {};
+    typeList.value.forEach(t => {
+      percentMap.value[t.id] = t.percent * 100;
+    });
+
+    // 清除所有自动分配标记
+    isAutoDistributed.value = {};
+
+    // 清空搜索条件
+    search.value = '';
+
+    ElMessage.success('刷新成功');
+  } catch (error) {
+    ElMessage.error('刷新失败：' + error.message);
+  } finally {
+    loading.value = false;
+  }
 };
 
 onMounted(async () => {
