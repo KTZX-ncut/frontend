@@ -1,3 +1,4 @@
+import { time } from 'echarts';
 import request from '../utils/request.js';
 import { UniExport } from './type.js';
 
@@ -73,7 +74,13 @@ export const getExternalAssessmentList = (id: string) => {
 
 // 一键计算
 export const calculateExternalAssessment = (classroomId: string): Promise<UniExport> => {
-  return request.evaluation.get(`/reach-evaluation/calculate?classroomId=${classroomId}`);
+  return request.evaluation.get(
+    `/reach-evaluation/calculate?classroomId=${classroomId}`,
+    {},
+    {
+      timeout: 120000
+    }
+  );
 };
 
 // 生成画像

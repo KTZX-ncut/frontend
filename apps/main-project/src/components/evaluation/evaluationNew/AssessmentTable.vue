@@ -11,7 +11,14 @@
       "
     >
       <!-- 原计算按钮 -->
-      <el-button type="success" @click="calc" style="margin-left: 0.8vw"> 计算 </el-button>
+      <el-button
+        v-if="roleName !== '课程负责人'"
+        type="success"
+        @click="calc"
+        style="margin-left: 0.8vw"
+      >
+        计算
+      </el-button>
 
       <!-- 新增修改功能按钮组 -->
       <template v-if="!isEditMode && roleName === '课程负责人'">
@@ -103,14 +110,15 @@
             align="center"
           >
             <template v-slot="scope">
-              <el-input
+              {{ item.percent * 100 }}%
+              <!-- <el-input
                 v-if="scope.row.edit[item.id]"
                 style="height: 28px"
                 :ref="el => setInputRef(el, item.id)"
                 @blur="handleBlur(scope.row, item.id)"
                 v-model="scope.row[item.id]"
-              ></el-input>
-              <div
+              ></el-input> -->
+              <!-- <div
                 v-else
                 @dblclick="handleClick(scope.row, item.id)"
                 :style="{
@@ -123,7 +131,7 @@
                 <span v-if="calcFooter2Data() !== 100" style="color: red">
                   （总评合计不为100）</span
                 >
-              </div>
+              </div> -->
             </template>
           </el-table-column>
         </el-table>
@@ -337,6 +345,7 @@ const loadObjectiveCategory = async () => {
 
 const labelStore = useLabel();
 const { fetchExternalAssessmenCalc } = labelStore;
+// const roleName = sessionStorage.getItem
 
 // 是否处于编辑模式
 const isEditMode = ref(false);
@@ -486,6 +495,15 @@ const info = ref<newInfo | null>(null);
 
 const calc = async () => {
   pageLoading.value = true;
+  let totalPercent = 0;
+  info.value?.head.forEach(h => {
+    totalPercent += Number(h.percent);
+  });
+  if (totalPercent !== 1) {
+    ElMessage.error('各列总评占比之和必须为 100%');
+    pageLoading.value = false;
+    return;
+  }
   try {
     const res = await fetchExternalAssessmenCalc(classroomId);
     if (res.code === 200) {

@@ -24,7 +24,7 @@
       </template>
       <el-input class="mb-2" v-model="addData.objectiveName" placeholder="课程目标" />
       <el-input class="mb-2" v-model="addData.objectiveDescription" placeholder="备注" />
-      <el-input v-model="addData.weight" placeholder="权重" />
+      <!-- <el-input v-model="addData.weight" placeholder="权重" /> -->
     </el-popover>
     <el-button @click="handleDelAll" type="danger" style="margin-left: 0.8vw">删除</el-button>
   </el-header>
@@ -53,13 +53,13 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="权重">
+      <!-- <el-table-column label="权重">
         <template #default="scope">
           <div style="display: flex; align-items: center">
             <span>{{ scope.row.weight }}</span>
           </div>
         </template>
-      </el-table-column>
+      </el-table-column> -->
       <el-table-column label="操作">
         <template #default="scope">
           <el-popover
@@ -72,7 +72,7 @@
               () => {
                 updateData.objectiveDescription = scope.row.objectiveDescription;
                 updateData.objectiveName = scope.row.objectiveName;
-                updateData.weight = scope.row.weight;
+                // updateData.weight = scope.row.weight;
               }
             "
           >
@@ -81,7 +81,7 @@
             </template>
             <el-input class="mb-2" v-model="updateData.objectiveName" placeholder="课程目标" />
             <el-input class="mb-2" v-model="updateData.objectiveDescription" placeholder="备注" />
-            <el-input v-model="updateData.weight" placeholder="权重" />
+            <!-- <el-input v-model="updateData.weight" placeholder="权重" /> -->
           </el-popover>
           <el-button size="small" type="danger" @click="handleDelete(scope)"> 删除 </el-button>
         </template>
@@ -143,8 +143,8 @@ const querySearch = async () => {
 const handleHide = async scope => {
   if (
     updateData.objectiveDescription === scope.row.objectiveDescription &&
-    updateData.objectiveName === scope.row.objectiveName &&
-    updateData.weight === scope.row.weight
+    updateData.objectiveName === scope.row.objectiveName
+    // updateData.weight === scope.row.weight
   ) {
     ElMessage({
       type: 'info',
@@ -157,13 +157,13 @@ const handleHide = async scope => {
     delete updateData.objectiveName;
   }
   const score = Number(updateData.weight);
-  if (!(score > 0 && score <= 1)) {
-    ElMessage({
-      type: 'warning',
-      message: '权重应在0-1之间'
-    });
-    return;
-  }
+  // if (!(score > 0 && score <= 1)) {
+  //   ElMessage({
+  //     type: 'warning',
+  //     message: '权重应在0-1之间'
+  //   });
+  //   return;
+  // }
   const data = await fetchUpdateAim({
     id: updateData.id,
     objectiveName: updateData.objectiveName,
@@ -212,10 +212,10 @@ const handleDelete = async scope => {
 
 const handelAdd = async () => {
   const score = Number(addData.weight);
-  if (!(addData.objectiveName && addData.weight && score > 0 && score <= 1)) {
+  if (!addData.objectiveName) {
     ElMessage({
       type: 'warning',
-      message: '课程目标名称，课程目标不可为空，且权重应在0-1之间'
+      message: '课程目标名称，课程目标不可为空'
     });
     return;
   }
@@ -224,7 +224,7 @@ const handelAdd = async () => {
     courseId,
     objectiveName: addData.objectiveName,
     objectiveDescription: addData.objectiveDescription,
-    weight: score
+    weight: 1
   });
   if (res.msg === 'success') {
     ElMessage({

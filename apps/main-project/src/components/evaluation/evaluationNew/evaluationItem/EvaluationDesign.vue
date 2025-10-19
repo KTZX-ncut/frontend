@@ -58,7 +58,7 @@
               未保存
             </el-tag>
             <el-tag
-              v-if="isAutoDistributed[scope.row.id]"
+              v-if="!scope.row.isLocal && percentMap[scope.row.id] !== scope.row.percent * 100"
               type="info"
               size="small"
               style="margin-left: 8px"
@@ -160,16 +160,9 @@ const generateUUI = () => {
 
 const percentMap = ref({});
 
-// 跟踪哪些项目的百分比是自动分配的（未更新到后端）
-const isAutoDistributed = ref({});
-
 // 更新百分比的方法
 const updatePercent = (id, value) => {
   percentMap.value[id] = value;
-  // 手动修改百分比时，清除自动分配标记
-  if (isAutoDistributed.value[id]) {
-    delete isAutoDistributed.value[id];
-  }
 };
 
 // 本地新增的数据列表
@@ -376,10 +369,6 @@ const handleDelAll = async () => {
       const newPercents = autoDistributePercent(remainingItems.length);
       remainingItems.forEach((item, index) => {
         percentMap.value[item.id] = newPercents[index];
-        // 标记为自动分配（未更新到后端），但排除本地新增项
-        if (!item.isLocal) {
-          isAutoDistributed.value[item.id] = true;
-        }
       });
     }
 
@@ -433,8 +422,6 @@ const handleSaveAll = async () => {
       typeList.value.forEach(t => {
         percentMap.value[t.id] = t.percent * 100;
       });
-      // 清除所有自动分配标记
-      isAutoDistributed.value = {};
       ElMessage.success('保存成功');
     } else {
       ElMessage.error('部分数据保存失败');
@@ -504,8 +491,6 @@ const handleBatchUpdate = async () => {
           percentMap.value[item.id] = 0;
         }
       });
-      // 清除所有自动分配标记
-      isAutoDistributed.value = {};
       ElMessage.success('批量更新成功');
     } else {
       ElMessage.error('部分数据更新失败');
@@ -542,10 +527,6 @@ const handleDelete = async scope => {
           const newPercents = autoDistributePercent(remainingItems.length);
           remainingItems.forEach((item, index) => {
             percentMap.value[item.id] = newPercents[index];
-            // 标记为自动分配（未更新到后端），但排除本地新增项
-            if (!item.isLocal) {
-              isAutoDistributed.value[item.id] = true;
-            }
           });
         }
 
@@ -566,10 +547,6 @@ const handleDelete = async scope => {
         const newPercents = autoDistributePercent(remainingItems.length);
         remainingItems.forEach((item, index) => {
           percentMap.value[item.id] = newPercents[index];
-          // 标记为自动分配（未更新到后端），但排除本地新增项
-          if (!item.isLocal) {
-            isAutoDistributed.value[item.id] = true;
-          }
         });
       }
 
@@ -650,9 +627,6 @@ const handleRefresh = async () => {
     typeList.value.forEach(t => {
       percentMap.value[t.id] = t.percent * 100;
     });
-
-    // 清除所有自动分配标记
-    isAutoDistributed.value = {};
 
     // 清空搜索条件
     search.value = '';

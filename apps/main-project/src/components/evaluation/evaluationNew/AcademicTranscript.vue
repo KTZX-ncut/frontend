@@ -377,7 +377,8 @@ const createHeaderNew = head => {
   const ratio = splitEvenlyInt(head.slice(0, head.length - 1));
   console.log('head', head);
   head.forEach((h, index) => {
-    h.title = h.categoryName + '（' + (h.percent || 1) * 100 + '%）';
+    console.log(h.percent);
+    h.title = h.categoryName + '（' + (h.percent ?? 1) * 100 + '%）';
     h.field = h.id;
   });
 };
