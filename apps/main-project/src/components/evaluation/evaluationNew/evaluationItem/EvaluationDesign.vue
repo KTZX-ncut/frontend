@@ -24,12 +24,13 @@
       </template>
       <el-input class="mb-2" v-model="addData.typeName" placeholder="类别名称" />
       <el-input class="mb-2" v-model="addData.remark" placeholder="备注" />
-      <el-input v-model="addData.score" placeholder="分数" />
+      <el-input class="mb-2" v-model="addData.score" placeholder="分数" />
+      <el-input v-model="addData.percent" placeholder="百分比" />
     </el-popover>
     <el-button @click="handleDelAll" type="danger" style="margin-left: 0.8vw">删除</el-button>
     <el-button @click="handleSaveAll" type="danger" style="margin-left: 0.8vw">保存</el-button>
-    <el-button @click="handleSavePercent" type="danger" style="margin-left: 0.8vw"
-      >更新百分比</el-button
+    <el-button @click="handleBatchUpdate" type="primary" style="margin-left: 0.8vw"
+      >批量更新</el-button
     >
     <div style="margin-left: auto; display: flex; align-items: center">
       <span :style="{ color: isPercentValid ? '#67C23A' : '#F56C6C' }">
@@ -61,7 +62,17 @@
       <el-table-column label="百分比">
         <template #default="scope">
           <div style="display: flex; align-items: center">
-            <span>{{ percentMap.get(scope.row.id) || 0 }}%</span>
+            <el-input-number
+              :model-value="percentMap[scope.row.id] || 0"
+              @update:model-value="value => updatePercent(scope.row.id, value)"
+              :min="0"
+              :max="100"
+              :precision="0"
+              size="small"
+              style="width: 100px"
+              @change="validatePercentSum"
+            />
+            <span style="margin-left: 5px">%</span>
           </div>
         </template>
       </el-table-column>
@@ -102,18 +113,7 @@
             <el-input class="mb-2" v-model="updateData.remark" placeholder="备注" />
             <el-input v-model="updateData.score" placeholder="分数" />
           </el-popover>
-          <el-popover
-            class="box-item"
-            content="Left Top prompts info"
-            placement="left-start"
-            trigger="click"
-            @hide="handlePercent(scope)"
-          >
-            <template #reference>
-              <el-button size="small"> 百分比 </el-button>
-            </template>
-            <el-input class="mb-2" v-model="percent" placeholder="百分比" />
-          </el-popover>
+          <el-button size="small" @click="handleDelete(scope)" type="danger"> 删除 </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -124,7 +124,7 @@
 import { onMounted, reactive, ref, computed } from 'vue';
 import useEvaluationNew from '../../../../stores/useEvaluationNew';
 import parseJWT from '../../../../utils/parseJWT';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { message } from 'ant-design-vue';
 import { storeToRefs } from 'pinia';
 import _, { update } from 'lodash';
@@ -141,21 +141,6 @@ const { fetchType, fetchAddType, fetchDelList, fuzzyQuery, fetchUpdateType } = e
 const { typeList } = storeToRefs(evaluationStore);
 const courseId = parseJWT(sessionStorage.getItem('token')).obsid;
 
-const percent = ref();
-
-const handlePercent = scope => {
-  console.log(percent);
-  if (!percent.value) {
-    ElMessage({
-      type: 'warning',
-      message: '百分比不能为空'
-    });
-    return;
-  }
-  percentMap.value.set(scope.row.id, Number(percent.value));
-  percent.value = null;
-};
-
 const generateUUI = () => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     const r = (Math.random() * 16) | 0;
@@ -164,73 +149,77 @@ const generateUUI = () => {
   });
 };
 
-const percentMap = ref(new Map());
+const percentMap = ref({});
+
+// 更新百分比的方法
+const updatePercent = (id, value) => {
+  percentMap.value[id] = value;
+};
 
 // 本地新增的数据列表
 const localAddedItems = ref([]);
 
-const handleSavePercent = async () => {
-  const totalPercent = [...percentMap.value.values()].reduce((sum, percent) => sum + percent, 0);
-  if (totalPercent !== 100) {
-    ElMessage({
-      type: 'error',
-      message: '加和应为100'
-    });
-    return;
-  }
-
-  const allPromise = [...percentMap.value.keys()].map(k => {
-    return fetchUpdateType({
-      id: k,
-      percent: percentMap.value.get(k) / 100
-    });
-  });
-
-  const results = await Promise.all(allPromise);
-  console.log(results);
-
-  // 检查是否所有保存都成功
-  const allSuccess = results.every(result => result.msg === 'success');
-
-  if (allSuccess) {
-    // 重新获取服务器数据
-    await fetchType({ courseId, current: 1, size: -1 });
-    ElMessage.success('更新成功');
-  } else {
-    ElMessage.error('部分数据保存失败');
-  }
-};
-
-// 使用 computed 合并服务器数据和本地新增数据，并计算百分比
+// 使用 computed 合并服务器数据和本地新增数据
 const exemList = computed(() => {
   const allItems = [...typeList.value, ...localAddedItems.value];
-
   return allItems;
 });
 
 // 计算百分比总和是否为100%
 const isPercentValid = computed(() => {
   if (exemList.value.length === 0) return true;
-  const totalPercent = [...percentMap.value.values()].reduce((sum, percent) => sum + percent, 0);
+  const totalPercent = Object.values(percentMap.value).reduce(
+    (sum, percent) => sum + Number(percent || 0),
+    0
+  );
   return totalPercent === 100; // 严格等于100%
 });
 
 // 获取当前百分比总和
 const totalPercent = computed(() => {
-  return [...percentMap.value.values()].reduce((sum, percent) => sum + Number(percent), 0);
+  return Object.values(percentMap.value).reduce((sum, percent) => sum + Number(percent || 0), 0);
 });
 
 const addData = reactive({
   typeName: '',
   remark: '',
-  score: 0
-});
-const updateData = reactive({
-  typeName: '',
-  remark: '',
   score: 0,
   percent: 0
 });
+
+const updateData = reactive({
+  typeName: '',
+  remark: '',
+  score: 0
+});
+
+// 百分比校验函数
+const validatePercentSum = () => {
+  const total = Object.values(percentMap.value).reduce(
+    (sum, percent) => sum + Number(percent || 0),
+    0
+  );
+  if (total !== 100) {
+    ElMessage.warning(`当前百分比总和为${total}%，请确保总和为100%`);
+  }
+};
+
+// 自动分配百分比
+const autoDistributePercent = itemCount => {
+  if (itemCount === 0) return [];
+
+  const base = Math.floor(100 / itemCount); // 基础整数部分
+  const remainder = 100 % itemCount; // 余数
+
+  const percents = new Array(itemCount).fill(base);
+
+  // 将余数分配给前几个项目
+  for (let i = 0; i < remainder; i++) {
+    percents[i] += 1;
+  }
+
+  return percents;
+};
 
 const debouncedQuerySearch = _.debounce(() => {
   querySearch();
@@ -288,32 +277,28 @@ const handleHide = async scope => {
     return;
   }
 
-  // 更新除了百分比以外字段
-  updateData.id = scope.row.id;
-  if (updateData.typeName === scope.row.categoryName) {
-    delete updateData.typeName;
-  }
-
+  // 更新服务器数据（不包括百分比）
   const data = await fetchUpdateType({
-    id: updateData.id,
+    id: scope.row.id,
     categoryName: updateData.typeName,
     categoryDescription: updateData.remark,
     score: updateData.score
   });
 
-  await fetchType({ courseId, current: 1, size: -1 });
-  if (data.code === 200) return ElMessage.success('修改成功');
-  ElMessage.error(data.msg);
+  if (data.code === 200) {
+    await fetchType({ courseId, current: 1, size: -1 });
+    ElMessage.success('修改成功');
+  } else {
+    ElMessage.error(data.msg);
+  }
 };
 
 const handleSelect = selection => {
   delList.value = selection.map(i => i.id);
-  console.log(delList.value);
 };
 
 const handleSelectAll = selection => {
   delList.value = selection.map(i => i.id);
-  console.log(delList.value);
 };
 
 const handleDelAll = async () => {
@@ -322,21 +307,25 @@ const handleDelAll = async () => {
     return;
   }
 
-  // 分离本地项和服务器项
-  const localIds = [];
-  const serverIds = [];
-  const ids = [];
-
-  delList.value.forEach(id => {
-    ids.push(id);
-    if (id.toString().startsWith('local')) {
-      localIds.push(id);
-    } else {
-      serverIds.push(id);
-    }
-  });
-
   try {
+    await ElMessageBox.confirm('确定要删除选中的项目吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    });
+
+    // 分离本地项和服务器项
+    const localIds = [];
+    const serverIds = [];
+
+    delList.value.forEach(id => {
+      if (id.toString().startsWith('local')) {
+        localIds.push(id);
+      } else {
+        serverIds.push(id);
+      }
+    });
+
     // 删除本地项
     if (localIds.length > 0) {
       localIds.forEach(id => {
@@ -344,6 +333,7 @@ const handleDelAll = async () => {
         if (index > -1) {
           localAddedItems.value.splice(index, 1);
         }
+        delete percentMap.value[id];
       });
     }
 
@@ -355,17 +345,24 @@ const handleDelAll = async () => {
         return;
       }
       await fetchType({ courseId, current: 1, size: -1 });
+      serverIds.forEach(id => {
+        delete percentMap.value[id];
+      });
     }
 
-    // 清空选择列表
+    // 重新分配剩余项目的百分比
+    const remainingItems = exemList.value;
+    if (remainingItems.length > 0) {
+      const newPercents = autoDistributePercent(remainingItems.length);
+      remainingItems.forEach((item, index) => {
+        percentMap.value[item.id] = newPercents[index];
+      });
+    }
+
     delList.value = [];
-    ElMessage.success('删除成功');
+    ElMessage.success('删除成功，已重新分配百分比');
   } catch (error) {
-    ElMessage.error('删除失败：' + error.message);
-  } finally {
-    ids.map(id => {
-      percentMap.value.delete(id);
-    });
+    // 用户取消删除
   }
 };
 
@@ -384,36 +381,33 @@ const handleSaveAll = async () => {
   loading.value = true;
 
   try {
-    // 获取当前计算后的百分比数据
     const itemsToSave = exemList.value.filter(item => item.isLocal);
-    console.log(itemsToSave);
 
-    // 批量保存所有本地新增的项目，包含百分比
+    // 批量保存所有本地新增的项目
     const savePromises = itemsToSave.map(item => {
-      // console.log(percentMap.value.get(item.id) / 100);
       return fetchAddType({
         courseId,
         categoryName: item.categoryName,
         categoryDescription: item.categoryDescription,
         score: item.score,
-        percent: percentMap.value.get(item.id) / 100 // 发送计算后的百分比
+        percent: percentMap.value[item.id] / 100
       });
     });
 
     const results = await Promise.allSettled(savePromises);
-    console.log(results);
 
     // 检查是否所有保存都成功
-    const allSuccess = results.every(result => result.value.msg === 'success');
+    const allSuccess = results.every(result => result.value && result.value.msg === 'success');
 
     if (allSuccess) {
       // 清空本地新增列表
       localAddedItems.value = [];
       // 重新获取服务器数据
       await fetchType({ courseId, current: 1, size: -1 });
-      percentMap.value.clear();
-      typeList.value.map(t => {
-        percentMap.value.set(t.id, t.percent * 100);
+      // 重新初始化百分比映射
+      percentMap.value = {};
+      typeList.value.forEach(t => {
+        percentMap.value[t.id] = t.percent * 100;
       });
       ElMessage.success('保存成功');
     } else {
@@ -426,46 +420,128 @@ const handleSaveAll = async () => {
   }
 };
 
-function splitEvenlyInt(arr) {
-  const len = arr.length;
-  if (len === 0) return [];
-
-  const base = Math.floor(100 / len);
-  const remainder = 100 % len;
-
-  return arr.map((_, i) => (i < remainder ? base + 1 : base));
-}
-
-const handleDelete = async scope => {
-  const item = scope.row;
-
-  if (item.isLocal) {
-    // 删除本地新增项
-    const index = localAddedItems.value.findIndex(localItem => localItem.id === item.id);
-    if (index > -1) {
-      localAddedItems.value.splice(index, 1);
-      ElMessage.success('删除成功');
-    }
-
-    percentMap.value.delete(item.id);
+// 批量更新百分比
+const handleBatchUpdate = async () => {
+  // 验证百分比总和是否为100%
+  if (!isPercentValid.value) {
+    ElMessage.error(`百分比总和必须为100%，当前总和为${totalPercent.value}%`);
     return;
   }
 
-  // 删除服务器数据
-  console.log(scope);
-  let delList = [scope.row.id];
-  const data = await fetchDelList({ idList: delList });
-  if (data.msg === 'success') {
-    await fetchType({ courseId, current: 1, size: -1 });
-    return ElMessage.success('删除成功');
+  try {
+    await ElMessageBox.confirm('确定要批量更新所有项目的百分比吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    });
+
+    loading.value = true;
+
+    // 只更新服务器数据的百分比
+    const serverItems = exemList.value.filter(item => !item.isLocal);
+
+    if (serverItems.length === 0) {
+      ElMessage.info('没有需要更新的服务器数据');
+      return;
+    }
+
+    const updatePromises = serverItems.map(item => {
+      return fetchUpdateType({
+        id: item.id,
+        percent: percentMap.value[item.id] / 100
+      });
+    });
+
+    const results = await Promise.allSettled(updatePromises);
+
+    // 检查是否所有更新都成功
+    const allSuccess = results.every(result => result.value && result.value.msg === 'success');
+
+    if (allSuccess) {
+      await fetchType({ courseId, current: 1, size: -1 });
+      // 重新初始化百分比映射
+      percentMap.value = {};
+      typeList.value.forEach(t => {
+        percentMap.value[t.id] = t.percent * 100;
+      });
+      // 保持本地新增项的百分比
+      localAddedItems.value.forEach(item => {
+        if (!percentMap.value[item.id]) {
+          percentMap.value[item.id] = 0;
+        }
+      });
+      ElMessage.success('批量更新成功');
+    } else {
+      ElMessage.error('部分数据更新失败');
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('更新失败：' + error.message);
+    }
+  } finally {
+    loading.value = false;
   }
-  ElMessage.error('删除失败');
-  // 删除对应百分比
-  percentMap.value.delete(item.id);
+};
+
+const handleDelete = async scope => {
+  try {
+    await ElMessageBox.confirm('确定要删除这个项目吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    });
+
+    const item = scope.row;
+
+    if (item.isLocal) {
+      // 删除本地新增项
+      const index = localAddedItems.value.findIndex(localItem => localItem.id === item.id);
+      if (index > -1) {
+        localAddedItems.value.splice(index, 1);
+        delete percentMap.value[item.id];
+
+        // 重新分配剩余项目的百分比
+        const remainingItems = exemList.value;
+        if (remainingItems.length > 0) {
+          const newPercents = autoDistributePercent(remainingItems.length);
+          remainingItems.forEach((item, index) => {
+            percentMap.value[item.id] = newPercents[index];
+          });
+        }
+
+        ElMessage.success('删除成功，已重新分配百分比');
+      }
+      return;
+    }
+
+    // 删除服务器数据
+    const data = await fetchDelList({ idList: [item.id] });
+    if (data.msg === 'success') {
+      await fetchType({ courseId, current: 1, size: -1 });
+      delete percentMap.value[item.id];
+
+      // 重新分配剩余项目的百分比
+      const remainingItems = exemList.value;
+      if (remainingItems.length > 0) {
+        const newPercents = autoDistributePercent(remainingItems.length);
+        remainingItems.forEach((item, index) => {
+          percentMap.value[item.id] = newPercents[index];
+        });
+      }
+
+      ElMessage.success('删除成功，已重新分配百分比');
+    } else {
+      ElMessage.error('删除失败');
+    }
+  } catch (error) {
+    // 用户取消删除
+  }
 };
 
 const handelAdd = async () => {
   const score = Number(addData.score);
+  const percent = Number(addData.percent);
+
   if (!(addData.typeName && addData.score && score > 0 && score <= 100)) {
     ElMessage({
       type: 'warning',
@@ -474,31 +550,50 @@ const handelAdd = async () => {
     return;
   }
 
+  if (!(percent >= 0 && percent <= 100)) {
+    ElMessage({
+      type: 'warning',
+      message: '百分比应在0-100之间'
+    });
+    return;
+  }
+
+  // 检查新增后百分比总和是否会超过100%
+  const currentTotal = Object.values(percentMap.value).reduce((sum, p) => sum + Number(p || 0), 0);
+  if (currentTotal + percent > 100) {
+    ElMessage({
+      type: 'error',
+      message: `新增后百分比总和将为${currentTotal + percent}%，超过100%，可以先将百分比设置为0`
+    });
+    return;
+  }
+
   // 添加到本地列表，生成临时ID
   const newItem = {
-    id: 'local' + generateUUI(), // 临时ID
+    id: 'local' + generateUUI(),
     categoryName: addData.typeName,
     categoryDescription: addData.remark,
     score: score,
-    isLocal: true, // 标记为本地新增项
+    isLocal: true,
     percent: 0
   };
-  percentMap.value.set(newItem.id, 0);
 
+  percentMap.value[newItem.id] = percent;
   localAddedItems.value.push(newItem);
 
   // 清空表单
   addData.typeName = '';
   addData.remark = '';
   addData.score = 0;
+  addData.percent = 0;
 
   ElMessage.success('已添加到列表，点击保存按钮提交');
 };
 
 onMounted(async () => {
   await fetchType({ courseId, current: 1, size: -1 });
-  typeList.value.map(t => {
-    percentMap.value.set(t.id, t.percent * 100);
+  typeList.value.forEach(t => {
+    percentMap.value[t.id] = t.percent * 100;
   });
 });
 

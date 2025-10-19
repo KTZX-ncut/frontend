@@ -23,9 +23,9 @@
       "
     >
       <!-- <el-button type="success" style="margin-left: 0.8vw; cursor: not-allowed;">新增</el-button> -->
-      <el-button type="primary" v-if="!isCourseManager" style="margin-left: 0.8vw" @click="calc()"
+      <!-- <el-button type="primary" v-if="!isCourseManager" style="margin-left: 0.8vw" @click="calc()"
         >刷新报告数据</el-button
-      >
+      > -->
       <el-button type="success" style="margin-left: 0.8vw" @click="printReport">打印报告</el-button>
       <el-button type="success" style="margin-left: 0.8vw" @click="generatePDF">下载报告</el-button>
       <el-button
