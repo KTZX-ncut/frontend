@@ -304,12 +304,14 @@ const routes = [
       {
         path: 'evaluation/dynamicEvaluation/academicTranscript', // 达成性评价-评价名单
         name: 'AcademicTranscript',
-        component: () => import('../components/evaluation/AcademicTranscript.vue')
+        component: () => import('../components/evaluation/evaluationNew/AcademicTranscript.vue')
+        // component: () => import('../components/evaluation/AcademicTranscript.vue')
       },
       {
         path: 'evaluation/dynamicEvaluation/classroomReport', // 达成性评价-生成报告
         name: 'ClassroomReport',
-        component: () => import('../components/evaluation/ClassroomReport.vue')
+        // component: () => import('../components/evaluation/ClassroomReport.vue')
+        component: () => import('../components/evaluation//evaluationNew/ClassroomReport.vue')
       },
       // 达成性评价画像名单
       {
@@ -416,8 +418,7 @@ const routes = [
         path: 'external-data/data-import', // 达成性评价模型-外部数据导入功能
         name: 'ExternalDataImport',
         component: () => import('../components/evaluation/evaluationNew/ExternalDataImport.vue')
-      },
-
+      }
     ]
   },
 

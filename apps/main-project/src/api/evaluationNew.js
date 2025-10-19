@@ -10,12 +10,13 @@ export const getType = (courseId, current, size) => {
 };
 
 // 增加考核项
-export const addType = (courseId, categoryName, categoryDescription, score) => {
+export const addType = (courseId, categoryName, categoryDescription, score, percent) => {
   return request.evaluation.post('/fe/assessment-categories/add', {
     courseId, // 课程ID（必填）
     categoryName, // 类别名称（必填）
     categoryDescription, // 类别描述（可选）
-    score // 类别分数（必填，范围：0-100）
+    score, // 类别分数（必填，范围：0-100）
+    percent
   });
 };
 

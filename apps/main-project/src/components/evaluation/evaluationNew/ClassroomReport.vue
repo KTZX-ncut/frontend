@@ -82,11 +82,11 @@
               </tr>
               <tr>
                 <td>最高分</td>
-                <td>{{ headerData.topScore }}</td>
+                <td>{{ headerData.topScore || 0 }}</td>
                 <td>最低分</td>
-                <td>{{ headerData.lowestScore }}</td>
+                <td>{{ headerData.lowestScore || 0 }}</td>
                 <td>平均分</td>
-                <td>{{ headerData.averScore }}</td>
+                <td>{{ headerData.averScore || 0 }}</td>
                 <td>不及格人数</td>
                 <td>{{ headerData.failNum }}</td>
               </tr>
@@ -120,8 +120,7 @@
             </tr>
             <tr>
               <td v-for="t in courseTargetData" :key="t.id">
-                {{ targetSumAchievementDegree[t.id] }}
-                <!-- {{ targetSumAchievementDegreeNew[t.id] }} -->
+                {{ acheiveMap.get(t.name) }}
               </td>
             </tr>
           </table>
@@ -140,7 +139,7 @@
                 <span v-if="targetAchievementPersonalDegreeScatterList[i]?.data[1].length"
                   >其中
                   {{ targetAchievementPersonalDegreeScatterList[i].data[1].join(',') }}
-                  号同学本课程目标达成度低于0.6，目标没有达成</span
+                  号同学本课程目标达成度低于60%，目标没有达成</span
                 >
                 <span v-else-if="targetAchievementData">本目标全员达成</span>
               </div>
@@ -158,14 +157,14 @@
                 <td style="width: 80px">姓名</td>
                 <td v-for="t of courseTargetData" :key="t.id">{{ t.name }}</td>
               </tr>
-              <tr v-for="s of studentList" :key="s.stuno">
-                <template v-if="s.evaluationState">
-                  <td>{{ s.rowNo }}</td>
-                  <td style="width: 120px">{{ s.stuno }}</td>
-                  <td style="width: 80px">{{ s.username }}</td>
-                  <td v-for="t in courseTargetData" :key="t.id">
-                    {{ Number(s[t.id]) >= 0.6 ? '√' : '' }}
-                  </td>
+              <tr v-for="(s, index) of aimEvaListNew" :key="s.stuno">
+                <td>{{ index + 1 }}</td>
+                <td style="width: 120px">{{ s.stuno }}</td>
+                <td style="width: 80px">{{ s.username }}</td>
+                <template v-for="(value, key) in aimEvaList" :key="key">
+                  <template v-if="key === s.key">
+                    <td v-for="item in value">{{ item.achievementScore >= 60 ? '√' : '' }}</td>
+                  </template>
                 </template>
               </tr>
             </table>
@@ -180,13 +179,15 @@
               <td style="width: 120px">班级</td>
               <td v-for="t of courseTargetData" :key="t.id">{{ t.name }}</td>
             </tr>
-            <tr v-for="s of studentList" :key="s.stuno">
-              <template v-if="s.evaluationState">
-                <td style="width: 50px">{{ s.rowNo }}</td>
-                <td style="width: 120px">{{ s.stuno }}</td>
-                <td style="width: 80px">{{ s.username }}</td>
-                <td style="width: 120px">{{ s.className }}</td>
-                <td v-for="t in courseTargetData" :key="t.id">{{ s[t.id] }}</td>
+            <tr v-for="s of aimEvaListNew" :key="s.stuno">
+              <td style="width: 50px">{{ s.rowNo }}</td>
+              <td style="width: 120px">{{ s.stuno }}</td>
+              <td style="width: 80px">{{ s.username }}</td>
+              <td style="width: 120px">{{ studentList[0].className }}</td>
+              <template v-for="(value, key) in aimEvaList" :key="key">
+                <template v-if="key === s.key">
+                  <td v-for="item in value">{{ item.achievementScore }}</td>
+                </template>
               </template>
             </tr>
           </table>
@@ -200,32 +201,30 @@
 import * as echarts from 'echarts';
 import { nextTick, onMounted, ref } from 'vue';
 import html2pdf from 'html2pdf.js';
-import request from '../../utils/request';
+import request from '../../../utils/request.js';
 import { ElMessage } from 'element-plus';
-import ChooseClassroom from './subcomponents/ChooseClassroom.vue';
+import ChooseClassroom from '../subcomponents/ChooseClassroom.vue';
 import { Loading } from '@element-plus/icons-vue';
-import useCourseAim from '../../stores/useCourseAim.js';
-import useItem from '../../stores/useItem.js';
+import useCourseAim from '../../../stores/useCourseAim.js';
+import useItem from '../../../stores/useItem.js';
+import useLabel from '../../../stores/useLabel.ts';
 import { storeToRefs } from 'pinia';
-import parseJWT from '../../utils/parseJWT.js';
+import parseJWT from '../../../utils/parseJWT.js';
 
 const roleName = JSON.parse(sessionStorage.getItem('users')).rolename;
 const classroomIdRef =
   roleName === '任课教师' ? parseJWT(sessionStorage.getItem('token')).obsid : '';
 const aimStore = useCourseAim();
 const itemStore = useItem();
+const labelStore = useLabel();
+const { fetchTypeEva, fetchAimEva, fetchStuIds, fetchLabelList } = labelStore;
+const { typeEvaList, aimEvaList, stuIds, labelList } = storeToRefs(labelStore);
 const { setCourseId, fetchCourseId } = itemStore;
 const { fetchAim } = aimStore;
 const { aimList } = storeToRefs(aimStore);
 const { courseId } = storeToRefs(itemStore);
-
-onMounted(async () => {
-  classroomIdRef
-    ? await fetchCourseId(classroomIdRef)
-    : setCourseId(parseJWT(sessionStorage.getItem('token')).obsid);
-  await fetchAim({ courseId: courseId.value, current: 1, size: -1 });
-  console.log(aimList.value);
-});
+const aimEvaListNew = ref([]);
+const className = ref();
 
 const isCourseManager = ref(null);
 const hasChooseClassroom = ref(false);
@@ -244,16 +243,16 @@ const courseTargetData = ref();
 const targetAchievementData = ref(null); // 存放计算好的所有学生的课程目标达成度数据
 
 const targetSumAchievementDegree = ref({}); // 存储每个课程目标达成度的平均达成度
-const targetSumAchievementDegreeNew = ref({
-  '800486762-128372d8-0e38-41a2-8427-2d0c45572049': 10,
-  '800486762-51fe6b50-9d44-4ff6-ab7f-71ac64a9eaab': 20
-});
 
 const gradeDivBar = ref(null); // 总评分布图-柱状图
 const targetSumAchievementDegreeBar = ref(null); // 课程目标总体达成度-柱状图
 const targetSumAchievementDegreeCategory = ref(null); // 课程目标总体达成度-折线图
 
 const targetAchievementPersonalDegreeScatterList = ref([]); // 课程目标个体达成度-散点图
+
+const acheiveMap = ref(new Map());
+const acheieveAllMap = ref(new Map());
+const personalMap = ref(new Map());
 
 const options = ref({
   // 报告生成pdf的配置项
@@ -327,6 +326,52 @@ const calc = async () => {
 onMounted(async () => {
   renderLoading.value = true;
   await checkRole();
+  classroomIdRef
+    ? await fetchCourseId(classroomIdRef)
+    : setCourseId(parseJWT(sessionStorage.getItem('token')).obsid);
+  await fetchAim({ courseId: courseId.value, current: 1, size: -1 });
+  courseTargetData.value = aimList.value.map(a => ({ ...a, name: a.objectiveName, id: a.id }));
+  await fetchTypeEva(classroomIdRef);
+  await fetchAimEva(classroomIdRef);
+  await fetchStuIds(classroomIdRef);
+  await fetchLabelList(classroomIdRef);
+
+  Object.entries(aimEvaList.value).forEach(([key, value]) => {
+    let newItem = { totalScore: 0 };
+    value.map((s, index) => {
+      newItem['username'] = s.studentName;
+      newItem['key'] = key;
+      newItem[s.objectiveName] = s.achievementScore;
+      newItem['final'] = s.final || 0;
+      newItem['stuno'] = s.stuNo;
+      newItem['seq'] = index + 1;
+      newItem['totalScore'] = Number(newItem['totalScore']) + Number(s.achievementScore) || 0;
+      acheiveMap.value.set(
+        s.objectiveName,
+        (acheiveMap.value.get(s.objectiveName) || 0) + Number(s.achievementScore)
+      );
+      acheieveAllMap.value.set(s.objectiveName, [
+        ...(acheieveAllMap.value.get(s.objectiveName) || []),
+        {
+          username: s.studentName,
+          score: s.achievementScore,
+          stuno: s.stuNo,
+          name: s.objectiveName
+        }
+      ]);
+      // personalMap.value.set(key,)
+    });
+    newItem['totalScore'] = Number((newItem['totalScore'] / value.length).toFixed(2));
+
+    aimEvaListNew.value.push(newItem);
+    newItem = {};
+  });
+  [...acheiveMap.value.keys()].map(k =>
+    acheiveMap.value.set(k, Number((acheiveMap.value.get(k) / stuIds.value.length).toFixed(2)))
+  );
+  console.log('aim', aimEvaListNew.value);
+  console.log(acheiveMap.value);
+  console.log(acheieveAllMap.value);
   if (!isCourseManager.value) {
     const token = sessionStorage.getItem('token');
     classroomId.value = getObsidFromToken(token);
@@ -350,7 +395,7 @@ const getData = async classroomId => {
   try {
     const res = await request.evaluation.get(`/evaluation/coursetarget`);
     if (res.code === 200) {
-      courseTargetData.value = res.data;
+      // courseTargetData.value = res.data;
     } else ElMessage.error(res.msg);
   } catch (error) {
     ElMessage.error('获取课程目标失败' + error);
@@ -408,7 +453,8 @@ const initialize = () => {
     averScore: 0,
     topScore: 0,
     lowestScore: 100,
-    failNum: 0
+    failNum: 0,
+    totalNum: 0
   });
   for (let [index, stu] of studentList.value.entries()) {
     stu.rowNo = index + 1;
@@ -427,7 +473,25 @@ const initialize = () => {
   headerData.value.averScore = Number(
     (headerData.value.averScore / studentList.value.length).toFixed(2)
   );
-  console.log(studentList.value);
+
+  headerData.value.totalNum = stuIds.value.length;
+  let min = Number.MAX_VALUE;
+  let max = 0;
+  let avg = 0;
+  let unQualifiedNum = 0;
+  aimEvaListNew.value.map(a => {
+    if (a.totalScore < 60) {
+      unQualifiedNum++;
+    }
+    avg += a.totalScore;
+    min = Math.min(min, a.totalScore);
+    max = Math.max(max, a.totalScore);
+  });
+  headerData.value.failNum = unQualifiedNum;
+  headerData.value.lowestScore = min.toFixed(2);
+  headerData.value.topScore = max.toFixed(2);
+  headerData.value.averScore = Number((avg / stuIds.value.length).toFixed(2));
+  console.log(headerData.value, max, min, unQualifiedNum);
 
   const gradeDivData = generateGradeDivData();
   gradeDivBar.value = echarts.init(document.getElementById('grade-div'), null, { renderer: 'svg' });
@@ -463,7 +527,8 @@ const initialize = () => {
   });
 
   calcTargetSumAchievementDegree();
-  const sumGraphData = generateSumGraphData();
+  // const sumGraphData = generateSumGraphData();
+  const sumGraphData = generateAim();
   targetSumAchievementDegreeBar.value = echarts.init(
     document.getElementById('target-achievement-degree-bar'),
     null,
@@ -473,7 +538,7 @@ const initialize = () => {
     tooltip: {},
     legend: {},
     xAxis: {
-      data: courseTargetData.value.map(ctd => ctd.code)
+      data: courseTargetData.value.map(ctd => ctd.name)
     },
     yAxis: {},
     series: [
@@ -489,7 +554,7 @@ const initialize = () => {
           symbol: 'none',
           data: [
             {
-              yAxis: 0.6, // 设置红线的位置
+              yAxis: 60, // 设置红线的位置
               lineStyle: {
                 color: 'red', // 设置红线的颜色
                 type: 'solid', // 设置红线的样式（可以是'solid', 'dashed', 'dotted'等）
@@ -513,14 +578,10 @@ const initialize = () => {
             console.log(params);
             const info = params.data.extraInfo;
             return (
-              '代码：' +
-              info.code +
-              '<br>' +
-              '课程目标：' +
-              info.name +
-              '<br>' +
-              '达成度：' +
-              params.data.value
+              // '代码：' +
+              // info.code +
+              // '<br>' +
+              '课程目标：' + info.name + '<br>' + '达成度：' + params.data.value
             );
           }
         }
@@ -537,7 +598,7 @@ const initialize = () => {
     tooltip: {},
     xAxis: {
       type: 'category',
-      data: courseTargetData.value.map(ctd => ctd.code)
+      data: courseTargetData.value.map(ctd => ctd.name)
     },
     yAxis: {
       type: 'value'
@@ -549,7 +610,7 @@ const initialize = () => {
           symbol: 'none',
           data: [
             {
-              yAxis: 0.6, // 设置红线的位置
+              yAxis: 60, // 设置红线的位置
               lineStyle: {
                 color: 'red', // 设置红线的颜色
                 type: 'solid', // 设置红线的样式（可以是'solid', 'dashed', 'dotted'等）
@@ -582,14 +643,10 @@ const initialize = () => {
             // console.log(params);
             const info = params.data.extraInfo;
             return (
-              '代码：' +
-              info.code +
-              '<br>' +
-              '课程目标：' +
-              info.name +
-              '<br>' +
-              '达成度：' +
-              params.data.value
+              // '代码：' +
+              // info.code +
+              // '<br>' +
+              '课程目标：' + info.name + '<br>' + '达成度：' + params.data.value
             );
           }
         }
@@ -598,10 +655,12 @@ const initialize = () => {
   });
 
   for (let i = 0; i < courseTargetData.value.length; i++) {
+    console.log(courseTargetData.value[i]);
     targetAchievementPersonalDegreeScatterList.value[i] = {};
     targetAchievementPersonalDegreeScatterList.value[i].data = generatePersonalGraphData(
-      courseTargetData.value[i].id
+      courseTargetData.value[i].objectiveName
     );
+    console.log(targetAchievementPersonalDegreeScatterList.value[i]);
     targetAchievementPersonalDegreeScatterList.value[i].element = echarts.init(
       document.getElementById(courseTargetData.value[i].id),
       null,
@@ -619,11 +678,7 @@ const initialize = () => {
         }
       },
       xAxis: {
-        type: 'category',
-        // 这里type为'category'，echarts会自动把data的数据转换为String类型的
-        data: studentList.value
-          .filter(t => t.evaluationState) // 过滤掉不参加评价的学生
-          .map(t => t.rowNo)
+        type: 'value'
       },
       yAxis: {
         type: 'value',
@@ -638,16 +693,13 @@ const initialize = () => {
           const info = params.data.extraInfo;
           return (
             '序号：' +
-            info.rowNo +
+            info.seq +
             '<br>' +
             '姓名：' +
             info.username +
             '<br>' +
             '学号：' +
             info.stuno +
-            '<br>' +
-            '班级：' +
-            info.className +
             '<br>' +
             '达成度: ' +
             params.value[1] +
@@ -671,7 +723,7 @@ const initialize = () => {
             symbol: 'none',
             data: [
               {
-                yAxis: 0.6, // 设置红线的位置
+                yAxis: 60, // 设置红线的位置
                 lineStyle: {
                   color: 'red', // 设置红线的颜色
                   type: 'solid', // 设置红线的样式（可以是'solid', 'dashed', 'dotted'等）
@@ -717,10 +769,10 @@ const generateGradeDivData = () => {
   let res = [];
   for (let i = 0; i < 4; i++)
     res[i] = { value: 0, itemStyle: { color: i === 0 ? '#d00' : 'dodgerblue' } };
-  stuTotalScoreMap.value.forEach((score, stuId) => {
-    if (score < 60) res[0].value++;
-    else if (score >= 60 && score < 75) res[1].value++;
-    else if (score >= 75 && score < 84) res[2].value++;
+  aimEvaListNew.value.forEach((a, stuId) => {
+    if (a.totalScore < 60) res[0].value++;
+    else if (a.totalScore >= 60 && a.totalScore < 75) res[1].value++;
+    else if (a.totalScore >= 75 && a.totalScore < 84) res[2].value++;
     else res[3].value++;
   });
   return res;
@@ -760,26 +812,42 @@ const generateSumGraphData = () => {
   return res;
 };
 
-const generatePersonalGraphData = courseTargetId => {
+const generateAim = () => {
+  let res = [];
+  [...acheiveMap.value.keys()].map(k => {
+    const totalScore = acheiveMap.value.get(k);
+    res.push({
+      value: totalScore,
+      itemStyle: {
+        color: totalScore >= 60 ? 'dodgerblue' : '#d00'
+      },
+      extraInfo: {
+        code: k,
+        name: k
+      }
+    });
+  });
+  return res;
+};
+
+const generatePersonalGraphData = courseTargetName => {
   // 生成有关显示课程目标个体达成度的图表数据
   let res = [];
   let unAchieved = [];
-  studentList.value.forEach(s => {
-    if (s.evaluationState) {
-      res.push({
-        value: [String(s.rowNo), s[courseTargetId]],
-        itemStyle: {
-          color: s[courseTargetId] >= 0.6 ? 'dodgerblue' : '#d00'
-        },
-        extraInfo: {
-          rowNo: s.rowNo,
-          username: s.username,
-          stuno: s.stuno,
-          className: s.className
-        }
-      });
-      if (s[courseTargetId] < 0.6) unAchieved.push(s.rowNo);
-    }
+  acheieveAllMap.value.get(courseTargetName).forEach((s, index) => {
+    res.push({
+      value: [String(index), s['score']],
+      itemStyle: {
+        color: s['score'] >= 60 ? 'dodgerblue' : '#d00'
+      },
+      extraInfo: {
+        username: s.username,
+        stuno: s.stuno,
+        objectiveNamw: s.name,
+        seq: index + 1
+      }
+    });
+    if (s['score'] < 60) unAchieved.push(index + 1);
   });
   return [res, unAchieved];
 };

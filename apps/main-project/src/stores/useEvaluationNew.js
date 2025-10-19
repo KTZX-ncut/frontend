@@ -13,8 +13,8 @@ const useEvaluationNew = defineStore('evaluationNew', () => {
     }
   };
 
-  const fetchAddType = async ({ courseId, categoryName, categoryDescription, score }) => {
-    const data = await addType(courseId, categoryName, categoryDescription, score);
+  const fetchAddType = async ({ courseId, categoryName, categoryDescription, score, percent }) => {
+    const data = await addType(courseId, categoryName, categoryDescription, score, percent);
     return data;
   };
 

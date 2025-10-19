@@ -107,13 +107,25 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import '../../../assets/css/taildwind.css';
 import { ref, onBeforeUnmount, onMounted, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import useItem from '../../../stores/useItem';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import _ from 'lodash';
+import useLabel from '../../../stores/useLabel';
+
+enum DataSource {
+  TestPaper = 0, //作业
+  Practice = 1, //实验
+  OutRage = 2 //外部
+}
+
+const labelStore = useLabel();
+const { fetchLabelList, fetchExternalAssessmentList } = labelStore;
+const { labelList, externalAssessmentList } = storeToRefs(labelStore);
+const labelmap = ref(new Map());
 
 /* ========== props ========== */
 const props = defineProps({
@@ -122,7 +134,7 @@ const props = defineProps({
 });
 
 /* ========== 状态定义 ========== */
-const filterData = ref([]);
+const filterData = ref<any>([]);
 const bindList = ref([]);
 const tableRef = ref();
 const itemType = ref('');
@@ -133,6 +145,7 @@ const isBindingMode = ref(false);
 /* ✅ 新增批量删除相关状态 */
 const multipleSelection = ref([]);
 const bindTableRef = ref(null);
+const dataSource = ref();
 
 /* ========== 引入 store ========== */
 const itemStore = useItem();
@@ -142,22 +155,32 @@ const { setShow, fetchBind, fetchTest, fetchGetBind, fetchDelBind } = itemStore;
 /* ========== 树配置与下拉类型 ========== */
 const typeProps = { children: node => node.children, label: node => node.type };
 const typeOptions = computed(() => {
-  const all = [...(testList.value.testPaper || []), ...(testList.value.practice || [])];
+  const all = [
+    ...(testList.value.testPaper || []),
+    ...(testList.value.practice || []),
+    ...(labelList.value || [])
+  ];
+  console.log(all);
+
   return _.uniqBy(
-    all.map(i => ({ type: i.itemType })),
+    all.map(i => ({ type: i.itemType || i.labelName, id: i.id || i.typeId })),
     'type'
   );
 });
 
 /* ========== classroomId 自动识别 ========== */
 const classroomId = ref('');
-onMounted(() => {
+onMounted(async () => {
   if (props.classroomId) classroomId.value = props.classroomId;
   else {
     const token = sessionStorage.getItem('token') || localStorage.getItem('token');
     if (token) classroomId.value = token;
   }
-  console.log('✅ 当前 classroomId:', classroomId.value);
+  await fetchLabelList(classroomId.value);
+  console.log(labelList.value);
+  labelList.value.map(item => {
+    labelmap.value.set(item.labelName, item.id);
+  });
 });
 
 /* ========== 加载数据 ========== */
@@ -169,6 +192,7 @@ const handleShow = async () => {
   bindList.value = itemStore.bindList;
   loading.value = false;
   isBindingMode.value = false;
+  console.log(testList.value);
 };
 
 /* ========== 模式切换 ========== */
@@ -176,23 +200,46 @@ const handleToggle = () => {
   console.log('🟢 点击切换绑定模式');
   isBindingMode.value = !isBindingMode.value;
   if (isBindingMode.value) {
-    mapping(itemType.value || '作业');
+    // console.log('bangding1');
+    // mapping(itemType.value || '作业');
+    itemType.value = '';
+    filterData.value = [];
   } else {
     bindList.value = itemStore.bindList;
   }
 };
 
 /* ========== 类型映射逻辑 ========== */
-const mapping = type => {
+const mapping = async (type: string) => {
   switch (type) {
     case '作业':
+      await fetchTest({ classroomId: classroomId.value });
       filterData.value = testList.value.testPaper || [];
+      dataSource.value = DataSource.TestPaper;
       break;
     case '实验':
+      await fetchTest({ classroomId: classroomId.value });
       filterData.value = testList.value.practice || [];
+      dataSource.value = DataSource.Practice;
       break;
     default:
-      filterData.value = [];
+      // TODO: 根据labelName获取对应的测试列表
+      await fetchExternalAssessmentList(labelmap.value.get(type));
+      console.log(labelmap.value);
+      console.log(externalAssessmentList.value);
+      filterData.value =
+        externalAssessmentList.value.map(e => ({
+          itemName: e.exAssessmentName,
+          itemType: '外部导入数据',
+          categoryId: '', // 类别ID（必填）
+          courseId: courseId.value || testList.value.testPaper[0].courseId, // 课程ID（必填）
+          classroomId: classroomId.value, // 课堂ID（必填）
+          objectiveId: '', // 目标ID（必填）
+          typeId: e.id, // 类型ID（必填）
+          itemDescription: '', // 考核项描述（可选）
+          sortOrder: 1
+        })) || [];
+      dataSource.value = DataSource.OutRage;
   }
 };
 
@@ -201,15 +248,19 @@ const handleSelectAll = selection => {
   inputList.value = selection.map(i => ({
     ...i,
     categoryId: categoryId.value,
-    objectiveId: objectiveId.value
+    objectiveId: objectiveId.value,
+    source: dataSource.value
   }));
+  console.log(inputList.value);
 };
 const handleSelect = selection => {
   inputList.value = selection.map(i => ({
     ...i,
     categoryId: categoryId.value,
-    objectiveId: objectiveId.value
+    objectiveId: objectiveId.value,
+    source: dataSource.value
   }));
+  console.log(inputList.value);
 };
 
 /* ========== 提交绑定 ========== */

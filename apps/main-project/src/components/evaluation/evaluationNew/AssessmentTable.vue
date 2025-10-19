@@ -11,32 +11,15 @@
       "
     >
       <!-- 原计算按钮 -->
-      <el-button
-        type="success"
-        @click="calc"
-        style="margin-left: 0.8vw"
-      >
-        计算
-      </el-button>
+      <el-button type="success" @click="calc" style="margin-left: 0.8vw"> 计算 </el-button>
 
       <!-- 新增修改功能按钮组 -->
       <template v-if="!isEditMode && roleName === '课程负责人'">
-        <el-button
-          type="primary"
-          style="margin-left: 10px"
-          @click="enterEdit"
-        >
-          修改
-        </el-button>
+        <el-button type="primary" style="margin-left: 10px" @click="enterEdit"> 修改 </el-button>
       </template>
 
       <template v-else-if="isEditMode && isCourseManager">
-        <el-button
-          style="margin-left: 10px"
-          @click="cancelEdit"
-        >
-          取消
-        </el-button>
+        <el-button style="margin-left: 10px" @click="cancelEdit"> 取消 </el-button>
         <el-button
           type="success"
           :disabled="calcFooter2Data() !== 100"
@@ -297,7 +280,7 @@
 
 <script setup lang="tsx">
 // ✅ 在这里加上我们新引入的批量保存接口
-import { batchSaveObjectiveCategory } from '@/api/externalAssessment'
+import { batchSaveObjectiveCategory } from '@/api/externalAssessment';
 import TypeItem from './TypeItem.vue';
 import Test from './Test.vue';
 import type { VxeGridProps } from 'vxe-table';
@@ -320,12 +303,13 @@ import useEvaluationNew from '../../../stores/useEvaluationNew';
 import { storeToRefs } from 'pinia';
 import parseJWT from '../../../utils/parseJWT';
 import { Category, AimType, newInfo, collumnItem } from './type';
+import useLabel from '../../../stores/useLabel';
 interface Footer2Row {
-  name: string
-  edit: Record<string, boolean>
-  [key: string]: any
+  name: string;
+  edit: Record<string, boolean>;
+  [key: string]: any;
 }
-const originalData = ref(null)
+const originalData = ref(null);
 // ✅ 从后端加载各目标-类别分数并回显到表格
 const loadObjectiveCategory = async () => {
   try {
@@ -333,10 +317,10 @@ const loadObjectiveCategory = async () => {
     if (res.code === 200 && Array.isArray(res.data)) {
       const list = res.data;
 
-      list.forEach((item) => {
+      list.forEach(item => {
         const { categoryId, objectiveId, score } = item;
         const field = `type${categoryId}`;
-        const targetRow = info.value.items.find((i) => i.id === objectiveId);
+        const targetRow = info.value.items.find(i => i.id === objectiveId);
         if (targetRow) {
           targetRow[field] = score;
         }
@@ -351,27 +335,29 @@ const loadObjectiveCategory = async () => {
   }
 };
 
+const labelStore = useLabel();
+const { fetchExternalAssessmenCalc } = labelStore;
+
 // 是否处于编辑模式
-const isEditMode = ref(false)
+const isEditMode = ref(false);
 
 const enterEdit = () => {
   // 深拷贝一份当前 info 数据（用于撤销）
-  originalData.value = _.cloneDeep(info.value)
-  isEditMode.value = true
-  ElMessage.info('进入编辑模式')
-}
-
+  originalData.value = _.cloneDeep(info.value);
+  isEditMode.value = true;
+  ElMessage.info('进入编辑模式');
+};
 
 const cancelEdit = () => {
   if (originalData.value) {
     // 恢复原始数据
-    info.value = _.cloneDeep(originalData.value)
+    info.value = _.cloneDeep(originalData.value);
     // 同步 grid 数据
-    gridOptions.value.data = info.value.items
+    gridOptions.value.data = info.value.items;
   }
-  isEditMode.value = false
-  ElMessage.warning('已取消编辑，已恢复原始数据')
-}
+  isEditMode.value = false;
+  ElMessage.warning('已取消编辑，已恢复原始数据');
+};
 
 const saveEdit = async () => {
   try {
@@ -434,7 +420,9 @@ const saveEdit = async () => {
 
         const shouldSendZero =
           (score === '' || score === undefined || score === null) &&
-          (prevScore !== undefined && prevScore !== null && prevScore !== '');
+          prevScore !== undefined &&
+          prevScore !== null &&
+          prevScore !== '';
         if (shouldSendZero) score = 0;
 
         const changed =
@@ -467,46 +455,41 @@ const saveEdit = async () => {
   }
 };
 
-
-
-
-
-
 // 保存修改（调用 /api/objective-category/batch-save）
 const savePercent = async () => {
   if (calcFooter2Data() !== 100) {
-    ElMessage.error('各列总评占比之和必须为 100%')
-    return
+    ElMessage.error('各列总评占比之和必须为 100%');
+    return;
   }
 
   const items = info.value!.head.map(h => ({
     id: h.id,
     weight: Math.max(0, Math.round(Number(footer2Data.value[0][h.id]) || 0))
-  }))
+  }));
 
   try {
-    const res = await batchSaveObjectiveCategory(items)
+    const res = await batchSaveObjectiveCategory(items);
     if (res.code === 200) {
-      ElMessage.success('批量保存成功')
-      info.value!.head.forEach(h => (footer2Data.value[0].edit[h.id] = false))
-      isEditing.value = false
-      await getData() // 刷新数据
+      ElMessage.success('批量保存成功');
+      info.value!.head.forEach(h => (footer2Data.value[0].edit[h.id] = false));
+      isEditing.value = false;
+      await getData(); // 刷新数据
     } else {
-      ElMessage.error(res.msg || '保存失败')
+      ElMessage.error(res.msg || '保存失败');
     }
   } catch (err) {
-    ElMessage.error('保存失败：' + err)
+    ElMessage.error('保存失败：' + err);
   }
-}
-
+};
 
 const info = ref<newInfo | null>(null);
 
 const calc = async () => {
   pageLoading.value = true;
   try {
-    const res = await request.evaluation.get(`/evaluation/attainment/calc`);
+    const res = await fetchExternalAssessmenCalc(classroomId);
     if (res.code === 200) {
+      ElMessage.success(res.msg + '请到对应页面查看结果');
     } else {
       ElMessage.error(res.msg);
     }
@@ -527,9 +510,7 @@ const pageLoading = ref(false);
 const leafIds = ref({}); // 以id为键存储其所有叶节点的id
 
 const footer1Data = ref([{ name: '分数合计' }]);
-const footer2Data = ref<Footer2Row[]>([
-  { name: '总评占比(%)', edit: {} }
-]);
+const footer2Data = ref<Footer2Row[]>([{ name: '总评占比(%)', edit: {} }]);
 
 const itemStore = useItem();
 const aimStore = useCourseAim();
@@ -545,7 +526,7 @@ const {
   setCourseId
 } = itemStore;
 const { fetchType } = typeStore;
-const { fetchAim, fuzzyQuery } = aimStore;
+const { fetchAim } = aimStore;
 const { testList, courseId, bindList } = storeToRefs(itemStore);
 const { typeList } = storeToRefs(typeStore);
 const { aimList } = storeToRefs(aimStore);
@@ -572,43 +553,40 @@ const gridOptions = ref<VxeGridProps<AimType>>({
     showIcon: false,
     beforeEditMethod: ({ column }) => {
       // 只在编辑模式允许编辑
-      return isEditMode.value && column.field !== 'target'
+      return isEditMode.value && column.field !== 'target';
     }
   },
   columnConfig: { resizable: false },
   headerCellConfig: { height: 80 },
   menuConfig: {
     header: {
-      options: [
-        [{ code: 'edit', name: '编辑', suffixConfig: { icon: 'vxe-icon-edit' } }]
-      ]
+      options: [[{ code: 'edit', name: '编辑', suffixConfig: { icon: 'vxe-icon-edit' } }]]
     },
     visibleMethod({ options, column }) {
-      rightClickItem.value = column
-      let isDisabled = true
-      let isVisible = false
+      rightClickItem.value = column;
+      let isDisabled = true;
+      let isVisible = false;
       if (
         info.value!.head.some(item => leafIds.value[item.id].includes(column.field)) &&
         !isCourseManager.value
       ) {
-        isDisabled = false
-        isVisible = true
+        isDisabled = false;
+        isVisible = true;
       }
       options.forEach(list => {
         list.forEach(item => {
           if (item.code === 'edit') {
-            item.visible = isVisible
-            item.disabled = isDisabled
+            item.visible = isVisible;
+            item.disabled = isDisabled;
           }
-        })
-      })
-      return true
+        });
+      });
+      return true;
     }
   },
   columns: [] as collumnItem[],
   data: [] as AimType[]
 });
-
 
 onMounted(async () => {
   container.value = document.getElementById('container');
@@ -663,6 +641,7 @@ function splitEvenlyInt(arr: any[]) {
 }
 
 const initialize = (info: newInfo) => {
+  console.log(info);
   // TODO:处理表头
   info.head.forEach((h, index) => {
     footer1Data.value[0][h.id] = h.score;
@@ -671,7 +650,7 @@ const initialize = (info: newInfo) => {
     footer2Data.value[0].edit[h.id] = false;
     // footer2Data.value[0].edit[h.id] = true;
   });
- console.log('head list', info.head)
+  console.log('head list', info.head);
 
   creatHeader(info?.head); // 创建表头
 
@@ -686,7 +665,9 @@ const initialize = (info: newInfo) => {
 const creatHeader = (head: Category[], floor = 0, ancestorId = '') => {
   // 每个 head 生成列配置
   const heads = head.map<collumnItem>((h, index) => {
-    const width = Number(((container.value!.clientWidth - 480) / info.value!.head.length).toFixed(0))
+    const width = Number(
+      ((container.value!.clientWidth - 480) / info.value!.head.length).toFixed(0)
+    );
 
     return {
       title: h.categoryName,
@@ -696,34 +677,33 @@ const creatHeader = (head: Category[], floor = 0, ancestorId = '') => {
       editRender: { name: 'input', props: { type: 'number', min: 0 } },
 
       // ⭐ 定义渲染逻辑
-slots: {
-  default: ({ row, column, rowIndex }) => {
-    // 编辑模式下显示输入框值
-    if (isEditMode.value) return row[column.field] ?? ''
+      slots: {
+        default: ({ row, column, rowIndex }) => {
+          // 编辑模式下显示输入框值
+          if (isEditMode.value) return row[column.field] ?? '';
 
-    const score = row[column.field]
-    if (score === undefined || score === null || score === '' || Number(score) === 0) {
-      return ''
-    }
+          const score = row[column.field];
+          if (score === undefined || score === null || score === '' || Number(score) === 0) {
+            return '';
+          }
 
-    // ✅ 非课程负责人时才显示“查看”按钮
-    return (
-      <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
-        <span style="font-weight: 600; color: #333;">{score}</span>
-        {roleName !== '课程负责人' && (
-          <vxe-button-group mode="text">
-            <vxe-button onClick={() => handleBind(h, row, rowIndex)} name="view">
-              查看
-            </vxe-button>
-          </vxe-button-group>
-        )}
-      </div>
-    )
-  }
-}
-
-    }
-  })
+          // ✅ 非课程负责人时才显示“查看”按钮
+          return (
+            <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <span style="font-weight: 600; color: #333;">{score}</span>
+              {roleName !== '课程负责人' && (
+                <vxe-button-group mode="text">
+                  <vxe-button onClick={() => handleBind(h, row, rowIndex)} name="view">
+                    查看
+                  </vxe-button>
+                </vxe-button-group>
+              )}
+            </div>
+          );
+        }
+      }
+    };
+  });
 
   // ⭐ 最后整合列配置
   gridOptions.value.columns = [
@@ -738,8 +718,8 @@ slots: {
       title: '期末考试',
       width: 240
     }
-  ]
-}
+  ];
+};
 
 const handleBind = async (h: Category, row: any, rowIndex: number) => {
   category.name = h.categoryName;
@@ -748,8 +728,6 @@ const handleBind = async (h: Category, row: any, rowIndex: number) => {
   await fetchGetBind(courseId.value, -1, 1, h.id, row.id);
   setShow(true); // ✅ 改成这一行
 };
-
-
 
 const getLeafIds = (node, result = []) => {
   if (node.children && node.children.length > 0) {
@@ -776,7 +754,6 @@ const calcSumScore = (array, ids) => {
   });
   return sum;
 };
-
 
 /**********************表格数据单元双击编辑*********************/
 const oldData = ref();

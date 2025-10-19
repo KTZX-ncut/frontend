@@ -1,16 +1,19 @@
 <template>
   <div class="external-import-container">
-    <h2>外部数据导入与标签管理</h2>
-
     <!-- 文件上传区域 -->
     <el-form inline class="form-area">
       <el-form-item label="选择类别">
-        <el-select v-model="selectedType" placeholder="请选择类别" style="width: 260px">
+        <el-select
+          @change="handleChange"
+          v-model="selectedType"
+          placeholder="请选择类别"
+          style="width: 260px"
+        >
           <el-option
             v-for="type in typeList"
             :key="type.id"
-            :label="type.name"
-            :value="type.id"
+            :label="type.labelName"
+            :value="type.labelName"
           />
         </el-select>
       </el-form-item>
@@ -28,12 +31,7 @@
       </el-form-item>
 
       <el-form-item>
-        <el-button
-          type="success"
-          :disabled="!file"
-          :loading="loading"
-          @click="uploadExcel"
-        >
+        <el-button type="success" :disabled="!file" :loading="loading" @click="uploadExcel">
           导入 Excel
         </el-button>
       </el-form-item>
@@ -44,162 +42,116 @@
     <!-- 标签管理部分 -->
     <div class="label-section">
       <div class="label-header">
-        <h3>外部考核标签列表</h3>
-        <el-button type="primary" @click="openAddDialog">新建标签</el-button>
+        <h3>外部考核数据列表</h3>
       </div>
 
-      <el-table :data="labelList" border stripe v-loading="tableLoading">
-        <el-table-column prop="id" label="ID" width="160" align="center" />
-        <el-table-column prop="labelName" label="标签名称" />
-        <el-table-column prop="classroomId" label="课堂ID" />
-        <el-table-column label="操作" width="240" align="center">
+      <el-table :data="testList" border stripe v-loading="tableLoading">
+        <el-table-column prop="index" label="序号" align="center" />
+        <el-table-column prop="testName" label="数据名称" />
+        <el-table-column label="操作">
           <template #default="scope">
-            <el-button type="primary" text @click="openEditDialog(scope.row)">编辑</el-button>
-            <el-button type="danger" text @click="deleteLabel(scope.row.id)">删除</el-button>
+            <el-button size="small" type="success" @click="handleShow(scope)"> 查看 </el-button>
           </template>
         </el-table-column>
       </el-table>
     </div>
-
-    <!-- 新增/编辑弹窗 -->
-    <el-dialog v-model="dialogVisible" :title="dialogMode === 'add' ? '新建标签' : '编辑标签'" width="400px">
-      <el-form :model="form" label-width="90px">
-        <el-form-item label="标签名称">
-          <el-input v-model="form.labelName" placeholder="请输入标签名称" />
-        </el-form-item>
-        <el-form-item label="课堂ID">
-          <el-input v-model="form.classroomId" placeholder="请输入课堂ID" />
-        </el-form-item>
-      </el-form>
-
-      <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveLabel">保存</el-button>
-      </template>
-    </el-dialog>
   </div>
+  <StuList />
 </template>
 
-<script setup>
-import { ref, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import {
   importExternalAssessment,
   getExternalLabelList,
   addExternalLabel,
   updateExternalLabel,
   deleteExternalLabel
-} from '@/api/externalAssessment'
+} from '@/api/externalAssessment';
+import useLabel, { Label } from '../../../stores/useLabel';
+import { storeToRefs } from 'pinia';
+import parseJWT from '../../../utils/parseJWT.js';
+import StuList from './StuList.vue';
+
+const labelStore = useLabel();
+const { fetchLabelList, fetchExternalAssessmentList, setSHow, setId } = labelStore;
+const { labelList, externalAssessmentList, isShow } = storeToRefs(labelStore);
+const classroomId = parseJWT(sessionStorage.getItem('token')).obsid;
+const selectedMap = ref(new Map());
 
 // ---------- 基础变量 ----------
-const selectedType = ref(null)
-const typeList = ref([
-  { id: 1, name: '外部考试成绩' },
-  { id: 2, name: '竞赛结果' },
-  { id: 3, name: '外部测评数据' }
-])
-const file = ref(null)
-const loading = ref(false)
-const tableLoading = ref(false)
-const labelList = ref([])
+const selectedType = ref(null);
+const typeList = ref<Label[]>([]);
+const file = ref(null);
+const loading = ref(false);
+const tableLoading = ref(false);
+const testList = ref<any>([]);
+
+const handleShow = scope => {
+  console.log(scope);
+  setId(scope.row.id);
+  setSHow(true);
+  console.log(isShow);
+};
 
 // ---------- 弹窗 ----------
-const dialogVisible = ref(false)
-const dialogMode = ref('add') // 'add' | 'edit'
+const dialogVisible = ref(false);
+const dialogMode = ref('add'); // 'add' | 'edit'
 const form = ref({
   id: null,
   labelName: '',
   classroomId: ''
-})
+});
 
 // ---------- 上传逻辑 ----------
-function handleFileChange(uploadFile) {
-  file.value = uploadFile.raw
+function handleFileChange(uploadFile: any) {
+  file.value = uploadFile.raw;
 }
+
+const handleChange = async (value: any) => {
+  const id = selectedMap.value.get(value);
+  await fetchExternalAssessmentList(id);
+  testList.value = externalAssessmentList.value.map((e, index) => ({
+    index: index + 1,
+    testName: e.exAssessmentName,
+    id: e.id,
+    labelId: e.labelId
+  }));
+};
 
 async function uploadExcel() {
   if (!selectedType.value) {
-    return ElMessage.warning('请先选择类别')
+    return ElMessage.warning('请先选择类别');
   }
-  if (!file.value) return ElMessage.warning('请先选择 Excel 文件')
-  ElMessage.info('正在上传...')
-  loading.value = true
+  if (!file.value) return ElMessage.warning('请先选择 Excel 文件');
+  ElMessage.info('正在上传...');
+  loading.value = true;
+  console.log(selectedType.value, selectedMap.value.get(selectedType.value));
+  console.log(file.value);
 
   try {
-    await importExternalAssessment(file.value)
-    ElMessage.success('Excel 导入成功')
-    getLabelList() // 导入成功后刷新标签列表
+    await importExternalAssessment(file.value, selectedMap.value.get(selectedType.value));
+    ElMessage.success('Excel 导入成功');
   } catch (err) {
-    console.error(err)
-    ElMessage.error(err?.response?.data?.message || '导入失败')
+    console.error(err);
+    ElMessage.error(err?.response?.data?.message || '导入失败');
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
-// ---------- 标签管理 ----------
-async function getLabelList() {
-    console.log('调用 getLabelList() 前 token =', sessionStorage.getItem('token'))
-  tableLoading.value = true
-  try {
-    const res = await getExternalLabelList() // ⚠️ 这里暂时可传空或固定值
-    labelList.value = Array.isArray(res.data) ? res.data : []
-  } catch (err) {
-    console.error(err)
-    labelList.value = []
-  } finally {
-    tableLoading.value = false
-  }
-}
-
-function openAddDialog() {
-  dialogMode.value = 'add'
-  form.value = { id: null, labelName: '', classroomId: '' }
-  dialogVisible.value = true
-}
-
-function openEditDialog(row) {
-  dialogMode.value = 'edit'
-  form.value = { ...row }
-  dialogVisible.value = true
-}
-
-async function saveLabel() {
-  try {
-    if (!form.value.labelName) {
-      return ElMessage.warning('请输入标签名称')
-    }
-
-    if (dialogMode.value === 'add') {
-      await addExternalLabel(form.value)
-      ElMessage.success('标签添加成功')
-    } else {
-      await updateExternalLabel(form.value)
-      ElMessage.success('标签更新成功')
-    }
-    dialogVisible.value = false
-    getLabelList()
-  } catch (err) {
-    console.error(err)
-    ElMessage.error('保存失败')
-  }
-}
-
-async function deleteLabel(id) {
-  ElMessageBox.confirm('确定要删除该标签吗？', '提示', { type: 'warning' })
-    .then(async () => {
-      await deleteExternalLabel(id)
-      ElMessage.success('删除成功')
-      getLabelList()
-    })
-    .catch(() => {})
-}
+const handleDelete = (scope: any) => {};
 
 // ---------- 页面初始化 ----------
-onMounted(() => {
-  getLabelList(),
-  console.log('当前 token:', sessionStorage.getItem('token'))
-})
+onMounted(async () => {
+  await fetchLabelList(classroomId);
+  typeList.value = labelList.value;
+  console.log(typeList.value);
+  typeList.value.map(t => {
+    selectedMap.value.set(t.labelName, t.id);
+  });
+});
 </script>
 
 <style scoped>
