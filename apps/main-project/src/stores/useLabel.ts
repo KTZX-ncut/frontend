@@ -83,6 +83,7 @@ const useLabel = defineStore('label', () => {
 
   // 查
   const fetchLabelList = async (classroomId: string) => {
+    console.log(classroomId);
     const res = await getExternalLabelList(classroomId);
     labelList.value = res.data;
   };

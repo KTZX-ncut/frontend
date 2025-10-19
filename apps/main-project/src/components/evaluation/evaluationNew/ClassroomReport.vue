@@ -82,13 +82,17 @@
               </tr>
               <tr>
                 <td>最高分</td>
-                <td>{{ headerData.topScore || 0 }}</td>
+                <!-- <td>{{ headerData.topScore || 0 }}</td> -->
+                <td>{{ newVal.max || 0 }}</td>
                 <td>最低分</td>
-                <td>{{ headerData.lowestScore || 0 }}</td>
+                <!-- <td>{{ headerData.lowestScore || 0 }}</td> -->
+                <td>{{ newVal.min || 0 }}</td>
                 <td>平均分</td>
-                <td>{{ headerData.averScore || 0 }}</td>
+                <!-- <td>{{ headerData.averScore || 0 }}</td> -->
+                <td>{{ newVal.avg || 0 }}</td>
                 <td>不及格人数</td>
-                <td>{{ headerData.failNum }}</td>
+                <!-- <td>{{ headerData.failNum }}</td> -->
+                <td>{{ newVal.failNum }}</td>
               </tr>
               <tr>
                 <td colspan="8">
@@ -199,7 +203,7 @@
 
 <script setup>
 import * as echarts from 'echarts';
-import { nextTick, onMounted, ref } from 'vue';
+import { nextTick, onMounted, reactive, ref } from 'vue';
 import html2pdf from 'html2pdf.js';
 import request from '../../../utils/request.js';
 import { ElMessage } from 'element-plus';
@@ -208,12 +212,18 @@ import { Loading } from '@element-plus/icons-vue';
 import useCourseAim from '../../../stores/useCourseAim.js';
 import useItem from '../../../stores/useItem.js';
 import useLabel from '../../../stores/useLabel.ts';
+import useEvaluationNew from '../../../stores/useEvaluationNew.js';
 import { storeToRefs } from 'pinia';
 import parseJWT from '../../../utils/parseJWT.js';
 
+const typeStore = useEvaluationNew();
+const { fetchType } = typeStore;
+const { typeList } = storeToRefs(typeStore);
 const roleName = JSON.parse(sessionStorage.getItem('users')).rolename;
-const classroomIdRef =
-  roleName === '任课教师' ? parseJWT(sessionStorage.getItem('token')).obsid : '';
+const classroomIdRef = ref(
+  roleName === '任课教师' ? parseJWT(sessionStorage.getItem('token')).obsid : ''
+);
+
 const aimStore = useCourseAim();
 const itemStore = useItem();
 const labelStore = useLabel();
@@ -252,7 +262,15 @@ const targetAchievementPersonalDegreeScatterList = ref([]); // 课程目标个�
 
 const acheiveMap = ref(new Map());
 const acheieveAllMap = ref(new Map());
-const personalMap = ref(new Map());
+const percentMap = ref(new Map());
+const stuListNew = ref([]);
+const finalList = ref([]);
+const newVal = reactive({
+  max: 0,
+  min: 0,
+  avg: 0,
+  failNum: 0
+});
 
 const options = ref({
   // 报告生成pdf的配置项
@@ -323,18 +341,82 @@ const calc = async () => {
   }
 };
 
-onMounted(async () => {
+const generate = async () => {
   renderLoading.value = true;
   await checkRole();
-  classroomIdRef
-    ? await fetchCourseId(classroomIdRef)
-    : setCourseId(parseJWT(sessionStorage.getItem('token')).obsid);
+  if (classroomIdRef.value) {
+    await fetchCourseId(classroomIdRef.value);
+  } else {
+    setCourseId(parseJWT(sessionStorage.getItem('token')).obsid);
+  }
+
   await fetchAim({ courseId: courseId.value, current: 1, size: -1 });
   courseTargetData.value = aimList.value.map(a => ({ ...a, name: a.objectiveName, id: a.id }));
-  await fetchTypeEva(classroomIdRef);
-  await fetchAimEva(classroomIdRef);
-  await fetchStuIds(classroomIdRef);
-  await fetchLabelList(classroomIdRef);
+  await fetchTypeEva(classroomIdRef.value);
+  await fetchType({ courseId: courseId.value, current: 1, size: -1 });
+  await fetchAimEva(classroomIdRef.value);
+  await fetchStuIds(classroomIdRef.value);
+  await fetchLabelList(classroomIdRef.value);
+
+  typeList.value.map(t => {
+    console.log(t);
+    percentMap.value.set(t.id, t.percent);
+  });
+
+  Object.entries(typeEvaList.value).forEach(([key, value]) => {
+    let newItem = { totalScore: 0 };
+    value.map((s, index) => {
+      newItem['username'] = s.studentName;
+      newItem[s.assessmentCategoryName] = s.achievementScore;
+      newItem[s.assessmentCategoryId] = {
+        id: s.assessmentCategoryId,
+        name: s.assessmentCategoryName,
+        score: s.achievementScore
+      };
+      newItem['final'] = s.final || 0;
+      newItem['stuno'] = s.stuNo;
+      newItem['seq'] = index + 1;
+      newItem['totalScore'] = Number(newItem['totalScore']) + Number(s.achievementScore) || 0;
+      // percentMap.value.set(s.assessmentCategoryName, s.percent);
+    });
+    stuListNew.value.push(newItem);
+    newItem = {};
+  });
+
+  stuListNew.value.map(i => {
+    let item = {};
+    item['stuno'] = i.stuno;
+    item['username'] = i.username;
+    item['score'] = [];
+    [...percentMap.value.keys()].map(k => {
+      if (i[k]?.name && i[k]?.score) {
+        item['score'].push({
+          id: k,
+          name: i[k]?.name,
+          score: i[k]?.score * percentMap.value.get(k)
+        });
+      }
+    });
+    console.log(item);
+    finalList.value.push(item);
+    item = {};
+  });
+
+  let score = finalList.value.map(f => {
+    let totalScore = 0;
+
+    f.score.forEach(s => {
+      totalScore += Number(s.score);
+    });
+
+    return Number(totalScore.toFixed(2));
+  });
+  console.log('score', score);
+  newVal.max = Math.max(...score);
+  newVal.min = Math.min(...score);
+  newVal.avg = (score.reduce((a, b) => a + b, 0) / score.length).toFixed(2);
+  newVal.failNum = score.filter(s => s < 60).length;
+  // console.log('final', finalList.value);
 
   Object.entries(aimEvaList.value).forEach(([key, value]) => {
     let newItem = { totalScore: 0 };
@@ -377,6 +459,10 @@ onMounted(async () => {
     classroomId.value = getObsidFromToken(token);
     await getData(classroomId.value);
   }
+};
+
+onMounted(async () => {
+  await generate();
 });
 
 const getData = async classroomId => {
@@ -760,9 +846,12 @@ const getClassroomInfoByClassroomId = async () => {
 
 const handleClassroomChosen = async (classroomId_, classroomInfo) => {
   headerData.value = classroomInfo;
-  hasChooseClassroom.value = true;
   classroomId.value = classroomId_;
+  classroomIdRef.value = classroomId_;
+  await generate();
   await getData(classroomId.value);
+
+  hasChooseClassroom.value = true;
 };
 
 const generateGradeDivData = () => {

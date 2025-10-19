@@ -665,9 +665,8 @@ const initialize = (info: newInfo) => {
 const creatHeader = (head: Category[], floor = 0, ancestorId = '') => {
   // 每个 head 生成列配置
   const heads = head.map<collumnItem>((h, index) => {
-    const width = Number(
-      ((container.value!.clientWidth - 480) / info.value!.head.length).toFixed(0)
-    );
+    const width = Number((container.value!.clientWidth / info.value!.head.length).toFixed(0));
+    // const width = 240;
 
     return {
       title: h.categoryName,
@@ -712,12 +711,12 @@ const creatHeader = (head: Category[], floor = 0, ancestorId = '') => {
       title: '课程目标',
       width: 240
     },
-    ...heads,
-    {
-      field: 'finalExam',
-      title: '期末考试',
-      width: 240
-    }
+    ...heads
+    // {
+    //   field: 'finalExam',
+    //   title: '期末考试',
+    //   width: 240
+    // }
   ];
 };
 
