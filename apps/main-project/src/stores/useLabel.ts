@@ -89,8 +89,8 @@ const useLabel = defineStore('label', () => {
   };
 
   // 查询外部考核数据列表
-  const fetchExternalAssessmentList = async (id: string) => {
-    const res = await getExternalAssessmentList(id);
+  const fetchExternalAssessmentList = async (id: string, filter?: boolean) => {
+    const res = await getExternalAssessmentList(id, filter);
     externalAssessmentList.value = res.data;
   };
 

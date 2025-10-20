@@ -87,6 +87,7 @@ const file = ref(null);
 const loading = ref(false);
 const tableLoading = ref(false);
 const testList = ref<any>([]);
+const uploadRef = ref();
 
 const handleShow = scope => {
   console.log(scope);
@@ -111,13 +112,35 @@ function handleFileChange(uploadFile: any) {
 
 const handleChange = async (value: any) => {
   const id = selectedMap.value.get(value);
-  await fetchExternalAssessmentList(id);
+  await fetchExternalAssessmentList(id, false);
   testList.value = externalAssessmentList.value.map((e, index) => ({
     index: index + 1,
     testName: e.exAssessmentName,
     id: e.id,
     labelId: e.labelId
   }));
+};
+
+// 刷新表格数据
+const refreshTableData = async () => {
+  if (selectedType.value) {
+    tableLoading.value = true;
+    try {
+      const id = selectedMap.value.get(selectedType.value);
+      await fetchExternalAssessmentList(id, false);
+      testList.value = externalAssessmentList.value.map((e, index) => ({
+        index: index + 1,
+        testName: e.exAssessmentName,
+        id: e.id,
+        labelId: e.labelId
+      }));
+    } catch (error) {
+      console.error('刷新表格数据失败:', error);
+      ElMessage.error('刷新数据失败');
+    } finally {
+      tableLoading.value = false;
+    }
+  }
 };
 
 async function uploadExcel() {
@@ -133,6 +156,15 @@ async function uploadExcel() {
   try {
     await importExternalAssessment(file.value, selectedMap.value.get(selectedType.value));
     ElMessage.success('Excel 导入成功');
+
+    // 上传成功后刷新表格数据
+    await refreshTableData();
+
+    // 清空文件选择
+    file.value = null;
+    if (uploadRef.value) {
+      uploadRef.value.clearFiles();
+    }
   } catch (err) {
     console.error(err);
     ElMessage.error(err?.response?.data?.message || '导入失败');

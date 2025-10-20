@@ -67,8 +67,9 @@ export const batchSaveObjectiveCategory = data => {
   return request.evaluation.post('/objective-category/batch-save', data);
 };
 
-export const getExternalAssessmentList = (id: string) => {
-  return request.evaluation.get(`/externalAssessmentTask/list/${id}?filter=true`);
+export const getExternalAssessmentList = (id: string, filter?: boolean) => {
+  filter = filter ?? true;
+  return request.evaluation.get(`/externalAssessmentTask/list/${id}?filter=${filter}`);
   // return request.evaluation.get(`/externalAssessmentTask/list/${id}`);
 };
 
