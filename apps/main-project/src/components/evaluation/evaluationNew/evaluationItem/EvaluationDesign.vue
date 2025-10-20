@@ -28,11 +28,8 @@
       <el-input v-model="addData.percent" placeholder="百分比" />
     </el-popover>
     <!-- <el-button @click="handleDelAll" type="danger" style="margin-left: 0.8vw">删除</el-button> -->
-    <el-button @click="handleSaveAll" type="danger" style="margin-left: 0.8vw">保存</el-button>
-    <el-button @click="handleBatchUpdate" type="primary" style="margin-left: 0.8vw"
-      >批量更新</el-button
-    >
-    <el-button @click="handleRefresh" type="primary" style="margin-left: 0.8vw">刷新</el-button>
+    <el-button @click="handleSave" type="primary" style="margin-left: 0.8vw">保存</el-button>
+    <el-button @click="handleRefresh" type="default" style="margin-left: 0.8vw">刷新</el-button>
     <div style="margin-left: auto; display: flex; align-items: center">
       <span :style="{ color: isPercentValid ? '#67C23A' : '#F56C6C' }">
         百分比总和: {{ totalPercent }}%
@@ -379,37 +376,76 @@ const handleDelAll = async () => {
   }
 };
 
-const handleSaveAll = async () => {
-  if (localAddedItems.value.length === 0) {
-    ElMessage.info('没有需要保存的数据');
-    return;
-  }
-
+// 合并的保存方法：保存本地新增项目 + 批量更新服务器项目的百分比
+const handleSave = async () => {
   // 验证百分比总和是否为100%
   if (!isPercentValid.value) {
     ElMessage.error(`百分比总和必须为100%，当前总和为${totalPercent.value}%`);
     return;
   }
 
-  loading.value = true;
+  const localItems = exemList.value.filter(item => item.isLocal);
+  const serverItems = exemList.value.filter(item => !item.isLocal);
+
+  // 检查是否有需要更新的服务器项目（百分比与后端不一致）
+  const serverItemsToUpdate = serverItems.filter(
+    item => percentMap.value[item.id] !== item.percent * 100
+  );
+
+  // 如果没有本地项目需要保存，也没有服务器项目需要更新
+  if (localItems.length === 0 && serverItemsToUpdate.length === 0) {
+    ElMessage.info('没有需要保存或更新的数据');
+    return;
+  }
 
   try {
-    const itemsToSave = exemList.value.filter(item => item.isLocal);
+    // 如果有数据需要保存或更新，显示确认对话框
+    const confirmMessage = [];
+    if (localItems.length > 0) {
+      confirmMessage.push(`保存${localItems.length}个新增项目`);
+    }
+    if (serverItemsToUpdate.length > 0) {
+      confirmMessage.push(`更新${serverItemsToUpdate.length}个项目的百分比`);
+    }
 
-    // 批量保存所有本地新增的项目
-    const savePromises = itemsToSave.map(item => {
-      return fetchAddType({
-        courseId,
-        categoryName: item.categoryName,
-        categoryDescription: item.categoryDescription,
-        score: item.score,
-        percent: percentMap.value[item.id] / 100
-      });
+    await ElMessageBox.confirm(`确定要${confirmMessage.join('并')}吗？`, '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
     });
 
-    const results = await Promise.allSettled(savePromises);
+    loading.value = true;
+    const allPromises = [];
 
-    // 检查是否所有保存都成功
+    // 1. 保存本地新增的项目
+    if (localItems.length > 0) {
+      const savePromises = localItems.map(item => {
+        return fetchAddType({
+          courseId,
+          categoryName: item.categoryName,
+          categoryDescription: item.categoryDescription,
+          score: item.score,
+          percent: percentMap.value[item.id] / 100
+        });
+      });
+      allPromises.push(...savePromises);
+    }
+
+    // 2. 批量更新服务器项目的百分比
+    if (serverItemsToUpdate.length > 0) {
+      const updatePromises = serverItemsToUpdate.map(item => {
+        return fetchUpdateType({
+          id: item.id,
+          percent: percentMap.value[item.id] / 100
+        });
+      });
+      allPromises.push(...updatePromises);
+    }
+
+    // 执行所有操作
+    const results = await Promise.allSettled(allPromises);
+
+    // 检查是否所有操作都成功
     const allSuccess = results.every(result => result.value && result.value.msg === 'success');
 
     if (allSuccess) {
@@ -422,82 +458,21 @@ const handleSaveAll = async () => {
       typeList.value.forEach(t => {
         percentMap.value[t.id] = t.percent * 100;
       });
-      ElMessage.success('保存成功');
+
+      const successMessage = [];
+      if (localItems.length > 0) {
+        successMessage.push(`保存${localItems.length}个新增项目`);
+      }
+      if (serverItemsToUpdate.length > 0) {
+        successMessage.push(`更新${serverItemsToUpdate.length}个项目的百分比`);
+      }
+      ElMessage.success(`${successMessage.join('并')}成功`);
     } else {
-      ElMessage.error('部分数据保存失败');
-    }
-  } catch (error) {
-    ElMessage.error('保存失败：' + error.message);
-  } finally {
-    loading.value = false;
-  }
-};
-
-// 批量更新百分比
-const handleBatchUpdate = async () => {
-  // 检查是否存在未保存的本地项目
-  if (localAddedItems.value.length > 0) {
-    ElMessage.error(
-      `当前存在${localAddedItems.value.length}个未保存的本地项目，请先保存后再进行批量更新`
-    );
-    return;
-  }
-
-  // 验证百分比总和是否为100%
-  if (!isPercentValid.value) {
-    ElMessage.error(`百分比总和必须为100%，当前总和为${totalPercent.value}%`);
-    return;
-  }
-
-  try {
-    await ElMessageBox.confirm('确定要批量更新所有项目的百分比吗？', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    });
-
-    loading.value = true;
-
-    // 只更新服务器数据的百分比
-    const serverItems = exemList.value.filter(item => !item.isLocal);
-
-    if (serverItems.length === 0) {
-      ElMessage.info('没有需要更新的服务器数据');
-      return;
-    }
-
-    const updatePromises = serverItems.map(item => {
-      return fetchUpdateType({
-        id: item.id,
-        percent: percentMap.value[item.id] / 100
-      });
-    });
-
-    const results = await Promise.allSettled(updatePromises);
-
-    // 检查是否所有更新都成功
-    const allSuccess = results.every(result => result.value && result.value.msg === 'success');
-
-    if (allSuccess) {
-      await fetchType({ courseId, current: 1, size: -1 });
-      // 重新初始化百分比映射
-      percentMap.value = {};
-      typeList.value.forEach(t => {
-        percentMap.value[t.id] = t.percent * 100;
-      });
-      // 保持本地新增项的百分比
-      localAddedItems.value.forEach(item => {
-        if (!percentMap.value[item.id]) {
-          percentMap.value[item.id] = 0;
-        }
-      });
-      ElMessage.success('批量更新成功');
-    } else {
-      ElMessage.error('部分数据更新失败');
+      ElMessage.error('部分数据保存或更新失败');
     }
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('更新失败：' + error.message);
+      ElMessage.error('保存失败：' + error.message);
     }
   } finally {
     loading.value = false;
