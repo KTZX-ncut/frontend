@@ -223,7 +223,7 @@
               v-if="MainStore.selectedRoute !== '/homes/courseteacherhome/dynamicmodel/graphlist'"
               type="success"
               @click="handleEnd"
-              >达成行评价</el-button
+              >达成性评价</el-button
             >
           </div>
           <List :titleList="titleList" :listData="attendList" />
@@ -257,6 +257,7 @@ import { getCourseId } from '@/utils/searchCourseId.js';
 import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { exportTableToCSV } from '../../../utils/exportTableToCSV';
 import useTeacherStuGra from '../../../stores/dynamicEvaluation/TeacherStuGraStore';
+import useLabel from '../../../stores/useLabel';
 
 /* ********************变量定义******************** */
 const unitName = ref('默认班级');
@@ -283,6 +284,8 @@ const portraitStore = usePortrait();
 
 const MainStore = useMain();
 
+const { fetchExternalAssessmenCalc } = useLabel();
+
 const titleList = [
   { prop: 'stuno', label: '学号' },
   { prop: 'userName', label: '姓名' },
@@ -304,6 +307,7 @@ const handleDynamic = () => {
 
 const handleEnd = () => {
   attendList.value = tableData.value.filter(item => item.reachState);
+  console.log(attendList.value);
 };
 
 const handleBack = () => {
@@ -313,9 +317,16 @@ const handleBack = () => {
 
 const handleChange = async (value, scope, flag) => {
   console.log(scope);
-  console.log(scope.row.dynamicState);
+  console.log(scope.row.reachState);
   console.log(scope.row.id);
   // TODO:在此处将选择退出评价的学生id插入到一个数组中，评价后统一更改状态
+  if (flag) {
+    resetList.value.set(scope.row.id, {
+      classroomStudentId: scope.row.id,
+      reachState: scope.row.reachState
+    });
+    return;
+  }
 
   resetList.value.set(scope.row.id, {
     classroomStudentId: scope.row.id,
@@ -340,6 +351,23 @@ const handleChange = async (value, scope, flag) => {
 
 const handleConfirm = async () => {
   creating.value = true;
+
+  // 达成性评价
+  if (MainStore.selectedRoute !== '/homes/courseteacherhome/dynamicmodel/graphlist') {
+    console.log('此为达成性评价');
+    console.log('rest', [...resetList.value.values()]);
+    await TeacherInClassStore.putAttendEvaluationAchievement(Array.from(resetList.value.values()));
+    const { code, msg } = await fetchExternalAssessmenCalc(classroomId.value);
+    if (code === 200) {
+      ElMessage.success('评价成功');
+    } else {
+      ElMessage.error(msg);
+    }
+
+    handleBack();
+    creating.value = false;
+    return;
+  }
 
   // 生成画像与改变学生状态
   const { code, msg, data } = await TeacherInClassStore.generatePortraitInstant(

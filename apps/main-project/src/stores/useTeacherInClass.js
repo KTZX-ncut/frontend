@@ -7,7 +7,9 @@ import {
   importStudentList,
   importStudentmenu,
   isAttendEvaluation,
-  generatePortrait
+  generatePortrait,
+  isAttendEvaluationAchievement,
+  generatePortraitAchievement
 } from '../api/teacherInclass';
 
 const useTeacherInClass = defineStore('TeacherInClass', {
@@ -65,13 +67,21 @@ const useTeacherInClass = defineStore('TeacherInClass', {
       const res = await importStudentmenu(list);
       return res;
     },
-    // 修改学生参与评价
+    // 修改学生参与评价(形成性)
     async putAttendEvaluation(arr) {
       return await isAttendEvaluation(arr);
     },
-    // 一键生成画像
+    // 一键生成画像（形成性）
     async generatePortraitInstant(courseId, classroomId, stuIdList, paperIdList) {
       return await generatePortrait(courseId, classroomId, stuIdList, paperIdList);
+    },
+    // 修改学生参与评价（达成性）
+    async putAttendEvaluationAchievement(arr) {
+      return await isAttendEvaluationAchievement(arr);
+    },
+    // 一键生成画像（达成性）
+    async generatePortraitAchievement(courseId, classroomId, stuIdList, paperIdList) {
+      return await generatePortraitAchievement(courseId, classroomId, stuIdList, paperIdList);
     }
   }
 });

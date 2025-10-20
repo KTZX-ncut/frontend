@@ -61,3 +61,11 @@ export const generatePortrait = (courseId, classroomId, stuIdList = [], paperIdL
   };
   return request.evaluation.post('/dynamic/portrait/calculate', data);
 };
+
+// 修改学生参与达成性评价
+export const isAttendEvaluationAchievement = arr => {
+  return request.evaluation.put('reach-evaluation/modifyStudentReachState', arr);
+};
+
+// 一键生成画像达成性
+export const generatePortraitAchievement = () => {};
