@@ -19,13 +19,13 @@
 
   <div v-if="!aimList.length">暂无数据</div>
   <div v-else>
-    <div class="h-[800px] overflow-auto">
+    <div class="h-[800px] overflow-auto" style="width: 100%">
       <el-table
         v-loading="loading"
         :data="aimList"
         @select="handleSelect"
         @selectAll="handleSelectAll"
-        style="width: 100%"
+        style="width: 100%; min-width: 800px"
       >
         <el-table-column type="selection" width="55" />
         <el-table-column label="课程目标名称">

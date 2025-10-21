@@ -45,7 +45,7 @@
           v-bind="gridOptions"
           v-on="gridEvents"
           :edit-config="gridOptions.editConfig"
-          class="scroll-container"
+          class="assessment-table"
           @edit-closed="handleEditClosed"
         >
           <template #cell="{ rowIndex, columnIndex }">
@@ -1151,10 +1151,34 @@ const generateBLOB = data => {
   }
 }
 
-.scroll-container {
-  ::-webkit-scrollbar {
-    display: none;
+#container {
+  // 确保容器可以水平和垂直滚动
+  overflow: auto;
+
+  // 自定义滚动条样式，使其更美观
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
   }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
+}
+
+.assessment-table {
+  // 确保表格内容不会被截断
+  min-width: 100%;
 }
 
 .link-text {
