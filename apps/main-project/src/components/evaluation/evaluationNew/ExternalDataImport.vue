@@ -154,8 +154,15 @@ async function uploadExcel() {
   console.log(file.value);
 
   try {
-    await importExternalAssessment(file.value, selectedMap.value.get(selectedType.value));
-    ElMessage.success('Excel 导入成功');
+    const { code, msg } = await importExternalAssessment(
+      file.value,
+      selectedMap.value.get(selectedType.value)
+    );
+    if (code === 200) {
+      ElMessage.success('Excel 导入成功');
+    } else {
+      ElMessage.error(msg);
+    }
 
     // 上传成功后刷新表格数据
     await refreshTableData();
