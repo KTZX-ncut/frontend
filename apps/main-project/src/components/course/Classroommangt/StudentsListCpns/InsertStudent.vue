@@ -89,6 +89,7 @@ const nodeClick = (data, node, event) => {
   currentobsId.value = data.id;
   getPeopleList();
   currentobsname.value = data.obsname;
+  console.log('data', data.id);
   // if (!node.childNodes || node.childNodes.length === 0) {
   //   node.checked = !node.checked;
   //   currentobsId.value = data.id;
@@ -101,8 +102,8 @@ const nodeClick = (data, node, event) => {
 // *****************搜索框逻辑***********
 const getPeopleList = () => {
   request.admin
-    // .get('/sysmangt/personnelmangt/person?obsid=' + currentobsId.value + '&catelog=1')
-    .get('/sysmangt/units/student')
+    .get('/sysmangt/personnelmangt/student?obsid=' + currentobsId.value + '&catelog=1')
+    // .get('/sysmangt/units/student')
     .then(res => {
       if (res.code === 200) {
         // peoplelist.value = res.data;
