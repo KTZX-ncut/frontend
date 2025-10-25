@@ -38,7 +38,7 @@ jobs:
         run: pnpm run build -- --mode prod.hw120
 
       - name: Upload new dist
-        uses: appleboy/scp-action@v1.2.0
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.HW_MAIN_SERVER_HOST }}
           username: ${{ secrets.HW_MAIN_SERVER_USER }}
