@@ -69,4 +69,5 @@ jobs:
             echo "删除临时dist" 
             rm -rf ${{ secrets.HW_MAIN_DEPLOY_PATH }}/temp/*
             echo "执行重启脚本"
+            cd /root/smarttt/smarttt_new/smarttt_frontend
             ./restart_nginx.sh
