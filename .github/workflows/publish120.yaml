@@ -63,8 +63,9 @@ jobs:
             cd ${{ secrets.HW_MAIN_DEPLOY_PATH }}
             echo "删除旧包"
             rm -rf ./dist
+            mkdir ./dist
             echo "从临时文件夹中复制到目标文件夹"
-            cp -r ${{ secrets.HW_MAIN_DEPLOY_PATH }}/temp/apps/main-project ${{ secrets.HW_MAIN_DEPLOY_PATH }}
+            cp -r ${{ secrets.HW_MAIN_DEPLOY_PATH }}/temp/apps/main-project/dist/* ${{ secrets.HW_MAIN_DEPLOY_PATH }}/dist
             echo "删除临时dist" 
             rm -rf ${{ secrets.HW_MAIN_DEPLOY_PATH }}/temp/*
             echo "执行重启脚本"
