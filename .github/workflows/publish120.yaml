@@ -2,11 +2,11 @@ name: Publish to 120 server
 
 on:
   workflow_dispatch: {}
-  push:
-    branches:
-      - master
-    paths:
-      - 'apps/main-project/**'
+  # push:
+  #   branches:
+  #     - master
+  #   paths:
+  #     - 'apps/main-project/**'
 
 jobs:
   publish:
