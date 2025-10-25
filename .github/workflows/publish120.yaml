@@ -33,9 +33,13 @@ jobs:
         run: |
           pnpm install --no-frozen-lockfile
 
-      - name: Build
+      # - name: Build
+      #   working-directory: apps/main-project
+      #   run: pnpm run build -- --mode prod.hw120
+      - name: test
         working-directory: apps/main-project
-        run: pnpm run build -- --mode prod.hw120
+        run: | 
+          mkdir dist
 
       - name: Upload new dist
         uses: appleboy/scp-action@v0.1.7
