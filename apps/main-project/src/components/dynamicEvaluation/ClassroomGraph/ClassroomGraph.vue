@@ -56,7 +56,7 @@ import { reactive, ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import useClassroomGraph from '../../../stores/dynamicEvaluation/classroomStore.js';
 import { radarOption } from '../../../assets/js/dynamicEvaluationPresets/ClassRoomGraphPresets/Radar.js';
 import { treeOption } from '../../../assets/js/dynamicEvaluationPresets/ClassRoomGraphPresets/Treemap.js';
-import { wordOption } from '../../../assets/js/dynamicEvaluationPresets/ClassRoomGraphPresets/wordmap.js';
+import { wordOption } from '../../../assets/js/dynamicEvaluationPresets/ClassRoomGraphPresets/Wordmap.js';
 import { wordMapPreset } from '../../../assets/js/dynamicEvaluationPresets/StudentGraphPresets/Wordmap.js';
 import { graphicLegend, graphicTitle } from '@/assets/js/dynamicEvaluationPresets/PublicPresets.js';
 /* ********************变量定义******************** */
