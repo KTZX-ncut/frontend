@@ -37,8 +37,18 @@ jobs:
         working-directory: apps/main-project
         run: pnpm run build -- --mode prod.hw120
 
+      - name: Upload new dist
+        uses: appleboy/scp-action@v1.2.0
+        with:
+          host: ${{ secrets.HW_MAIN_SERVER_HOST }}
+          username: ${{ secrets.HW_MAIN_SERVER_USER }}
+          key: ${{ secrets.HW_MAIN_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          source: 'dist'
+          target: ${{ secrets.HW_MAIN_DEPLOY_PATH }}/temp
+
       - name: remove old version
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.HW_MAIN_SERVER_HOST }}
           username: ${{ secrets.HW_MAIN_SERVER_USER }}
@@ -59,4 +69,5 @@ jobs:
           target: ${{ secrets.HW_MAIN_DEPLOY_PATH }}
           script: |
             cd ${{ secrets.HW_MAIN_DEPLOY_PATH }}
+            cp -r ${{ secrets.HW_MAIN_DEPLOY_PATH }}/temp/dist ${{ secrets.HW_MAIN_DEPLOY_PATH }}
             ./restart_nginx.sh
