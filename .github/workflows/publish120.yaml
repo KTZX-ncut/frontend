@@ -2,11 +2,11 @@ name: Publish to 120 server
 
 on:
   workflow_dispatch: {}
-  # push:
-  #   branches:
-  #     - master
-  #   paths:
-  #     - 'apps/main-project/**'
+  push:
+    branches:
+      - master
+    paths:
+      - 'apps/main-project/**'
 
 jobs:
   publish:
@@ -26,20 +26,20 @@ jobs:
           registry-url: https://registry.npmjs.org/
 
         # 3. 安装 pnpm
-      # - name: Install pnpm
-      #   run: npm install -g pnpm
+      - name: Install pnpm
+        run: npm install -g pnpm
 
-      # - name: Install dependencies
-      #   run: |
-      #     pnpm install --no-frozen-lockfile
-
-      # - name: Build
-      #   working-directory: apps/main-project
-      #   run: pnpm run build -- --mode prod.hw120
-      - name: test
-        working-directory: apps/main-project
+      - name: Install dependencies
         run: |
-          mkdir dist
+          pnpm install --no-frozen-lockfile
+
+      - name: Build
+        working-directory: apps/main-project
+        run: pnpm run build -- --mode prod.hw120
+      # - name: test
+      #   working-directory: apps/main-project
+      #   run: |
+      #     mkdir dist
 
       - name: Upload new dist
         uses: appleboy/scp-action@v0.1.7
@@ -69,3 +69,4 @@ jobs:
             echo "删除临时dist" 
             rm -rf ${{ secrets.HW_MAIN_DEPLOY_PATH }}/temp/*
             echo "执行重启脚本"
+            ./restart_nginx.sh
