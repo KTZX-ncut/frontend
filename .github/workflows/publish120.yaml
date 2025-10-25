@@ -44,19 +44,8 @@ jobs:
           username: ${{ secrets.HW_MAIN_SERVER_USER }}
           key: ${{ secrets.HW_MAIN_SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_PORT }}
-          source: 'dist'
+          source: 'apps/main-project/dist'
           target: ${{ secrets.HW_MAIN_DEPLOY_PATH }}/temp
-
-      - name: remove old version
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.HW_MAIN_SERVER_HOST }}
-          username: ${{ secrets.HW_MAIN_SERVER_USER }}
-          port: ${{ secrets.SERVER_PORT }}
-          key: ${{ secrets.HW_MAIN_SSH_PRIVATE_KEY }}
-          script: |
-            cd ${{ secrets.HW_MAIN_DEPLOY_PATH }}
-            rm -rf ./dist
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.2.0
@@ -65,9 +54,14 @@ jobs:
           username: ${{ secrets.HW_MAIN_SERVER_USER }}
           key: ${{ secrets.HW_MAIN_SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_PORT }}
-          source: 'dist/*'
-          target: ${{ secrets.HW_MAIN_DEPLOY_PATH }}
           script: |
+            set -e  # 只要有一个命令失败，整个脚本立即退出
             cd ${{ secrets.HW_MAIN_DEPLOY_PATH }}
-            cp -r ${{ secrets.HW_MAIN_DEPLOY_PATH }}/temp/dist ${{ secrets.HW_MAIN_DEPLOY_PATH }}
+            echo "删除旧包"
+            rm -rf ./dist
+            echo "从临时文件夹中复制到目标文件夹"
+            cp -r ${{ secrets.HW_MAIN_DEPLOY_PATH }}/temp/dist ${{ secrets.HW_MAIN_DEPLOY_PATH }} 
+            echo "删除临时dist" 
+            rm -rf ${{ secrets.HW_MAIN_DEPLOY_PATH }}/temp/dist
+            echo "执行重启脚本"
             ./restart_nginx.sh
