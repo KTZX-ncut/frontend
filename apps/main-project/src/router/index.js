@@ -121,7 +121,7 @@ const routes = [
       {
         path: 'sysmangt/termmangt',
         name: 'TermsManagement', //学期管理
-        component: () => import('../components/admin/TermMangt.vue')
+        component: () => import('../components/admin/Termmangt.vue')
       },
       {
         path: 'sysmangt/creatteachunit',
