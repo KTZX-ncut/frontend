@@ -1,4 +1,4 @@
-name: Publish Package
+name: Publish to 120 server
 
 on:
   workflow_dispatch: {}
