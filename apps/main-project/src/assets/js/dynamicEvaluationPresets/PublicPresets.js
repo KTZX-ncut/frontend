@@ -151,7 +151,7 @@ const graphicTitle = {
   left: 'left', // 将文本框放置在右侧
   top: 'top', // 将文本框放置在底部
   style: {
-    text: '当前展示第X次作业，已评价X次', // TODO数据产生后，将会存储到store中更好处理
+    text: '', // TODO数据产生后，将会存储到store中更好处理
     fill: '#333', // 设置文本颜色
     font: '14px sans-serif', // 设置字体和大小
     align: 'right', // 文本右对齐

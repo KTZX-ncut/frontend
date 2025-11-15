@@ -85,36 +85,55 @@
         <el-table-column prop="loginname" label="登录名称" />
         <el-table-column prop="userName" label="姓名" />
         <el-table-column prop="obsName" :label="unitName" />
-        <el-table-column
-          v-if="MainStore.selectedRoute !== '/homes/courseteacherhome/evaluation/graphList'"
-          label="参与评价(形成性)"
+        <template
+          v-if="MainStore.selectedRoute === '/homes/courseteacherhome/sizheng/portraitList'"
         >
-          <template #default="scope">
-            <el-switch
-              @change="value => handleChange(value, scope, 0)"
-              :active-value="1"
-              :inactive-value="0"
-              size="large"
-              v-model="
-                tableData[tableData.findIndex(item => item.id === scope.row.id)].dynamicState
-              "
-            />
-          </template>
-        </el-table-column>
-        <el-table-column
-          v-if="MainStore.selectedRoute !== '/homes/courseteacherhome/dynamicmodel/graphlist'"
-          label="参与评价(达成性)"
-        >
-          <template #default="scope">
-            <el-switch
-              :active-value="1"
-              :inactive-value="0"
-              @change="value => handleChange(value, scope, 1)"
-              size="large"
-              v-model="tableData[scope.$index].reachState"
-            />
-          </template>
-        </el-table-column>
+          <el-table-column label="参与评价(思政价值)">
+            <template #default="scope">
+              <el-switch
+                @change="value => handleChange(value, scope, 2)"
+                :active-value="1"
+                :inactive-value="0"
+                size="large"
+                v-model="
+                  tableData[tableData.findIndex(item => item.id === scope.row.id)].ideologyState
+                "
+              />
+            </template>
+          </el-table-column>
+        </template>
+        <template v-else>
+          <el-table-column
+            v-if="MainStore.selectedRoute !== '/homes/courseteacherhome/evaluation/graphList'"
+            label="参与评价(形成性)"
+          >
+            <template #default="scope">
+              <el-switch
+                @change="value => handleChange(value, scope, 0)"
+                :active-value="1"
+                :inactive-value="0"
+                size="large"
+                v-model="
+                  tableData[tableData.findIndex(item => item.id === scope.row.id)].dynamicState
+                "
+              />
+            </template>
+          </el-table-column>
+          <el-table-column
+            v-if="MainStore.selectedRoute !== '/homes/courseteacherhome/dynamicmodel/graphlist'"
+            label="参与评价(达成性)"
+          >
+            <template #default="scope">
+              <el-switch
+                :active-value="1"
+                :inactive-value="0"
+                @change="value => handleChange(value, scope, 1)"
+                size="large"
+                v-model="tableData[scope.$index].reachState"
+              />
+            </template>
+          </el-table-column>
+        </template>
       </el-table>
       <!-- 分页器 -->
       <el-footer
@@ -213,18 +232,25 @@
               margin-bottom: 15px;
             "
           >
-            <el-button
-              v-if="MainStore.selectedRoute !== '/homes/courseteacherhome/evaluation/graphList'"
-              type="success"
-              @click="handleDynamic"
-              >形成性评价</el-button
+            <template
+              v-if="MainStore.selectedRoute === '/homes/courseteacherhome/sizheng/portraitList'"
             >
-            <el-button
-              v-if="MainStore.selectedRoute !== '/homes/courseteacherhome/dynamicmodel/graphlist'"
-              type="success"
-              @click="handleEnd"
-              >达成性评价</el-button
-            >
+              <el-button type="success" @click="handleIdealogy">思政价值</el-button>
+            </template>
+            <template v-else>
+              <el-button
+                v-if="MainStore.selectedRoute !== '/homes/courseteacherhome/evaluation/graphList'"
+                type="success"
+                @click="handleDynamic"
+                >形成性评价</el-button
+              >
+              <el-button
+                v-if="MainStore.selectedRoute !== '/homes/courseteacherhome/dynamicmodel/graphlist'"
+                type="success"
+                @click="handleEnd"
+                >达成性评价</el-button
+              >
+            </template>
           </div>
           <List :titleList="titleList" :listData="attendList" />
           <el-button type="primary" @click="handleBack">返回</el-button>
@@ -258,6 +284,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { exportTableToCSV } from '../../../utils/exportTableToCSV';
 import useTeacherStuGra from '../../../stores/dynamicEvaluation/TeacherStuGraStore';
 import useLabel from '../../../stores/useLabel';
+import useIdealogyNew from '../../../stores/idealogyNewStore';
 
 /* ********************变量定义******************** */
 const unitName = ref('默认班级');
@@ -286,6 +313,10 @@ const MainStore = useMain();
 
 const { fetchExternalAssessmenCalc } = useLabel();
 
+// 思政价值
+const idealogyNewStore = useIdealogyNew();
+const { fetchStudentState, fetchCalc } = idealogyNewStore;
+
 const titleList = [
   { prop: 'stuno', label: '学号' },
   { prop: 'userName', label: '姓名' },
@@ -310,17 +341,35 @@ const handleEnd = () => {
   console.log(attendList.value);
 };
 
+const handleIdealogy = () => {
+  attendList.value = tableData.value.filter(item => item.ideologyState);
+};
+
 const handleBack = () => {
   createReport.value = false;
   attendList.value = [];
 };
 
+/* 
+flag == 0:形成性
+flag == 1:达成性
+flag == 2:思政价值
+*/
 const handleChange = async (value, scope, flag) => {
   console.log(scope);
   console.log(scope.row.reachState);
   console.log(scope.row.id);
   // TODO:在此处将选择退出评价的学生id插入到一个数组中，评价后统一更改状态
-  if (flag) {
+
+  if (flag === 2) {
+    resetList.value.set(scope.row.id, {
+      classroomStudentId: scope.row.id,
+      ideologyState: scope.row.ideologyState
+    });
+    return;
+  }
+
+  if (flag === 1) {
     resetList.value.set(scope.row.id, {
       classroomStudentId: scope.row.id,
       reachState: scope.row.reachState
@@ -352,6 +401,23 @@ const handleChange = async (value, scope, flag) => {
 const handleConfirm = async () => {
   creating.value = true;
 
+  // 思政价值
+  if (MainStore.selectedRoute === '/homes/courseteacherhome/sizheng/portraitList') {
+    console.log('此为思政价值');
+    console.log('rest', [...resetList.value.values()]);
+    await fetchStudentState(Array.from(resetList.value.values()));
+    // TODO：思政价值对接画像接口
+    const { code, msg } = await fetchCalc(classroomId.value);
+    if (code === 200) {
+      ElMessage.success('评价成功');
+    } else {
+      ElMessage.error(msg);
+    }
+    handleBack();
+    creating.value = false;
+    return;
+  }
+
   // 达成性评价
   if (MainStore.selectedRoute !== '/homes/courseteacherhome/dynamicmodel/graphlist') {
     console.log('此为达成性评价');
@@ -369,7 +435,7 @@ const handleConfirm = async () => {
     return;
   }
 
-  // 生成画像与改变学生状态
+  // 生成画像与改变学生状态，形成性
   const { code, msg, data } = await TeacherInClassStore.generatePortraitInstant(
     courseId.value,
     classroomId.value,

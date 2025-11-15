@@ -259,8 +259,33 @@ const routes = [
       },
       {
         path: 'evasys/formative/idealogy', // 形成性评价模型-思政价值
+        name: 'Idealogy-dy',
+        component: () => import('../components/Idealogy/Idealogy.vue')
+      },
+      {
+        path: 'evaluation/valueLabel', // 思政价值价值标签
         name: 'Idealogy',
         component: () => import('../components/Idealogy/Idealogy.vue')
+      },
+      {
+        path: 'sizheng/portraitList', // 思政价值-学生名单
+        name: 'IdealogyList',
+        component: () => import('../components/course/Classroommangt/StudentsList.vue')
+      },
+      {
+        path: 'sizheng/portraitData', // 思政价值-数据管理
+        name: 'IdealogyDatamanage',
+        component: () => import('../components/Idealogy/Portraitmangt.vue')
+      },
+      {
+        path: 'evaluation/studentPortrait', // 思政价值-学生画像
+        name: 'IdealogyStudentPortrait',
+        component: () => import('../components/Idealogy/StudentsGraph/StudentsGraphWrapper.vue')
+      },
+      {
+        path: 'evaluation/classroomPortrait', // 思政价值-课堂画像
+        name: 'IdealogyClassroomPortraita',
+        component: () => import('../components/Idealogy/ClassroomGraph/ClassroomGraphWrapper.vue')
       },
       {
         path: 'evasys/accessible/coursetarget', // 达成性评价模型-课程目标

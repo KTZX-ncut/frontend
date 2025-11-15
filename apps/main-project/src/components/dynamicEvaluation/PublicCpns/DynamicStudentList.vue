@@ -41,7 +41,7 @@ import ListWithSelection from './ListWithSelection.vue';
 import { storeToRefs } from 'pinia';
 import useStudentGraph from '../../../stores/dynamicEvaluation/studentGraphStore';
 import List from './List.vue';
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, watch } from 'vue';
 
 /* ********************变量定义******************** */
 // props定义
@@ -85,6 +85,7 @@ const props = defineProps({
 // pinia状态管理
 const studentGraphStore = useStudentGraph();
 const { stuListVisible } = storeToRefs(studentGraphStore);
+
 
 /* ********************方法定义******************** */
 </script>
