@@ -1,4 +1,4 @@
-import { State, updateStudentState, calculate, getIdeologyList, updateIdeology, addParentIdeology, addSameIdeology, addChildIdeology, deleteIdeology, getExamList, getinsertedExamInfo, insertExam, deleteExam, changeOrder, getClassroomValue, getStudentValue } from '../api/idealogyNew';
+import { State, updateStudentState, calculate, getIdeologyList, updateIdeology, addParentIdeology, addSameIdeology, addChildIdeology, deleteIdeology, getExamList, getinsertedExamInfo, insertExam, deleteExam, changeOrder, getClassroomValue, getStudentValue, getAllStudentValue, getClassroominfo } from '../api/idealogyNew';
 
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
@@ -62,6 +62,25 @@ export interface EvalResult {
   vid: string;
 }
 
+export interface AllStudentValue {
+  userId: string;
+  studentName: string;
+  stuno: string;
+  ideologyList: CourseIdealogy[];
+}
+
+export interface ClassroomInfo {
+  classroomId: string;
+  classroomName: string;
+  termName: string;
+  courseName: string;
+  professionName: null;
+  teacherName: string;
+  time: number;
+  score: null;
+  assistantName: null;
+}
+
 
 
 const useIdealogyNew = defineStore('idealogyNew', () => {
@@ -71,8 +90,19 @@ const useIdealogyNew = defineStore('idealogyNew', () => {
   const listVisible = ref(false)
   const courseValueList = ref<CourseIdealogy[]>([])
   const studentValueList = ref<CourseIdealogy[]>([])
+  const allStudentValueList = ref<AllStudentValue[]>([])
+  const classroomInfo = ref<ClassroomInfo>({} as ClassroomInfo)
+
   const fetchStudentState = async (stateList: State[]) => {
     return await updateStudentState(stateList);
+  }
+
+  const setCourseValueList = (value: CourseIdealogy[]) => {
+    courseValueList.value = value
+  }
+
+  const setStudentvalueList = (value: CourseIdealogy[]) => {
+    studentValueList.value = value
   }
 
   const fetchCalc = async (classroomId: string) => {
@@ -142,9 +172,23 @@ const useIdealogyNew = defineStore('idealogyNew', () => {
     courseValueList.value = data
   }
 
-  const fetchStudentValue = async (userId: string) => {
-    const { data, msg, code } = await getStudentValue(userId)
+  const fetchStudentValue = async (userId: string, classroomId: string) => {
+    const { data, msg, code } = await getStudentValue(userId, classroomId)
     studentValueList.value = data
+    return {
+      code, msg
+    }
+  }
+
+  const fetchAllStudentValue = async (classroomId: string) => {
+    const { code, msg, data } = await getAllStudentValue(classroomId)
+    allStudentValueList.value = data
+    return { code, msg }
+  }
+
+  const fetchClassroomInfo = async () => {
+    const { code, msg, data } = await getClassroominfo()
+    classroomInfo.value = data
     return {
       code, msg
     }
@@ -155,7 +199,10 @@ const useIdealogyNew = defineStore('idealogyNew', () => {
     testList,
     testInfo,
     listVisible,
+    classroomInfo,
     courseValueList,
+    studentValueList,
+    allStudentValueList,
     setTestList,
     fetchStudentState,
     fetchCalc,
@@ -173,7 +220,10 @@ const useIdealogyNew = defineStore('idealogyNew', () => {
     fetchChangeOrder,
     fetchCourseValue,
     fetchStudentValue,
-    studentValueList
+    setCourseValueList,
+    setStudentvalueList,
+    fetchAllStudentValue,
+    fetchClassroomInfo,
   }
 
 });

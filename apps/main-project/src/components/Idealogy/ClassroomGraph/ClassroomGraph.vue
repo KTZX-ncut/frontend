@@ -11,13 +11,44 @@
   />
   <!-- 课堂列表结束 -->
   <!-- 课堂画像图表 -->
-  <GraphChart :store="classroomGraphStore">
+  <GraphChart v-if="!isDestroy" :store="classroomGraphStore" @close="handleClose">
     <template #title>课堂画像：{{ courseInfo.courseName }}</template>
     <template #GraphItem>
       <GraphItem title="思政标签画像" :chartOption="currentWordOption" ref="wordmapCmp" />
       <!-- <GraphItem title="KWA画像" /> -->
       <GraphItem title="思政标签评价" :chartOption="currentBarFOption" ref="barFCmp" />
       <GraphItem title="思政标签占比" :chartOption="currentPieOption" ref="pieChartCmp" />
+      <GraphItem title="思政标签分布" :chartOption="currentHotOption" ref="hotChartCmp" />
+      <GraphItem title="思政标签达成情况">
+        <div class="table-wrapper" :style="{ '--col-count': values.length }">
+          <table class="equal-table">
+            <tr>
+              <td style="width: 50px">序号</td>
+              <td style="width: 120px">学号</td>
+              <td style="width: 80px">姓名</td>
+              <td style="width: 120px">课堂</td>
+              <td v-for="(v, index) in values" :key="index" :title="v.name">
+                <el-tooltip :content="v.name" placement="top">
+                  <span>{{ v.name }}</span>
+                </el-tooltip>
+              </td>
+            </tr>
+            <tr v-for="(v, index) in heatMapNames" :key="index">
+              <td style="width: 50px">{{ index + 1 }}</td>
+              <td style="width: 120px">{{ v.stuno }}</td>
+              <td style="width: 80px">{{ v.name }}</td>
+              <td style="width: 120px">
+                <el-tooltip :content="courseInfo.courseName" placement="top">
+                  <span>{{ courseInfo.courseName }}</span>
+                </el-tooltip>
+              </td>
+              <template v-for="innerV in v.value">
+                <td style="width: 80px">{{ innerV }}</td>
+              </template>
+            </tr>
+          </table>
+        </div>
+      </GraphItem>
     </template>
   </GraphChart>
   <!-- 课堂画像图表结束 -->
@@ -44,14 +75,16 @@ import { toolbox } from '@/assets/js/dynamicEvaluationPresets/PublicPresets.js';
 import { axisLabel } from '@/assets/js/dynamicEvaluationPresets/PublicPresets';
 import clickFSvg from '@/assets/images/click.svg';
 import { barOption } from '@/assets/js/dynamicEvaluationPresets/StudentGraphPresets/Bar.js';
+import { number } from 'echarts';
 /* ********************变量定义******************** */
 // props定义
 // 普通变量
 const courseId = ref('');
-const radarCmp = ref(null);
 const wordmapCmp = ref(null);
 const barFCmp = ref(null);
 const pieChartCmp = ref(null);
+const hotChartCmp = ref(null);
+const isDestroy = ref(false);
 
 const courseInfo = reactive({
   courseName: '',
@@ -62,17 +95,28 @@ const courseInfo = reactive({
 const currentWordOption = ref({});
 const currentBarFOption = ref({});
 const currentPieOption = ref({});
+const currentHotOption = ref({});
 
 // pinia状态管理
 const classroomGraphStore = useClassroomGraph();
 const mainStore = useMain();
 const { chartVisible } = storeToRefs(classroomGraphStore);
 const IdealogyNewStore = useIdealogyNew();
-const { fetchCourseValue } = IdealogyNewStore;
-const { courseValueList } = storeToRefs(IdealogyNewStore);
-const type = ref<{ name: string; value: number; type: string }[]>([]);
-const values = ref<{ name: string; value: number; type: string }[]>([]);
+const { fetchCourseValue, setCourseValueList, fetchAllStudentValue } = IdealogyNewStore;
+const { courseValueList, allStudentValueList } = storeToRefs(IdealogyNewStore);
+const type = ref<{ name: string; value: number; type: string; id: string }[]>([]);
+const values = ref<{ name: string; value: number; type: string; id: string }[]>([]);
 const payloadMap = ref<Map<string, boolean>>(new Map());
+
+const heatMapNames = ref<{ name: string; stuno: string; userId: string; value: number[] }[]>([]);
+const heatmapTypesCount = ref<{ stuno: string; id: string; value: number }[]>([]);
+const heatmapValues = ref<{ stuno: string; id: string; value: number }[]>([]);
+
+const handleClose = () => {
+  setCourseValueList([]);
+  type.value = [];
+  values.value = [];
+};
 
 function getRandomColor() {
   const r = Math.floor(Math.random() * 256);
@@ -163,6 +207,46 @@ const handleCustomeClick = (name: string) => {
         }
       );
     }
+    case 'hot': {
+      const chartInstance = hotChartCmp.value?.getChartInstance();
+      chartInstance.setOption(
+        {
+          xAxis: {
+            type: 'category',
+            data: !payloadMap.value.get(name)
+              ? type.value.map(t => t.name)
+              : values.value.map(v => v.name),
+            splitArea: { show: true } // 显示块区域背景
+          },
+          series: [
+            {
+              name: 'HeatMap',
+              type: 'heatmap',
+              progressive: 5000,
+              data: heatmapValues.value.map(heat => {
+                const x = values.value.findIndex(t => t.id === heat.id);
+                const y = heatMapNames.value.findIndex(n => n.stuno === heat.stuno);
+                return [x, y, heat.value];
+              }),
+              label: {
+                show: true,
+                formatter: v => v.data[2],
+                color: '#000'
+              },
+              emphasis: {
+                itemStyle: {
+                  shadowBlur: 10,
+                  shadowColor: 'rgba(0, 0, 0, 0.4)'
+                }
+              }
+            }
+          ]
+        },
+        {
+          replaceMerge: ['xAxis', 'series']
+        }
+      );
+    }
   }
 };
 
@@ -213,19 +297,70 @@ const handleCellClick = async (row, column, cell) => {
     courseValueList.value.map(c => {
       type.value.push({
         name: c.name,
-        value: c.weight,
-        type: '类型'
+        value: c.evalResult?.valueCount ?? 0,
+        type: '类型',
+        id: c.id
       });
       if (c.children) {
         c.children.map(ch => {
           values.value.push({
             name: ch.name,
-            value: ch.weight,
-            type: '标签'
+            value: ch.evalResult?.valueCount ?? 0,
+            type: '标签',
+            id: ch.id
           });
         });
       }
     });
+
+    //  获取所有学生评价
+    const { code, msg } = await fetchAllStudentValue(row.classroomId);
+    if (code !== 200) {
+      ElMessage({
+        type: 'error',
+        message: msg
+      });
+      return;
+    }
+    allStudentValueList.value.map(sin => {
+      const names = {
+        name: sin.studentName,
+        stuno: sin.stuno,
+        userId: sin.userId,
+        value: [] as number[]
+      };
+
+      let cid: null | string = null;
+      if (sin.ideologyList.length) {
+        sin.ideologyList.map(id => {
+          let count = 0;
+          cid = id.id;
+          if (id.children?.length) {
+            id.children.map(ch => {
+              names.value.push(ch.evalResult?.valueCount ?? 0);
+              values.value.map(v => {
+                heatmapValues.value.push({
+                  stuno: sin.stuno,
+                  id: v.id,
+                  value: ch.evalResult?.valueCount ?? 0
+                });
+              });
+              if (ch.evalResult?.valueCount && ch.evalResult?.valueCount > 0) {
+                count++;
+              }
+            });
+          }
+
+          heatmapTypesCount.value.push({
+            stuno: sin.stuno,
+            id: cid,
+            value: count
+          });
+        });
+      }
+      heatMapNames.value.push(names);
+    });
+    console.log('typecount :', heatMapNames.value);
     classroomGraphStore.setChartVisible(true);
 
     initChart();
@@ -360,6 +495,103 @@ const initChart = () => {
     ]
   };
   payloadMap.value.set('pie', false);
+
+  currentHotOption.value = {
+    toolbox: {
+      ...newtoolbox('hot')
+    },
+    tooltip: {
+      position: 'top',
+      formatter: function (params) {
+        return `学生: ${heatMapNames.value[params.data[1]].name}<br/>学号：${
+          heatMapNames.value[params.data[1]].stuno
+        }<br/>评价: ${params.data[2]}`;
+      }
+    },
+    grid: {
+      height: '60%',
+      top: '10%',
+      left: '10%',
+      right: '10%',
+      containLabel: true // 确保轴标签不会被裁掉
+    },
+    xAxis: {
+      type: 'category',
+      data: type.value.map(t => t.name),
+      splitArea: { show: true }, // 显示块区域背景
+      axisLabel: {
+        rotate: 45, // 标签旋转 45 度
+        interval: 0, // 强制显示所有标签
+        fontSize: 12, // 根据需要调整字体大小
+        formatter: function (value) {
+          return value.length > 8 ? value.slice(0, 8) + '…' : value; // 长标签截断
+        }
+      }
+    },
+    yAxis: {
+      type: 'category',
+      data: heatMapNames.value.map(n => n.name),
+      splitArea: { show: true }
+    },
+    visualMap: {
+      min: 0,
+      max: 1,
+      calculable: true,
+      orient: 'horizontal',
+      left: 'center',
+      bottom: '15%',
+      inRange: {
+        color: [
+          '#d7d7d7', // 低值
+          '#fba89b', // 中间偏低
+          '#ffff00', // 中间
+          '#4876ff', // 中间偏高
+          '#90ee90' // 高值
+        ]
+      }
+    },
+    dataZoom: [
+      {
+        type: 'slider',
+        xAxisIndex: 0,
+        yAxisIndex: 0,
+        start: 0,
+        end: 50 // 显示前 50% 类目，可滑动查看
+      },
+      {
+        type: 'slider', // 纵向滑块
+        yAxisIndex: 0,
+        start: 0,
+        end: 50,
+        right: '5%', // 放在右侧，避开 visualMap
+        orient: 'vertical' // 纵向滑块
+      }
+    ],
+    series: [
+      {
+        name: 'HeatMap',
+        type: 'heatmap',
+        progressive: 5000,
+        data: heatmapTypesCount.value.map(heat => {
+          const x = type.value.findIndex(t => t.id === heat.id);
+          const y = heatMapNames.value.findIndex(n => n.stuno === heat.stuno);
+          return [x, y, heat.value];
+        }),
+        label: {
+          show: true,
+          formatter: v => v.data[2],
+          color: '#000'
+        },
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(0, 0, 0, 0.4)'
+          }
+        }
+      }
+    ]
+  };
+  payloadMap.value.set('hot', false);
 };
 
 // 获取课堂列表
@@ -400,4 +632,45 @@ onMounted(async () => {
 });
 </script>
 
-<style lang="less" scoped></style>
+<style lang="less" scoped>
+/* 放到组件的 <style> 中，或全局样式里 */
+.table-wrapper {
+  width: 100%; /* 占满父容器 */
+  overflow-x: auto; /* 横向滚动 */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 表格等宽逻辑：
+   --col-count 由 Vue 传入（values.length）
+   当列很多时，min-width 会使表格总宽 > 容器，从而触发滚动
+*/
+.equal-table {
+  width: 100%;
+  border-collapse: collapse; /* 边框不双线 */
+  table-layout: fixed; /* 固定表格布局，配合 width 均分 */
+  min-width: calc(var(--col-count) * 120px); /* 每列至少 120px（可改或删） */
+  box-sizing: border-box;
+}
+
+/* th / td 通用样式 */
+.equal-table th,
+.equal-table td {
+  border: 1px solid #000; /* 黑色描边 */
+  padding: 8px 10px;
+  box-sizing: border-box;
+  width: calc(100% / var(--col-count)); /* 均分父宽 */
+  min-width: 120px; /* 列最小宽度（同上） */
+  white-space: nowrap; /* 内容单行显示 */
+  overflow: hidden;
+  text-overflow: ellipsis; /* 溢出用省略号 */
+  vertical-align: middle;
+}
+
+/* 可选：固定表头（在横向滚动时也保持可见）*/
+.equal-table tr:first-child td {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 2;
+}
+</style>

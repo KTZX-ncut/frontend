@@ -40,6 +40,7 @@
     >
       <template #default="{ node }">
         <div
+          v-if="char.rolename === '课程负责人'"
           style="
             display: flex;
             justify-content: space-between;
@@ -113,6 +114,19 @@
             </template>
           </el-popover>
         </div>
+        <div style="width: 850px" v-else>
+          <div style="display: flex; flex: auto; justify-content: space-between">
+            <div style="width: auto">
+              <el-icon v-if="node.data.children" color="orange">
+                <Folder />
+              </el-icon>
+              <el-icon v-else color="dodgerblue">
+                <Document />
+              </el-icon>
+              {{ node.data.name }}
+            </div>
+          </div>
+        </div>
       </template>
     </el-tree>
   </div>
@@ -167,8 +181,8 @@ const querySearch = async () => {
     loading.value = true;
     await IdealogyStore.fetchFuzzyQuery({
       fuzzyQuery: true,
-      vname: search.value,
-      courseId: addData.courseId
+      vname: search.value
+      // courseId: addData.courseId
     });
     loading.value = false;
   }

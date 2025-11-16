@@ -23,7 +23,7 @@
   <!-- 学生列表浮窗结束 -->
   <!-- 图标列表 -->
   <!-- 在GraphChart组件的具名插槽中可以插入GraphItem，可自定义图表 -->
-  <GraphChart :store="studentGraphStore">
+  <GraphChart :store="studentGraphStore" @close="handleClose">
     <template #title
       >学生课程画像：{{ stuInfo.courseName }} - {{ stuInfo.stuname }}({{ stuInfo.stuNo }})</template
     >
@@ -74,11 +74,17 @@ const pieChartCmp = ref(null);
 const barFCmp = ref(null);
 
 const IdealogyNewStore = useIdealogyNew();
-const { fetchStudentValue } = IdealogyNewStore;
+const { fetchStudentValue, setStudentvalueList } = IdealogyNewStore;
 const { studentValueList } = storeToRefs(IdealogyNewStore);
 const type = ref<{ name: string; value: number; type: string }[]>([]);
 const values = ref<{ name: string; value: number; type: string }[]>([]);
 const payloadMap = ref<Map<string, boolean>>(new Map());
+
+const handleClose = () => {
+  setStudentvalueList([]);
+  type.value = [];
+  values.value = [];
+};
 
 function getRandomColor() {
   const r = Math.floor(Math.random() * 256);
@@ -264,8 +270,9 @@ const stuListCellClick = async (row, column, cell) => {
     stuInfo.stuname = row.userName;
     stuInfo.stuNo = row.stuno;
     const userId = row.userId;
+    console.log('courseId', courseId.value, 'classroomId', row.classroomId);
 
-    const { code, msg } = await fetchStudentValue(userId);
+    const { code, msg } = await fetchStudentValue(userId, row.classroomId);
     if (code !== 200) {
       ElMessage({
         type: 'error',
@@ -275,14 +282,14 @@ const stuListCellClick = async (row, column, cell) => {
     studentValueList.value.map(c => {
       type.value.push({
         name: c.name,
-        value: c.weight,
+        value: c.evalResult?.valueCount ?? 0,
         type: '类型'
       });
       if (c.children) {
         c.children.map(ch => {
           values.value.push({
             name: ch.name,
-            value: ch.weight,
+            value: ch.evalResult?.valueCount ?? 0,
             type: '标签'
           });
         });

@@ -7,7 +7,7 @@
   />
   <!-- 图标列表 -->
   <!-- 在GraphChart组件的具名插槽中可以插入GraphItem，可自定义图表 -->
-  <GraphChart :store="teacherStuGraStore">
+  <GraphChart :store="teacherStuGraStore" @close="handelClose">
     <template #title
       >学生课程画像：{{ stuInfo.classroomName }} - {{ stuInfo.stuname }}({{
         stuInfo.stuNo
@@ -165,12 +165,17 @@ const teacherStuGraStore = useTeacherStuGra();
 const mainStore = useMain();
 const { stuListVisible, chartVisible } = storeToRefs(teacherStuGraStore);
 const IdealogyNewStore = useIdealogyNew();
-const { fetchStudentValue } = IdealogyNewStore;
+const { fetchStudentValue, setStudentvalueList } = IdealogyNewStore;
 const { studentValueList } = storeToRefs(IdealogyNewStore);
 const type = ref<{ name: string; value: number; type: string }[]>([]);
 const values = ref<{ name: string; value: number; type: string }[]>([]);
 const payloadMap = ref<Map<string, boolean>>(new Map());
 
+const handelClose = () => {
+  setStudentvalueList([]);
+  type.value = [];
+  values.value = [];
+};
 /* ********************课程数据定义******************** */
 
 /* ********************学生数据数据定义******************** */
@@ -212,7 +217,7 @@ const stuListCellClick = async (row, column, cell) => {
     stuInfo.stuname = row.userName;
     stuInfo.stuNo = row.stuno;
     const userId = row.userId;
-    const { code, msg } = await fetchStudentValue(userId);
+    const { code, msg } = await fetchStudentValue(userId, String(stuInfo.classroomId));
     if (code !== 200) {
       ElMessage({
         type: 'error',
@@ -222,14 +227,14 @@ const stuListCellClick = async (row, column, cell) => {
     studentValueList.value.map(c => {
       type.value.push({
         name: c.name,
-        value: c.weight,
+        value: c.evalResult?.valueCount ?? 0,
         type: '类型'
       });
       if (c.children) {
         c.children.map(ch => {
           values.value.push({
             name: ch.name,
-            value: ch.weight,
+            value: ch.evalResult?.valueCount ?? 0,
             type: '标签'
           });
         });

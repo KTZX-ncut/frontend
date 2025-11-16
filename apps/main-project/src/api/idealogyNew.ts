@@ -83,6 +83,16 @@ export const getClassroomValue = (classroomId: string): Promise<UniExport> => {
 }
 
 // 获取学生思政评分
-export const getStudentValue = (userId: string): Promise<UniExport> => {
-  return request.evaluation.get(`/evaluation/ideology/getStudentIdeologyEvaluation?userId=${userId}`)
+export const getStudentValue = (userId: string, classroomId: string): Promise<UniExport> => {
+  return request.evaluation.get(`/evaluation/ideology/getStudentIdeologyEvaluation?userId=${userId}&classroomId=${classroomId}`)
+}
+
+// 获取所有学生评价
+export const getAllStudentValue = (classroomId: string): Promise<UniExport> => {
+  return request.evaluation.get(`/evaluation/ideology/getAllStudentIdeologyEvaluation?classroomId=${classroomId}`)
+}
+
+// 通过classroomId获取课堂明细
+export const getClassroominfo = (): Promise<UniExport> => {
+  return request.evaluation.get('/evaluation/attainment/getClassroomByClassroomId');
 }
