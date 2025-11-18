@@ -277,16 +277,16 @@ const routes = [
         name: 'IdealogyDatamanage',
         component: () => import('../components/Idealogy/Portraitmangt.vue')
       },
-      {
-        path: 'evaluation/studentPortrait', // 思政价值-学生画像
-        name: 'IdealogyStudentPortrait',
-        component: () => import('../components/Idealogy/StudentsGraph/StudentsGraphWrapper.vue')
-      },
-      {
-        path: 'evaluation/classroomPortrait', // 思政价值-课堂画像
-        name: 'IdealogyClassroomPortraita',
-        component: () => import('../components/Idealogy/ClassroomGraph/ClassroomGraphWrapper.vue')
-      },
+      // {
+      //   path: 'evaluation/studentPortrait', // 思政价值-学生画像
+      //   name: 'IdealogyStudentPortrait',
+      //   component: () => import('../components/Idealogy/StudentsGraph/StudentsGraphWrapper.vue')
+      // },
+      // {
+      //   path: 'evaluation/classroomPortrait', // 思政价值-课堂画像
+      //   name: 'IdealogyClassroomPortraita',
+      //   component: () => import('../components/Idealogy/ClassroomGraph/ClassroomGraphWrapper.vue')
+      // },
       {
         path: 'evasys/accessible/coursetarget', // 达成性评价模型-课程目标
         name: 'CourseTarget',
