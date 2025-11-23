@@ -277,11 +277,11 @@ const routes = [
         name: 'IdealogyDatamanage',
         component: () => import('../components/Idealogy/Portraitmangt.vue')
       },
-      // {
-      //   path: 'evaluation/studentPortrait', // 思政价值-学生画像
-      //   name: 'IdealogyStudentPortrait',
-      //   component: () => import('../components/Idealogy/StudentsGraph/StudentsGraphWrapper.vue')
-      // },
+      {
+        path: 'evaluation/studentPortrait', // 思政价值-学生画像
+        name: 'IdealogyStudentPortrait',
+        component: () => import('../components/Idealogy/StudentsGraph/StudentsGraphWrapper.vue')
+      },
       // {
       //   path: 'evaluation/classroomPortrait', // 思政价值-课堂画像
       //   name: 'IdealogyClassroomPortraita',
