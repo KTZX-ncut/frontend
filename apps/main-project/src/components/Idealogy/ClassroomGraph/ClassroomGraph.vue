@@ -209,8 +209,21 @@ const handleCustomeClick = (name: string) => {
     }
     case 'hot': {
       const chartInstance = hotChartCmp.value?.getChartInstance();
+      const updateMaps = !payloadMap.value.get(name) ? heatmapTypesCount : heatmapValues;
+      const updateXData = !payloadMap.value.get(name) ? type : values;
+
+      const updateData = updateMaps.value.map(heat => {
+        const x = updateXData.value.findIndex(t => t.id === heat.id);
+        const y = heatMapNames.value.findIndex(n => n.stuno === heat.stuno);
+        return [x, y, heat.value];
+      });
       chartInstance.setOption(
         {
+          yAxis: {
+            type: 'category',
+            data: heatMapNames.value.map(n => n.name),
+            splitArea: { show: true }
+          },
           xAxis: {
             type: 'category',
             data: !payloadMap.value.get(name)
@@ -223,11 +236,7 @@ const handleCustomeClick = (name: string) => {
               name: 'HeatMap',
               type: 'heatmap',
               progressive: 5000,
-              data: heatmapValues.value.map(heat => {
-                const x = values.value.findIndex(t => t.id === heat.id);
-                const y = heatMapNames.value.findIndex(n => n.stuno === heat.stuno);
-                return [x, y, heat.value];
-              }),
+              data: updateData,
               label: {
                 show: true,
                 formatter: v => v.data[2],
@@ -297,7 +306,7 @@ const handleCellClick = async (row, column, cell) => {
     courseValueList.value.map(c => {
       type.value.push({
         name: c.name,
-        value: c.evalResult?.valueCount ?? 0,
+        value: c.children?.length ?? 0,
         type: '类型',
         id: c.id
       });
@@ -330,20 +339,16 @@ const handleCellClick = async (row, column, cell) => {
         value: [] as number[]
       };
 
-      let cid: null | string = null;
       if (sin.ideologyList.length) {
         sin.ideologyList.map(id => {
           let count = 0;
-          cid = id.id;
           if (id.children?.length) {
             id.children.map(ch => {
               names.value.push(ch.evalResult?.valueCount ?? 0);
-              values.value.map(v => {
-                heatmapValues.value.push({
-                  stuno: sin.stuno,
-                  id: v.id,
-                  value: ch.evalResult?.valueCount ?? 0
-                });
+              heatmapValues.value.push({
+                stuno: sin.stuno,
+                id: ch.id,
+                value: ch.evalResult?.valueCount ?? 0
               });
               if (ch.evalResult?.valueCount && ch.evalResult?.valueCount > 0) {
                 count++;
@@ -353,7 +358,7 @@ const handleCellClick = async (row, column, cell) => {
 
           heatmapTypesCount.value.push({
             stuno: sin.stuno,
-            id: cid,
+            id: id.id,
             value: count
           });
         });

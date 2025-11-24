@@ -227,7 +227,7 @@ const stuListCellClick = async (row, column, cell) => {
     studentValueList.value.map(c => {
       type.value.push({
         name: c.name,
-        value: c.evalResult?.valueCount ?? 0,
+        value: c.children?.length ?? 0,
         type: '类型'
       });
       if (c.children) {
