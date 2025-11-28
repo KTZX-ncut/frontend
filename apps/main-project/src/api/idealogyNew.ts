@@ -96,3 +96,8 @@ export const getAllStudentValue = (classroomId: string): Promise<UniExport> => {
 export const getClassroominfo = (): Promise<UniExport> => {
   return request.evaluation.get('/evaluation/attainment/getClassroomByClassroomId');
 }
+
+// 获取所有题目对应标签
+export const getAllQuestionLabels = (classroomId: string): Promise<UniExport> => {
+  return request.evaluation.get(`/evaluation/ideology/getAllPaperIdeologyEvaluation?classroomId=${classroomId}`);
+}

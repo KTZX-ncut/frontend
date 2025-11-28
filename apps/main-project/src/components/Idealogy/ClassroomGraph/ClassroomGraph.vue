@@ -19,6 +19,7 @@
       <GraphItem title="思政标签评价" :chartOption="currentBarFOption" ref="barFCmp" />
       <GraphItem title="思政标签占比" :chartOption="currentPieOption" ref="pieChartCmp" />
       <GraphItem title="思政标签分布" :chartOption="currentHotOption" ref="hotChartCmp" />
+      <GraphItem title="思政题目分布" :chartOption="currentQuestionOption" ref="questionChartCmp" />
       <GraphItem title="思政标签达成情况">
         <div class="table-wrapper" :style="{ '--col-count': values.length }">
           <table class="equal-table">
@@ -84,6 +85,7 @@ const wordmapCmp = ref(null);
 const barFCmp = ref(null);
 const pieChartCmp = ref(null);
 const hotChartCmp = ref(null);
+const questionChartCmp = ref(null);
 const isDestroy = ref(false);
 
 const courseInfo = reactive({
@@ -96,14 +98,16 @@ const currentWordOption = ref({});
 const currentBarFOption = ref({});
 const currentPieOption = ref({});
 const currentHotOption = ref({});
+const currentQuestionOption = ref({});
 
 // pinia状态管理
 const classroomGraphStore = useClassroomGraph();
 const mainStore = useMain();
 const { chartVisible } = storeToRefs(classroomGraphStore);
 const IdealogyNewStore = useIdealogyNew();
-const { fetchCourseValue, setCourseValueList, fetchAllStudentValue } = IdealogyNewStore;
-const { courseValueList, allStudentValueList } = storeToRefs(IdealogyNewStore);
+const { fetchCourseValue, setCourseValueList, fetchAllStudentValue, fetchAllQuestionsLabels } =
+  IdealogyNewStore;
+const { courseValueList, allStudentValueList, questionsLabels } = storeToRefs(IdealogyNewStore);
 const type = ref<{ name: string; value: number; type: string; id: string }[]>([]);
 const values = ref<{ name: string; value: number; type: string; id: string }[]>([]);
 const payloadMap = ref<Map<string, boolean>>(new Map());
@@ -111,6 +115,21 @@ const payloadMap = ref<Map<string, boolean>>(new Map());
 const heatMapNames = ref<{ name: string; stuno: string; userId: string; value: number[] }[]>([]);
 const heatmapTypesCount = ref<{ stuno: string; id: string; value: number }[]>([]);
 const heatmapValues = ref<{ stuno: string; id: string; value: number }[]>([]);
+
+const questionLists = ref<
+  {
+    questionName: string;
+    questionId: string;
+    labels: Array<{ labelName: string; value: number; valueId: string }>;
+  }[]
+>([]);
+const testsLists = ref<
+  {
+    testName: string;
+    testId: string;
+    labels: Array<{ labelName: string; value: number; valueId: string }>;
+  }[]
+>([]);
 
 const handleClose = () => {
   setCourseValueList([]);
@@ -206,6 +225,7 @@ const handleCustomeClick = (name: string) => {
           replaceMerge: 'series'
         }
       );
+      break;
     }
     case 'hot': {
       const chartInstance = hotChartCmp.value?.getChartInstance();
@@ -253,6 +273,94 @@ const handleCustomeClick = (name: string) => {
         },
         {
           replaceMerge: ['xAxis', 'series']
+        }
+      );
+      break;
+    }
+    case 'question': {
+      const chartInstance = questionChartCmp.value?.getChartInstance();
+      const updateMaps = !payloadMap.value.get(name)
+        ? testsLists.value.map(t => t.testName)
+        : questionLists.value.map(q => q.questionName);
+      const testsSeries = () => {
+        const heatmapData: number[][] = [];
+        testsLists.value.forEach((test, testIndex) => {
+          test.labels.forEach(label => {
+            const x = values.value.findIndex(v => v.id === label.valueId);
+            const y = testsLists.value.findIndex(t => t.testId === test.testId);
+            if (x !== -1 && y !== -1) {
+              // 只处理能找到对应标签的数据
+              heatmapData.push([x, y, label.value]);
+            }
+          });
+        });
+        return heatmapData;
+      };
+
+      const questionSeries = () => {
+        const heatmapData: number[][] = [];
+        questionLists.value.forEach((question, questionIndex) => {
+          question.labels.forEach(label => {
+            const x = values.value.findIndex(v => v.id === label.valueId);
+            const y = questionLists.value.findIndex(q => q.questionId === question.questionId);
+            if (x !== -1 && y !== -1) {
+              // 只处理能找到对应标签的数据
+              heatmapData.push([x, questionIndex, label.value]);
+            }
+          });
+        });
+        return heatmapData;
+      };
+
+      chartInstance.setOption(
+        {
+          yAxis: {
+            type: 'category',
+            data: updateMaps,
+            splitArea: { show: true },
+            axisLabel: {
+              formatter: function (value: string) {
+                return value.length > 10 ? value.slice(0, 10) + '…' : value; // 长标签截断
+              }
+            }
+          },
+          tooltip: {
+            position: 'top',
+            formatter: function (params) {
+              // params.data[0] 是 x 轴索引（标签索引）
+              // params.data[1] 是 y 轴索引（试卷索引）
+              // params.data[2] 是值
+              const labelName = values.value[params.data[0]]?.name || '未知标签';
+              const testName = !payloadMap.value.get(name)
+                ? testsLists.value[params.data[1]]?.testName || '未知试卷'
+                : questionLists.value[params.data[1]]?.questionName || '未知题目';
+              return `${
+                !payloadMap.value.get(name) ? '试卷' : '题目'
+              }: ${testName}<br/>标签: ${labelName}<br/>评价: ${params.data[2]}`;
+            }
+          },
+          series: [
+            {
+              name: 'HeatMap',
+              type: 'heatmap',
+              progressive: 5000,
+              data: !payloadMap.value.get(name) ? testsSeries() : questionSeries(),
+              label: {
+                show: true,
+                formatter: v => v.data[2],
+                color: '#000'
+              },
+              emphasis: {
+                itemStyle: {
+                  shadowBlur: 10,
+                  shadowColor: 'rgba(0, 0, 0, 0.4)'
+                }
+              }
+            }
+          ]
+        },
+        {
+          replaceMerge: ['yAxis', 'series', 'tooltip']
         }
       );
     }
@@ -331,6 +439,66 @@ const handleCellClick = async (row, column, cell) => {
       });
       return;
     }
+
+    // 获取所有题目的标签
+    await fetchAllQuestionsLabels(row.classroomId);
+
+    // 清空之前的数据，避免重复
+    questionLists.value = [];
+    testsLists.value = [];
+
+    // 处理试卷维度的标签数据
+    questionsLabels.value.forEach(paper => {
+      // 按试卷分组，创建试卷对象
+      const testPaper = {
+        testName: paper?.paperName,
+        testId: paper?.paperId,
+        labels: [] as Array<{ labelName: string; value: number; valueId: string }>
+      };
+
+      // 遍历试卷中的题目，收集所有不重复的标签
+      const uniqueLabels = new Map<string, { labelName: string; value: number; valueId: string }>();
+
+      paper?.questionList.forEach(question => {
+        const labelKey = question.valueId;
+        if (!uniqueLabels.has(labelKey)) {
+          uniqueLabels.set(labelKey, {
+            labelName: question.valueTypeName,
+            value: question.valueCount,
+            valueId: question.valueId
+          });
+        }
+      });
+
+      // 将去重后的标签添加到试卷中
+      testPaper.labels = Array.from(uniqueLabels.values());
+      testsLists.value.push(testPaper);
+    });
+
+    // 处理题目维度的标签数据
+    questionsLabels.value.forEach(paper => {
+      // 遍历试卷中的所有题目
+      let labels = [] as Array<{ labelName: string; value: number; valueId: string }>;
+      paper?.questionList.forEach(question => {
+        if (Array.isArray(question.valueName)) {
+        } else {
+          labels.push({
+            labelName: question.valueTypeName,
+            value: question.valueCount,
+            valueId: question.valueId
+          });
+          questionLists.value.push({
+            questionName: question.questionTitle,
+            questionId: question.questionId,
+            labels: labels
+          });
+        }
+      });
+    });
+
+    console.log('试卷标签数据:', testsLists.value);
+    console.log('题目标签数据:', questionLists.value);
+
     allStudentValueList.value.map(sin => {
       const names = {
         name: sin.studentName,
@@ -351,7 +519,7 @@ const handleCellClick = async (row, column, cell) => {
                 value: ch.evalResult?.valueCount ?? 0
               });
               if (ch.evalResult?.valueCount && ch.evalResult?.valueCount > 0) {
-                count++;
+                count += ch.evalResult?.valueCount;
               }
             });
           }
@@ -375,7 +543,7 @@ const handleCellClick = async (row, column, cell) => {
 // 需要传递第几次作业，默认最新一次评价
 const initChart = () => {
   // 第一个图表在点击的时候会将所有数据进行初始化，节省性能
-
+  console.log('---lyjc', testsLists.value);
   // courseGraphStore.updateCharts(num, isInit);
   // console.log('---lyjcs', courseGraphStore.charts[1].options[courseGraphStore.totalTimes - 1]);
   const idealogySet = {
@@ -577,11 +745,19 @@ const initChart = () => {
         name: 'HeatMap',
         type: 'heatmap',
         progressive: 5000,
-        data: heatmapTypesCount.value.map(heat => {
-          const x = type.value.findIndex(t => t.id === heat.id);
-          const y = heatMapNames.value.findIndex(n => n.stuno === heat.stuno);
-          return [x, y, heat.value];
-        }),
+        data: (() => {
+          const heatmapData: number[][] = [];
+          testsLists.value.forEach((test, testIndex) => {
+            test.labels.forEach(label => {
+              const x = values.value.findIndex(v => v.id === label.valueId);
+              if (x !== -1) {
+                // 只处理能找到对应标签的数据
+                heatmapData.push([x, testIndex, label.value]);
+              }
+            });
+          });
+          return heatmapData;
+        })(),
         label: {
           show: true,
           formatter: v => v.data[2],
@@ -597,6 +773,120 @@ const initChart = () => {
     ]
   };
   payloadMap.value.set('hot', false);
+
+  currentQuestionOption.value = {
+    toolbox: {
+      ...newtoolbox('question')
+    },
+    tooltip: {
+      position: 'top',
+      formatter: function (params) {
+        // params.data[0] 是 x 轴索引（标签索引）
+        // params.data[1] 是 y 轴索引（试卷索引）
+        // params.data[2] 是值
+        const labelName = values.value[params.data[0]]?.name || '未知标签';
+        const testName = testsLists.value[params.data[1]]?.testName || '未知试卷';
+        return `试卷: ${testName}<br/>标签: ${labelName}<br/>评价: ${params.data[2]}`;
+      }
+    },
+    grid: {
+      height: '60%',
+      top: '10%',
+      left: '10%',
+      right: '10%',
+      containLabel: true // 确保轴标签不会被裁掉
+    },
+    xAxis: {
+      type: 'category',
+      data: values.value.map(t => t.name),
+      splitArea: { show: true }, // 显示块区域背景
+      axisLabel: {
+        rotate: 45, // 标签旋转 45 度
+        interval: 0, // 强制显示所有标签
+        fontSize: 12, // 根据需要调整字体大小
+        formatter: function (value) {
+          return value.length > 8 ? value.slice(0, 8) + '…' : value; // 长标签截断
+        }
+      }
+    },
+    yAxis: {
+      type: 'category',
+      data: testsLists.value.map(t => t.testName),
+      splitArea: { show: true },
+      axisLabel: {
+        formatter: function (value: string) {
+          return value.length > 8 ? value.slice(0, 8) + '…' : value; // 更短的截断
+        }
+      }
+    },
+    visualMap: {
+      min: 0,
+      max: 1,
+      calculable: true,
+      orient: 'horizontal',
+      left: 'center',
+      bottom: '15%',
+      inRange: {
+        color: [
+          '#d7d7d7', // 低值
+          '#fba89b', // 中间偏低
+          '#ffff00', // 中间
+          '#4876ff', // 中间偏高
+          '#90ee90' // 高值
+        ]
+      }
+    },
+    dataZoom: [
+      {
+        type: 'slider',
+        xAxisIndex: 0,
+        yAxisIndex: 0,
+        start: 0,
+        end: 50 // 显示前 50% 类目，可滑动查看
+      },
+      {
+        type: 'slider', // 纵向滑块
+        yAxisIndex: 0,
+        start: 0,
+        end: 50,
+        right: '5%', // 放在右侧，避开 visualMap
+        orient: 'vertical' // 纵向滑块
+      }
+    ],
+    series: [
+      {
+        name: 'HeatMap',
+        type: 'heatmap',
+        progressive: 5000,
+        data: (() => {
+          const heatmapData: number[][] = [];
+          testsLists.value.forEach((test, testIndex) => {
+            test.labels.forEach(label => {
+              const x = values.value.findIndex(v => v.id === label.valueId);
+              const y = testsLists.value.findIndex(t => t.testId === test.testId);
+              if (x !== -1 && y !== -1) {
+                // 只处理能找到对应标签的数据
+                heatmapData.push([x, y, label.value]);
+              }
+            });
+          });
+          return heatmapData;
+        })(),
+        label: {
+          show: true,
+          formatter: v => v.data[2],
+          color: '#000'
+        },
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(0, 0, 0, 0.4)'
+          }
+        }
+      }
+    ]
+  };
+  payloadMap.value.set('question', false);
 };
 
 // 获取课堂列表

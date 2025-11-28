@@ -1,4 +1,4 @@
-import { State, updateStudentState, calculate, getIdeologyList, updateIdeology, addParentIdeology, addSameIdeology, addChildIdeology, deleteIdeology, getExamList, getinsertedExamInfo, insertExam, deleteExam, changeOrder, getClassroomValue, getStudentValue, getAllStudentValue, getClassroominfo } from '../api/idealogyNew';
+import { State, updateStudentState, calculate, getIdeologyList, updateIdeology, addParentIdeology, addSameIdeology, addChildIdeology, deleteIdeology, getExamList, getinsertedExamInfo, insertExam, deleteExam, changeOrder, getClassroomValue, getStudentValue, getAllStudentValue, getClassroominfo, getAllQuestionLabels } from '../api/idealogyNew';
 
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
@@ -81,6 +81,29 @@ export interface ClassroomInfo {
   assistantName: null;
 }
 
+export interface AllQuestionsLabels {
+  paperId: string;
+  paperType: PaperType;
+  paperName: string;
+  questionList: QuestionList[];
+}
+
+export enum PaperType {
+  Def = "def",
+  Practice = "practice",
+}
+
+export interface QuestionList {
+  questionId: string;
+  valueId: string;
+  valueTypeId: string;
+  questionTitle: string;
+  questionContent: string;
+  valueTypeName: string;
+  valueName: string;
+  valueCount: number;
+}
+
 
 
 const useIdealogyNew = defineStore('idealogyNew', () => {
@@ -92,6 +115,7 @@ const useIdealogyNew = defineStore('idealogyNew', () => {
   const studentValueList = ref<CourseIdealogy[]>([])
   const allStudentValueList = ref<AllStudentValue[]>([])
   const classroomInfo = ref<ClassroomInfo>({} as ClassroomInfo)
+  const questionsLabels = ref<AllQuestionsLabels[]>([])
 
   const fetchStudentState = async (stateList: State[]) => {
     return await updateStudentState(stateList);
@@ -194,6 +218,12 @@ const useIdealogyNew = defineStore('idealogyNew', () => {
     }
   }
 
+  const fetchAllQuestionsLabels = async (classroomId: string) => {
+    const { code, data, msg } = await getAllQuestionLabels(classroomId)
+    questionsLabels.value = data
+    return { code, msg }
+  }
+
   return {
     Llist,
     testList,
@@ -203,6 +233,7 @@ const useIdealogyNew = defineStore('idealogyNew', () => {
     courseValueList,
     studentValueList,
     allStudentValueList,
+    questionsLabels,
     setTestList,
     fetchStudentState,
     fetchCalc,
@@ -224,6 +255,7 @@ const useIdealogyNew = defineStore('idealogyNew', () => {
     setStudentvalueList,
     fetchAllStudentValue,
     fetchClassroomInfo,
+    fetchAllQuestionsLabels
   }
 
 });
