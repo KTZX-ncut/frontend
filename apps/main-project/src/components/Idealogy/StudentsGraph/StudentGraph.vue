@@ -280,13 +280,12 @@ const stuListCellClick = async (row, column, cell) => {
       });
     }
     studentValueList.value.map(c => {
-      type.value.push({
-        name: c.name,
-        value: c.children?.length ?? 0,
-        type: '类型'
-      });
+      let count = 0;
       if (c.children) {
         c.children.map(ch => {
+          if (ch.evalResult?.valueCount && ch.evalResult?.valueCount > 0) {
+            count += ch.evalResult?.valueCount;
+          }
           values.value.push({
             name: ch.name,
             value: ch.evalResult?.valueCount ?? 0,
@@ -294,6 +293,11 @@ const stuListCellClick = async (row, column, cell) => {
           });
         });
       }
+      type.value.push({
+        name: c.name,
+        value: count,
+        type: '类型'
+      });
     });
 
     studentGraphStore.setChartVisible(true);

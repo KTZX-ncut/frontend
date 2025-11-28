@@ -393,6 +393,15 @@ importers:
       '@ai-sdk/openai':
         specifier: ^2.0.64
         version: 2.0.64(zod@3.25.76)
+      '@huggingface/hub':
+        specifier: ^2.7.1
+        version: 2.7.1
+      '@huggingface/inference':
+        specifier: ^4.13.4
+        version: 4.13.4
+      '@huggingface/mcp-client':
+        specifier: ^0.2.3
+        version: 0.2.3
       '@llamaindex/huggingface':
         specifier: ^0.1.31
         version: 0.1.31(@huggingface/transformers@3.7.6)(@llamaindex/core@0.6.22(@huggingface/transformers@3.7.6))(@llamaindex/env@0.1.30(@huggingface/transformers@3.7.6))(ws@8.18.3)(zod@3.25.76)
@@ -423,6 +432,9 @@ importers:
       '@voltagent/server-hono':
         specifier: ^1.0.0
         version: 1.2.2(@voltagent/core@1.2.0(@ai-sdk/provider-utils@3.0.16(zod@3.25.76))(@voltagent/logger@1.0.4(@opentelemetry/api@1.9.0))(ai@5.0.89(zod@3.25.76))(zod@3.25.76))(zod@3.25.76)
+      adm-zip:
+        specifier: ^0.5.16
+        version: 0.5.16
       ai:
         specifier: ^5.0.12
         version: 5.0.89(zod@3.25.76)
@@ -438,6 +450,15 @@ importers:
       llamaindex:
         specifier: ^0.12.0
         version: 0.12.0(@huggingface/transformers@3.7.6)(@modelcontextprotocol/sdk@1.21.1)(hono@4.10.4)(p-retry@6.2.1)(rxjs@7.8.2)(tree-sitter@0.22.4)(web-tree-sitter@0.24.7)(zod@3.25.76)
+      openai:
+        specifier: ^6.9.1
+        version: 6.9.1(ws@8.18.3)(zod@3.25.76)
+      p-limit:
+        specifier: ^7.2.0
+        version: 7.2.0
+      xml2js:
+        specifier: ^0.6.2
+        version: 0.6.2
       zod:
         specifier: ^3.25.76
         version: 3.25.76
@@ -445,9 +466,15 @@ importers:
       '@biomejs/biome':
         specifier: ^1.9.4
         version: 1.9.4
+      '@types/adm-zip':
+        specifier: ^0.5.7
+        version: 0.5.7
       '@types/node':
         specifier: ^22.10.5
         version: 22.18.8
+      '@types/xml2js':
+        specifier: ^0.4.14
+        version: 0.4.14
       tsdown:
         specifier: ^0.15.2
         version: 0.15.12(typescript@5.9.3)
@@ -1595,16 +1622,33 @@ packages:
     peerDependencies:
       hono: '*'
 
+  '@huggingface/hub@2.7.1':
+    resolution: {integrity: sha512-XzDVwF8ISi1R7JL+KP44ax4LbG/RhYRyfwaWTg/+zCaCDLTLpIW8LGDgBVQsuSkBBHiPdWp8PaNUGZ04yQCIOQ==}
+    engines: {node: '>=18'}
+    hasBin: true
+
   '@huggingface/inference@2.8.1':
     resolution: {integrity: sha512-EfsNtY9OR6JCNaUa5bZu2mrs48iqeTz0Gutwf+fU0Kypx33xFQB4DKMhp8u4Ee6qVbLbNWvTHuWwlppLQl4p4Q==}
+    engines: {node: '>=18'}
+
+  '@huggingface/inference@4.13.4':
+    resolution: {integrity: sha512-1G6jBDYLAZw7oNrJdMp+0/CafeoNaCLzrDd9fYSX3nhjzMuyWIPZ/MtP5EwXdC0htlFPx+R6JGqPhctAalQO+w==}
     engines: {node: '>=18'}
 
   '@huggingface/jinja@0.5.1':
     resolution: {integrity: sha512-yUZLld4lrM9iFxHCwFQ7D1HW2MWMwSbeB7WzWqFYDWK+rEb+WldkLdAJxUPOmgICMHZLzZGVcVjFh3w/YGubng==}
     engines: {node: '>=18'}
 
+  '@huggingface/mcp-client@0.2.3':
+    resolution: {integrity: sha512-j3l1XE1qzVeF5lv6ho3ScRgnqAg063FNUIVoiy1WCQTwPIC+Y/mF+RUPc6fO3+2USz1VN8UnmeFqXcBsth+KkA==}
+    engines: {node: '>=18'}
+    hasBin: true
+
   '@huggingface/tasks@0.12.30':
     resolution: {integrity: sha512-A1ITdxbEzx9L8wKR8pF7swyrTLxWNDFIGDLUWInxvks2ruQ8PLRBZe8r0EcjC3CDdtlj9jV1V4cgV35K/iy3GQ==}
+
+  '@huggingface/tasks@0.19.66':
+    resolution: {integrity: sha512-cj3+pAxyMWRZXepxdgVUUrlbLVhSD7+G6lt/HI7GKUo8pOdsre4CWVcu+4AXptY9btaCqyBGzTOCD7Ve2OtTfw==}
 
   '@huggingface/transformers@3.7.6':
     resolution: {integrity: sha512-OYlIRY8vj8r/pNx2CdXcDHz4KqpEC+bUMKzdVW5Dx//gp4XRmK+/g8as0h3cssRQYT0vG1A6VCfZy8SV0F4RDQ==}
@@ -2735,6 +2779,9 @@ packages:
   '@tybys/wasm-util@0.10.1':
     resolution: {integrity: sha512-9tTaPJLSiejZKx+Bmog4uSubteqTvFrVrURwkmHixBo0G4seD0zUxp98E1DzUBJxLQ3NPwXrGKDiVjwx/DpPsg==}
 
+  '@types/adm-zip@0.5.7':
+    resolution: {integrity: sha512-DNEs/QvmyRLurdQPChqq0Md4zGvPwHerAJYWk9l2jCbD1VPpnzRJorOdiq4zsw09NFbYnhfsoEhWtxIzXpn2yw==}
+
   '@types/argparse@1.0.38':
     resolution: {integrity: sha512-ebDJ9b0e702Yr7pWgB0jzm+CX4Srzz8RcXtLJDJB+BSccqMa36uyH/zUsSYao5+BD1ytv3k3rPYCq4mAE1hsXA==}
 
@@ -2947,6 +2994,9 @@ packages:
 
   '@types/ws@8.18.1':
     resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
+
+  '@types/xml2js@0.4.14':
+    resolution: {integrity: sha512-4YnrRemBShWRO2QjvUin8ESA41rH+9nQGLUGZV/1IDhi3SL9OhdpNC/MrulTWuptXKwhx/aDxE7toV0f/ypIXQ==}
 
   '@uppy/companion-client@2.2.2':
     resolution: {integrity: sha512-5mTp2iq97/mYSisMaBtFRry6PTgZA6SIL7LePteOV5x0/DxKfrZW3DEiQERJmYpHzy7k8johpm2gHnEKto56Og==}
@@ -3406,6 +3456,10 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
+  adm-zip@0.5.16:
+    resolution: {integrity: sha512-TGw5yVi4saajsSEgz25grObGHEUaDrniwvA2qwSC060KfqGPdglhvPMA2lPIoxs3PQIItj2iag35fONcQqgUaQ==}
+    engines: {node: '>=12.0'}
+
   aes-decrypter@3.1.3:
     resolution: {integrity: sha512-VkG9g4BbhMBy+N5/XodDeV6F02chEk9IpgRTq/0bS80y4dzy79VH2Gtms02VXomf3HmyRe3yyJYkJ990ns+d6A==}
 
@@ -3778,6 +3832,10 @@ packages:
   cli-cursor@3.1.0:
     resolution: {integrity: sha512-I/zHAwsKf9FqGoXM4WWRACob9+SNukZTd94DWF57E4toouRulbCxcUh6RKUEOQlYTHJnzkPMySvPNaaSLNfLZw==}
     engines: {node: '>=8'}
+
+  cli-progress@3.12.0:
+    resolution: {integrity: sha512-tRkV3HJ1ASwm19THiiLIXLO7Im7wlTuKnvkYaTkyoAPefqjNg7W7DHKUlGRxy9vxDvbyCYQkQozvptuMkGCg8A==}
+    engines: {node: '>=4'}
 
   cli-spinners@2.9.2:
     resolution: {integrity: sha512-ywqV+5MmyL4E7ybXgKys4DugZbX0FC6LnwrhjuykIjnK9k8OQacQ7axGKnjDXWNhns0xot3bZI5h55H8yo9cJg==}
@@ -5783,6 +5841,18 @@ packages:
       zod:
         optional: true
 
+  openai@6.9.1:
+    resolution: {integrity: sha512-vQ5Rlt0ZgB3/BNmTa7bIijYFhz3YBceAA3Z4JuoMSBftBF9YqFHIEhZakSs+O/Ad7EaoEimZvHxD5ylRjN11Lg==}
+    hasBin: true
+    peerDependencies:
+      ws: ^8.18.0
+      zod: ^3.25 || ^4.0
+    peerDependenciesMeta:
+      ws:
+        optional: true
+      zod:
+        optional: true
+
   openapi3-ts@4.5.0:
     resolution: {integrity: sha512-jaL+HgTq2Gj5jRcfdutgRGLosCy/hT8sQf6VOy+P+g36cZOjI1iukdPnijC+4CmeRzg/jEllJUboEic2FhxhtQ==}
 
@@ -5799,6 +5869,10 @@ packages:
   p-cancelable@1.1.0:
     resolution: {integrity: sha512-s73XxOZ4zpt1edZYZzvhqFa6uvQc1vwUa0K0BdtIZgQMAJj9IbebH+JkgKZc9h+B05PKHLOTl4ajG1BmNrVZlw==}
     engines: {node: '>=6'}
+
+  p-limit@7.2.0:
+    resolution: {integrity: sha512-ATHLtwoTNDloHRFFxFJdHnG6n2WUeFjaR8XQMFdKIv0xkXjrER8/iG9iu265jOM95zXHAfv9oTkqhrfbIzosrQ==}
+    engines: {node: '>=20'}
 
   p-retry@6.2.1:
     resolution: {integrity: sha512-hEt02O4hUct5wtwg4H4KcWgDdm+l1bOaEy/hWzd8xtXB9BqxTWBBhb+2ImAtH4Cv4rPjV76xN3Zumqk3k3AhhQ==}
@@ -7267,8 +7341,16 @@ packages:
   xe-utils@3.7.9:
     resolution: {integrity: sha512-LWH6M7g+TKX8P2fqGxDPgJQygiULhbMtpmfxTMxJTUjuUv9y2+I45UCcVLh5AnmJSxDV1xTxsq7G5P9Eid06JQ==}
 
+  xml2js@0.6.2:
+    resolution: {integrity: sha512-T4rieHaC1EXcES0Kxxj4JWgaUQHDk+qwHcYOCFHfiwKz7tOVPLq7Hjq9dM1WCMhylqMEfP7hMcOIChvotiZegA==}
+    engines: {node: '>=4.0.0'}
+
   xmlbuilder@10.1.1:
     resolution: {integrity: sha512-OyzrcFLL/nb6fMGHbiRDuPup9ljBycsdCypwuyg5AAHvyWzGfChJpCXMG88AGTIMFhGZ9RccFN1e6lhg3hkwKg==}
+    engines: {node: '>=4.0'}
+
+  xmlbuilder@11.0.1:
+    resolution: {integrity: sha512-fDlsI/kFEx7gLvbecc0/ohLG50fugQp8ryHzMTuW9vSa1GJ0XYWKnhsUx7oie3G98+r56aTQIUB4kht42R3JvA==}
     engines: {node: '>=4.0'}
 
   xmlchars@2.2.0:
@@ -7300,6 +7382,10 @@ packages:
   yargs@17.1.1:
     resolution: {integrity: sha512-c2k48R0PwKIqKhPMWjeiF6y2xY/gPMUlro0sgxqXpbOIohWiLNXWslsootttv7E1e73QPAMQSg5FeySbVcpsPQ==}
     engines: {node: '>=12'}
+
+  yocto-queue@1.2.2:
+    resolution: {integrity: sha512-4LCcse/U2MHZ63HAJVE+v71o7yOdIe4cZ70Wpf8D/IyjDKYQLV5GD46B+hSTjJsvV5PztjvHoU580EftxjDZFQ==}
+    engines: {node: '>=12.20'}
 
   zip-stream@4.1.1:
     resolution: {integrity: sha512-9qv4rlDiopXg4E69k+vMHjNN63YFMe9sZMrdlvKnCjlCRWeCBswPPMPUfx+ipsAWq1LXHe70RcbaHdJJpS6hyQ==}
@@ -8599,13 +8685,35 @@ snapshots:
     dependencies:
       hono: 4.10.4
 
+  '@huggingface/hub@2.7.1':
+    dependencies:
+      '@huggingface/tasks': 0.19.66
+    optionalDependencies:
+      cli-progress: 3.12.0
+
   '@huggingface/inference@2.8.1':
     dependencies:
       '@huggingface/tasks': 0.12.30
 
+  '@huggingface/inference@4.13.4':
+    dependencies:
+      '@huggingface/jinja': 0.5.1
+      '@huggingface/tasks': 0.19.66
+
   '@huggingface/jinja@0.5.1': {}
 
+  '@huggingface/mcp-client@0.2.3':
+    dependencies:
+      '@huggingface/inference': 4.13.4
+      '@huggingface/tasks': 0.19.66
+      '@modelcontextprotocol/sdk': 1.21.1
+    transitivePeerDependencies:
+      - '@cfworker/json-schema'
+      - supports-color
+
   '@huggingface/tasks@0.12.30': {}
+
+  '@huggingface/tasks@0.19.66': {}
 
   '@huggingface/transformers@3.7.6':
     dependencies:
@@ -9644,6 +9752,10 @@ snapshots:
       tslib: 2.8.1
     optional: true
 
+  '@types/adm-zip@0.5.7':
+    dependencies:
+      '@types/node': 22.18.8
+
   '@types/argparse@1.0.38': {}
 
   '@types/body-parser@1.19.6':
@@ -9897,6 +10009,10 @@ snapshots:
   '@types/webxr@0.5.24': {}
 
   '@types/ws@8.18.1':
+    dependencies:
+      '@types/node': 22.18.8
+
+  '@types/xml2js@0.4.14':
     dependencies:
       '@types/node': 22.18.8
 
@@ -10597,6 +10713,8 @@ snapshots:
 
   acorn@8.15.0: {}
 
+  adm-zip@0.5.16: {}
+
   aes-decrypter@3.1.3:
     dependencies:
       '@babel/runtime': 7.28.4
@@ -11067,6 +11185,11 @@ snapshots:
   cli-cursor@3.1.0:
     dependencies:
       restore-cursor: 3.1.0
+
+  cli-progress@3.12.0:
+    dependencies:
+      string-width: 4.2.3
+    optional: true
 
   cli-spinners@2.9.2: {}
 
@@ -13157,6 +13280,11 @@ snapshots:
       ws: 8.18.3
       zod: 3.25.76
 
+  openai@6.9.1(ws@8.18.3)(zod@3.25.76):
+    optionalDependencies:
+      ws: 8.18.3
+      zod: 3.25.76
+
   openapi3-ts@4.5.0:
     dependencies:
       yaml: 2.8.1
@@ -13178,6 +13306,10 @@ snapshots:
       wcwidth: 1.0.1
 
   p-cancelable@1.1.0: {}
+
+  p-limit@7.2.0:
+    dependencies:
+      yocto-queue: 1.2.2
 
   p-retry@6.2.1:
     dependencies:
@@ -13827,8 +13959,7 @@ snapshots:
     optionalDependencies:
       '@parcel/watcher': 2.5.1
 
-  sax@1.4.1:
-    optional: true
+  sax@1.4.1: {}
 
   saxes@5.0.1:
     dependencies:
@@ -14751,7 +14882,14 @@ snapshots:
 
   xe-utils@3.7.9: {}
 
+  xml2js@0.6.2:
+    dependencies:
+      sax: 1.4.1
+      xmlbuilder: 11.0.1
+
   xmlbuilder@10.1.1: {}
+
+  xmlbuilder@11.0.1: {}
 
   xmlchars@2.2.0: {}
 
@@ -14776,6 +14914,8 @@ snapshots:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 20.2.9
+
+  yocto-queue@1.2.2: {}
 
   zip-stream@4.1.1:
     dependencies:

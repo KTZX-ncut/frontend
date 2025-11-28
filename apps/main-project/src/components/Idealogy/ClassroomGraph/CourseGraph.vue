@@ -364,14 +364,12 @@ const handleCellClick = async (row, column, cell) => {
 
   await fetchCourseValue(classroomId.value);
   courseValueList.value.map(c => {
-    type.value.push({
-      name: c.name,
-      value: c.children?.length ?? 0,
-      type: '类型',
-      id: c.id
-    });
+    let count = 0;
     if (c.children) {
       c.children.map(ch => {
+        if (ch.evalResult?.valueCount && ch.evalResult?.valueCount > 0) {
+          count += ch.evalResult?.valueCount;
+        }
         values.value.push({
           name: ch.name,
           value: ch.evalResult?.valueCount ?? 0,
@@ -380,6 +378,12 @@ const handleCellClick = async (row, column, cell) => {
         });
       });
     }
+    type.value.push({
+      name: c.name,
+      value: count,
+      type: '类型',
+      id: c.id
+    });
   });
 
   //  获取所有学生评价
