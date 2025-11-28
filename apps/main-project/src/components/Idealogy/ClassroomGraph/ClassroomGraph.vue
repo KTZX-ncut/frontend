@@ -745,19 +745,11 @@ const initChart = () => {
         name: 'HeatMap',
         type: 'heatmap',
         progressive: 5000,
-        data: (() => {
-          const heatmapData: number[][] = [];
-          testsLists.value.forEach((test, testIndex) => {
-            test.labels.forEach(label => {
-              const x = values.value.findIndex(v => v.id === label.valueId);
-              if (x !== -1) {
-                // 只处理能找到对应标签的数据
-                heatmapData.push([x, testIndex, label.value]);
-              }
-            });
-          });
-          return heatmapData;
-        })(),
+        data: heatmapTypesCount.value.map(heat => {
+          const x = type.value.findIndex(t => t.id === heat.id);
+          const y = heatMapNames.value.findIndex(n => n.stuno === heat.stuno);
+          return [x, y, heat.value];
+        }),
         label: {
           show: true,
           formatter: v => v.data[2],
