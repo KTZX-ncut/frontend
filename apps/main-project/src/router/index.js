@@ -268,6 +268,11 @@ const routes = [
         component: () => import('../components/Idealogy/Idealogy.vue')
       },
       {
+        path: 'evaluation/valueKnowledgeUnit', // 思政价值-知识单元（新建空白页，复用VTab）
+        name: 'IdealogyKnowledgeUnit',
+        component: () => import('../components/Idealogy/KnowledgeUnitPage.vue')
+      },
+      {
         path: 'sizheng/portraitList', // 思政价值-学生名单
         name: 'IdealogyList',
         component: () => import('../components/course/Classroommangt/StudentsList.vue')
