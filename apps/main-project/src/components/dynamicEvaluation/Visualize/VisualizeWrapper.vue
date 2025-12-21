@@ -13,6 +13,11 @@
         <PyramidComp />
       </div>
     </el-tab-pane>
+    <el-tab-pane label="能力映射" name="forth">
+      <div style="" class="w-[100%] overflow-auto flex items-center justify-center">
+        <AbilityMapping />
+      </div>
+    </el-tab-pane>
   </el-tabs>
 </template>
 
@@ -23,6 +28,8 @@ import Universe from './Universe.vue';
 import PyramidComp from './PyramidComp.vue';
 import { ref } from 'vue';
 import { TabsPaneContext } from 'element-plus';
+import AbilityMapping from '../../evaluation/subcomponents/AbilityMapping.vue';
+import KGraph from '../../evaluation/subcomponents/3Dgraph.vue';
 
 const activeName = ref('first');
 const handleClick = (tab: TabsPaneContext) => {

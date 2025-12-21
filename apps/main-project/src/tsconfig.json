@@ -26,6 +26,7 @@
     "./**/*",
     "./vue.d.ts",
     "src",
-    "types"
+    "types",
+    "src/**/*.vue"
   ]
 }
