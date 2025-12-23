@@ -48,60 +48,36 @@
 				</el-table-column>
 				<el-table-column prop="vValues" label="绑定Value" v-if="isCourseManager">
 					<template #default="tableRowData">
-						<div style="display: flex; align-items: center; gap: 6px;">
-							<el-popover v-if="isCourseManager" placement="right-end" width="500"
-								:visible="vValuePopoverVisible[tableRowData.row.id]">
-								<div style="text-align: right;">
-									<el-button style="font-size: 23px;" :type="'danger'" link
-										@click="vValuePopoverVisible[tableRowData.row.id] = isVValuePopoverShow = false;">×</el-button>
-								</div>
-								<el-table ref="vValueTableRef" :data="vValueData" height="400" @selection-change="handleVValueChange"
-									stripe row-key="id" :tree-props="{ children: 'children', hasChildren: 'hasChildren' }" :default-expand-all="true">
-									<el-table-column align="center" type="selection"
-										:selectable="row => vValueTableSelectable(row, tableRowData.row)"
-										width="40"></el-table-column>
-									<el-table-column width="60" label="序号">
-										<template #default="scope">
-											{{ getVValueIndex(scope.row) }}
-										</template>
-									</el-table-column>
-									<el-table-column prop="name" label="名称">
-										<template #default="scope">
-											{{ scope.row.name || scope.row.vname || '' }}
-										</template>
-									</el-table-column>
-								</el-table>
-								<div style="margin-top: 10px; display: flex; justify-content: center;">
-									<el-button type="success" @click="saveEditVValue(tableRowData.row)">确定</el-button>
-								</div>
-								<template #reference>
-									<el-button type="primary" size="small" @click="openVValueDict(tableRowData.row)">绑定Value</el-button>
-								</template>
-							</el-popover>
-							<el-button type="info" size="small" plain
-								@click="openBoundValueDialog(tableRowData.row)">查看绑定</el-button>
-							<span v-if="tableRowData.row.sumVValues && tableRowData.row.sumVValues.length > 0" style="margin-left: 6px;">
-								{{ ' ' + tableRowData.row.sumVValues.map(item => item.name).join(", ") }}
-							</span>
-						
-						</div>
-						<!-- 对话框独立渲染，确保能正常显示 -->
-						<el-dialog
-							v-model="boundValueDialogVisible[tableRowData.row.id]"
-							title="已绑定价值"
-							width="30%"
-							:append-to-body="true"
-							:modal="true"
-							:lock-scroll="true"
-							:close-on-click-modal="false"
-							:close-on-press-escape="false"
-							:z-index="4000"
-							@close="closeBoundValueDialog(tableRowData.row)">
-							<el-input type="textarea" :rows="6" v-model="boundValueText" readonly placeholder="暂无绑定价值" />
-							<template #footer>
-								<el-button @click="closeBoundValueDialog(tableRowData.row)">关闭</el-button>
+						<el-popover v-if="isCourseManager" placement="right-end" width="500"
+							:visible="vValuePopoverVisible[tableRowData.row.id]">
+							<div style="text-align: right;">
+								<el-button style="font-size: 23px;" :type="'danger'" link
+									@click="vValuePopoverVisible[tableRowData.row.id] = isVValuePopoverShow = false;">×</el-button>
+							</div>
+							<el-table ref="vValueTableRef" :data="vValueData" height="400" @selection-change="handleVValueChange"
+								stripe row-key="id" :tree-props="{ children: 'children', hasChildren: 'hasChildren' }" :default-expand-all="true">
+								<el-table-column align="center" type="selection"
+									:selectable="row => vValueTableSelectable(row, tableRowData.row)"
+									width="40"></el-table-column>
+								<el-table-column width="60">
+									<template v-slot="row">
+										{{ row.row.index }}
+									</template>
+								</el-table-column>
+								<el-table-column prop="name" label="名称"></el-table-column>
+							</el-table>
+							<div style="margin-top: 10px; display: flex; justify-content: center;">
+								<el-button type="success" @click="saveEditVValue(tableRowData.row)">确定</el-button>
+							</div>
+							<template #reference>
+								<el-icon class='icon' color="dodgerblue">
+									<Edit @click="openVValueDict(tableRowData.row)" />
+								</el-icon>
 							</template>
-						</el-dialog>
+						</el-popover>
+						<span v-if="tableRowData.row.sumVValues && tableRowData.row.sumVValues.length > 0">
+							{{ ' ' + tableRowData.row.sumVValues.map(item => item.name || item.vname || '').join(", ") }}
+						</span>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -113,6 +89,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, nextTick } from 'vue';
 import { ElMessage, ElMessageBox } from "element-plus";
+import { Edit } from '@element-plus/icons-vue';
 import request from "../../utils/request";
 import Sortable from 'sortablejs';
 import _ from 'lodash';
@@ -135,9 +112,7 @@ const tableData = ref([]);
 const tableLoading = ref(true);
 const vValueData = ref([]);
 const vValuePopoverVisible = ref({});
-const boundValueDialogVisible = ref({});
-const activeBoundDialogRowId = ref(null);
-const boundValueText = ref('');
+
 
 //-------------------------处理方法
 //children行class显示
@@ -286,6 +261,15 @@ const loadData = async () => {
 	try {
 		const res = await request.evaluation.get('/evaluation/knowledgeUnit/getKnowledgeUnitTree?courseid=' + courseid);
 		if (res.code === 200) {
+			const normalizeVValuesField = (nodes) => {
+				(nodes || []).forEach((n) => {
+					n.vValues = n.vValues || n.vvalues || [];
+					if (n.children && n.children.length) {
+						normalizeVValuesField(n.children);
+					}
+				});
+			};
+			normalizeVValuesField(res.data);
 			tableData.value = res.data;
 			// console.log(res.data);
 			initialize();
@@ -313,7 +297,6 @@ const initialize = () => {
 		item.pOrderNum = 0;
 		item.isChildren = false;
 		vValuePopoverVisible.value[item.id] = false;
-	boundValueDialogVisible.value[item.id] = false;
 		editRef.value.set(item.id, { "editName": false, "editDataValue": false });
 		if (item.children) {
 			item.children.forEach((i) => {
@@ -332,7 +315,6 @@ const initialize = () => {
 				i.pOrderNum = item.ordernum;
 				i.parentType = item.type;
 				vValuePopoverVisible.value[i.id] = false;
-			boundValueDialogVisible.value[i.id] = false;
 				editRef.value.set(i.id, { "editName": false, "editDataValue": false });
 			});
 		}
@@ -443,16 +425,32 @@ const vValueTableSelectable = (vValueRow, tableRowData) => {
 	return !(tableRowData.children_vValues || []).map(t => t.vid).includes(vValueRow.id);
 }
 
+const flattenVValueTree = (nodes) => {
+	const result = [];
+	const walk = (list) => {
+		(list || []).forEach((n) => {
+			result.push(n);
+			if (n.children && n.children.length) {
+				walk(n.children);
+			}
+		});
+	};
+	walk(nodes);
+	return result;
+}
+
 const toggleVValueSelection = vValueIds => {
-	const rows = vValueData.value.filter(v => vValueIds.includes(v.id));
+	const idSet = new Set((vValueIds || []).map(id => String(id)));
+	const allRows = flattenVValueTree(vValueData.value);
+	const rows = allRows.filter(v => idSet.has(String(v.id)));
 	if (rows.length > 0) {
 		nextTick(() => {
 			rows.forEach(row => {
-				vValueTableRef.value!.toggleRowSelection(row, undefined, true);
+				vValueTableRef.value?.toggleRowSelection(row, true);
 			});
 		});
 	} else {
-		vValueTableRef.value!.clearSelection();
+		vValueTableRef.value?.clearSelection();
 	}
 };
 
@@ -464,53 +462,12 @@ const openVValueDict = (row) => {
 	if (isVValuePopoverShow.value) return;
 	vValuePopoverVisible.value[row.id] = true;
 	isVValuePopoverShow.value = true;
-	vValueTableRef.value!.clearSelection();		
-	toggleVValueSelection(row.sumVValueIds || []);
+	vValueTableRef.value?.clearSelection();		
+	// 仅回显当前行“直接绑定”的v值，避免把子节点继承的children_vValues也拿来回显（它们在selectable里是禁选的）
+	toggleVValueSelection(row.vValueIds || []);
 }
 
-const closeAllBoundDialogs = () => {
-	Object.keys(boundValueDialogVisible.value || {}).forEach(key => {
-		boundValueDialogVisible.value[key] = false;
-	});
-	activeBoundDialogRowId.value = null;
-};
 
-// 查看已绑定的价值（弹出文本框）
-const openBoundValueDialog = async (row) => {
-	// 如果已有其他弹窗未关闭，阻止打开新的
-	if (activeBoundDialogRowId.value && activeBoundDialogRowId.value !== row.id && boundValueDialogVisible.value[activeBoundDialogRowId.value]) {
-		ElMessage.warning('请先关闭当前查看绑定弹窗');
-		return;
-	}
-
-	activeBoundDialogRowId.value = row.id;
-	boundValueDialogVisible.value[row.id] = true;
-	boundValueText.value = '正在加载...';
-	
-	// 直接从后端查询当前单元已绑定的v值（cm_course_unit_v_values + v_ideology_value）
-	try {
-		const res = await request.evaluation.get(`/evaluation/knowledgeUnit/getKnowledgeUnitVValues?unitid=${row.id}`);
-		if (res.code === 200) {
-			const list = res.data || [];
-			const names = list
-				.map((v: any) => v.name || v.vname || '')
-				.filter((s: string) => s && s.trim().length > 0);
-			boundValueText.value = names.length ? names.join(', ') : '暂无绑定价值';
-		}
-	} catch (error) {
-		console.warn('刷新绑定价值数据失败:', error);
-		boundValueText.value = '获取绑定价值失败';
-	}
-}
-
-// 关闭绑定价值对话框
-const closeBoundValueDialog = (row) => {
-	boundValueDialogVisible.value[row.id] = false;
-	if (activeBoundDialogRowId.value === row.id) {
-		activeBoundDialogRowId.value = null;
-	}
-	boundValueText.value = '';
-}
 
 //保存v值修改
 const saveEditVValue = async (row) => {
