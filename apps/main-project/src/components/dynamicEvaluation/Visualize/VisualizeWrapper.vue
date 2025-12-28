@@ -18,6 +18,11 @@
         <AbilityMapping />
       </div>
     </el-tab-pane>
+    <el-tab-pane label="KWA" name="fivth">
+      <div style="" class="w-[100vw] overflow-auto flex items-center justify-center">
+        <KGraph />
+      </div>
+    </el-tab-pane>
   </el-tabs>
 </template>
 
@@ -29,7 +34,7 @@ import PyramidComp from './PyramidComp.vue';
 import { ref } from 'vue';
 import { TabsPaneContext } from 'element-plus';
 import AbilityMapping from '../../evaluation/subcomponents/AbilityMapping.vue';
-import KGraph from '../../evaluation/subcomponents/3Dgraph.vue';
+import KGraph from '../../evaluation/subcomponents/KWAGraphNew.vue';
 
 const activeName = ref('first');
 const handleClick = (tab: TabsPaneContext) => {
