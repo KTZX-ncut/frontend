@@ -103,7 +103,7 @@ export default defineComponent({
   props: ['item'],
   setup(props, { emit }) {
     console.log('topic-props', props)
-    const { questionTypeId, title, id, kwas, content, answers, answer } = props?.item
+    const { questionTypeId, title, id, kwas, content, answers, answer, vids } = props?.item
     const item = ref({})
     const headline = ref(TOPICTYPE[questionTypeId] ?? '预留题')
     const options = ref([])
@@ -157,7 +157,11 @@ export default defineComponent({
           isAnswer: answer.isAnswer ? true : false
         }
       })
-      keaData.value = kwas
+      // 编辑时传递包含 kwas 和 vids 的对象
+      keaData.value = {
+        kwas: kwas || [],
+        vids: vids || []
+      }
       resetName()
       console.log('edit-item', item)
     } else {

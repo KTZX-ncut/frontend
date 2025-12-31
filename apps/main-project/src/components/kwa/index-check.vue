@@ -115,12 +115,14 @@ const currentValueSubs = computed(() => {
     // 如果没有选中tab，返回第一个tab的子节点
     const firstCategory = valueCategories.value[0];
     if (firstCategory && firstCategory.subs) {
-      activeValueTabId.value = firstCategory.id;
+      activeValueTabId.value = String(firstCategory.id);
       return (firstCategory.subs || []).filter(item => item.level === 2);
     }
     return [];
   }
-  const category = valueTreeData.value.find(item => item.id === activeValueTabId.value && item.level === 1);
+  // 确保 ID 类型匹配（都转为字符串比较）
+  const activeTabIdStr = String(activeValueTabId.value);
+  const category = valueTreeData.value.find(item => String(item.id) === activeTabIdStr && item.level === 1);
   return (category?.subs || []).filter(item => item.level === 2);
 });
 
@@ -160,9 +162,21 @@ const getCourseLibKwa = () => {
     api().then((res) => {
       if (res.code === "200") {
         kwaTree.value = res.data;
-        if (defaultValue && defaultValue.length) {
+        // 处理 defaultValue，可能是数组格式或对象格式
+        let kwasArray = [];
+        if (defaultValue) {
+          if (Array.isArray(defaultValue)) {
+            // 旧格式：数组 [{ kwaId, kwaName, vid }]
+            kwasArray = defaultValue;
+          } else if (typeof defaultValue === 'object' && defaultValue.kwas) {
+            // 新格式：对象 { kwas: [], vids: [] }
+            kwasArray = defaultValue.kwas || [];
+          }
+        }
+        
+        if (kwasArray && kwasArray.length) {
           // kwaTree.
-          const kwaIds = defaultValue?.map((obj) => obj.kwaId);
+          const kwaIds = kwasArray.map((obj) => obj.kwaId);
           let kwaTreeArr = kwaTree.value.map((obj) => {
             const arr = obj.abilityList.filter((f) => kwaIds.includes(f.kwaId));
             if (arr && arr.length) {
@@ -288,59 +302,79 @@ const getCourseLibValue = () => {
     courseLibVTree().then((res) => {
       if (res.code === "200") {
         valueTreeData.value = res.data || [];
-        // 默认选中第一个tab
-        if (valueCategories.value.length > 0 && !activeValueTabId.value) {
-          activeValueTabId.value = valueCategories.value[0].id;
-        }
         
-        // 复显价值 - 从 defaultValue 中提取 vid
-        // defaultValue 可能是旧格式 [{ kwaId, kwaName, vid }] 或新格式 { kwas: [], vids: [] }
-        if (defaultValue) {
-          let vidToRestore = null;
-          // 检查是否是旧格式（数组，包含 vid）
-          if (Array.isArray(defaultValue) && defaultValue.length > 0 && defaultValue[0]?.vid) {
-            vidToRestore = defaultValue[0].vid;
-          } 
-          // 检查是否是新格式（对象，包含 vids）
-          else if (defaultValue && typeof defaultValue === 'object' && !Array.isArray(defaultValue) && defaultValue.vids && defaultValue.vids.length > 0) {
-            vidToRestore = defaultValue.vids[0];
-          }
+        // 复显价值 - 从 defaultValue 中提取 vids
+        // defaultValue 格式：对象 { kwas: [], vids: [] }
+        if (defaultValue && typeof defaultValue === 'object' && !Array.isArray(defaultValue) && defaultValue.vids && defaultValue.vids.length > 0) {
+          const vidToRestore = defaultValue.vids[0];
           
           if (vidToRestore && valueTreeData.value.length > 0) {
             // 延迟执行，确保数据加载完成后再复显
             setTimeout(() => {
-              // 从树形数据中找到对应的 vid，并设置对应的tab
-              const findVidInTree = (tree, targetVid) => {
+              // 从树形数据中找到对应的二级节点（子节点），然后反推一级节点（父节点/tab）
+              const findVidAndParent = (tree, targetVid) => {
+                const targetIdStr = String(targetVid);
+                
                 for (const item of tree) {
-                  if (item.id === targetVid || item.id === String(targetVid)) {
-                    // 如果是子节点，需要找到父节点并设置active tab
-                    if (item.level === 2 && item.parentId) {
-                      activeValueTabId.value = item.parentId;
-                    }
-                    return item.id;
-                  }
-                  if (item.subs && item.subs.length > 0) {
-                    const found = findVidInTree(item.subs, targetVid);
-                    if (found) {
-                      // 如果找到了，且当前项是父节点，设置active tab
-                      if (item.level === 1) {
-                        activeValueTabId.value = item.id;
+                  // 检查当前节点是否匹配（支持字符串和数字类型）
+                  const itemIdStr = String(item.id);
+                  if (itemIdStr === targetIdStr) {
+                    // 如果是一级节点，继续查找其子节点
+                    if (item.level === 1 && item.subs && item.subs.length > 0) {
+                      const found = findVidAndParent(item.subs, targetVid);
+                      if (found) {
+                        return found;
                       }
+                    }
+                    // 如果是二级节点，返回其 parentId（一级节点id）和自身id
+                    if (item.level === 2) {
+                      return {
+                        parentId: item.parentId,
+                        vid: item.id
+                      };
+                    }
+                  }
+                  
+                  // 递归查找子节点
+                  if (item.subs && item.subs.length > 0) {
+                    const found = findVidAndParent(item.subs, targetVid);
+                    if (found) {
                       return found;
                     }
                   }
                 }
                 return null;
               };
-              const vid = findVidInTree(valueTreeData.value, vidToRestore);
-              if (vid) {
-                form.value.vids = [vid];
+              
+              const result = findVidAndParent(valueTreeData.value, vidToRestore);
+              console.log('价值回显 - vidToRestore:', vidToRestore, 'result:', result);
+              
+              if (result && result.parentId) {
+                // 由二级反推一级：设置一级 tab 为选中
+                // 确保 parentId 类型匹配
+                const parentIdStr = String(result.parentId);
+                activeValueTabId.value = parentIdStr;
+                // 设置选中的二级节点 id
+                form.value.vids = [String(result.vid)];
+                console.log('价值回显 - activeValueTabId:', activeValueTabId.value, 'vids:', form.value.vids);
+                
                 // 如果已经有 kwas 数据，触发一次 emit 以同步数据
                 if (kwaEvent.value && kwaEvent.value.length > 0) {
                   emitKwaAndVids();
                 }
+              } else {
+                console.warn('价值回显失败 - 未找到对应的节点，vidToRestore:', vidToRestore, 'valueTreeData:', valueTreeData.value);
+                // 如果回显失败，默认选中第一个tab
+                if (valueCategories.value.length > 0 && !activeValueTabId.value) {
+                  activeValueTabId.value = String(valueCategories.value[0].id);
+                }
               }
             }, 300);
+          } else {
+            // 如果没有需要回显的值，默认选中第一个tab
+            if (valueCategories.value.length > 0 && !activeValueTabId.value) {
+              activeValueTabId.value = String(valueCategories.value[0].id);
+            }
           }
         }
       }
