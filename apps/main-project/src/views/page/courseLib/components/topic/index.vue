@@ -106,7 +106,7 @@ export default defineComponent({
   props: ["item"],
   setup(props, { emit }) {
     console.log("topic-props000", props);
-    const { questionTypeId, title, id, kwas, content, answers, answer } = props?.item;
+    const { questionTypeId, title, id, kwas, content, answers, answer, vids } = props?.item;
     const item = ref({});
     const headline = ref(TOPICTYPE[questionTypeId] ?? "预留题");
     const options = ref([]);
@@ -159,7 +159,11 @@ export default defineComponent({
           isAnswer: answer.isAnswer ? true : false,
         };
       });
-      keaData.value = kwas;
+      // 编辑时传递包含 kwas 和 vids 的对象
+      keaData.value = {
+        kwas: kwas || [],
+        vids: vids || []
+      };
       resetName();
       console.log("edit-item", item);
     } else {
@@ -285,7 +289,15 @@ export default defineComponent({
     };
 
     const handleKwaEvent = (obj) => {
-      item.value.kwas = obj;
+      console.log("handleKwaEvent", obj);
+      // 如果 obj 是对象，包含 kwas 和 vids
+      if (obj && typeof obj === 'object' && !Array.isArray(obj) && obj.kwas !== undefined) {
+        item.value.kwas = obj.kwas;
+        item.value.vids = obj.vids || [];
+      } else {
+        // 兼容旧的数据格式（只有 kwas 数组）
+        item.value.kwas = obj;
+      }
       console.log("kwa-add", obj);
     };
 

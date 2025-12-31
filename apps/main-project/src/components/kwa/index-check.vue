@@ -33,10 +33,34 @@
           <el-checkbox class="custom-checkbox" v-for="(item, i) in abilityList" :key="i" :label="item">{{ item.name }}</el-checkbox>
         </el-checkbox-group>
       </el-form-item>
-      <el-form-item label="价值" v-if="valueList && valueList.length">
-        <el-checkbox-group @change="addHandleValueChange" v-model="form.valueItems" :max="1">
-          <el-checkbox class="custom-checkbox" v-for="(item, i) in valueList" :key="i" :label="item">{{ item.name }}</el-checkbox>
-        </el-checkbox-group>
+      <el-form-item label="价值" v-if="valueTreeData && valueTreeData.length">
+        <div>
+           <!-- Tab页：一级父节点 -->
+          <div class="value-tab-container">
+            <div
+              v-for="category in valueCategories"
+              :key="category.id"
+              :class="['value-tab-item', { active: activeValueTabId === category.id }]"
+              @click="handleValueTabClick(category.id)"
+            >
+              {{ category.vname }}
+            </div>
+          </div>
+          
+          <!-- 复选框：二级子节点 -->
+          <div class="value-checkbox-container" v-if="currentValueSubs.length">
+            <el-checkbox-group v-model="form.vids" @change="addHandleValueChange" :max="1">
+              <el-checkbox 
+                class="custom-checkbox" 
+                v-for="item in currentValueSubs" 
+                :key="item.id" 
+                :label="item.id"
+              >
+                {{ item.vname }}
+              </el-checkbox>
+            </el-checkbox-group>
+          </div>
+        </div>
       </el-form-item>
     </el-form>
 
@@ -57,8 +81,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, defineEmits } from "vue";
-import { courseLibKwaMap, courseLibKwaTree, courseLibType, taskKwa } from "@/api/courseLib";
+import { ref, onMounted, defineEmits, computed } from "vue";
+import { courseLibKwaMap, courseLibKwaTree, courseLibType, taskKwa, courseLibVTree } from "@/api/courseLib";
 import { classroomLibKwaTree, classroomLibKwaMap, classroomLibType } from "@/api/classroomLib.js";
 const emit = defineEmits(["child-event"]);
 const props = defineProps({
@@ -77,6 +101,37 @@ const kwaMap = ref(null);
 const kwaTree = ref(null);
 const courseType = ref(null);
 const abilityList = ref([]);
+const valueTreeData = ref([]);
+const activeValueTabId = ref(null);
+
+// 一级父节点（价值分类）
+const valueCategories = computed(() => {
+  return (valueTreeData.value || []).filter(item => item.level === 1 && !item.parentId);
+});
+
+// 当前tab下的子节点
+const currentValueSubs = computed(() => {
+  if (!activeValueTabId.value) {
+    // 如果没有选中tab，返回第一个tab的子节点
+    const firstCategory = valueCategories.value[0];
+    if (firstCategory && firstCategory.subs) {
+      activeValueTabId.value = String(firstCategory.id);
+      return (firstCategory.subs || []).filter(item => item.level === 2);
+    }
+    return [];
+  }
+  // 确保 ID 类型匹配（都转为字符串比较）
+  const activeTabIdStr = String(activeValueTabId.value);
+  const category = valueTreeData.value.find(item => String(item.id) === activeTabIdStr && item.level === 1);
+  return (category?.subs || []).filter(item => item.level === 2);
+});
+
+const handleValueTabClick = (tabId) => {
+  activeValueTabId.value = tabId;
+  // 切换tab时清空选中的价值
+  form.value.vids = [];
+  addHandleValueChange([]);
+};
 
 const init = () => {
   form.value = {};
@@ -107,9 +162,21 @@ const getCourseLibKwa = () => {
     api().then((res) => {
       if (res.code === "200") {
         kwaTree.value = res.data;
-        if (defaultValue && defaultValue.length) {
+        // 处理 defaultValue，可能是数组格式或对象格式
+        let kwasArray = [];
+        if (defaultValue) {
+          if (Array.isArray(defaultValue)) {
+            // 旧格式：数组 [{ kwaId, kwaName, vid }]
+            kwasArray = defaultValue;
+          } else if (typeof defaultValue === 'object' && defaultValue.kwas) {
+            // 新格式：对象 { kwas: [], vids: [] }
+            kwasArray = defaultValue.kwas || [];
+          }
+        }
+        
+        if (kwasArray && kwasArray.length) {
           // kwaTree.
-          const kwaIds = defaultValue?.map((obj) => obj.kwaId);
+          const kwaIds = kwasArray.map((obj) => obj.kwaId);
           let kwaTreeArr = kwaTree.value.map((obj) => {
             const arr = obj.abilityList.filter((f) => kwaIds.includes(f.kwaId));
             if (arr && arr.length) {
@@ -181,8 +248,7 @@ const handleChange = (changeValue) => {
     abilityList.value = [];
     form.value.abilityItem = [];
     form.value.abilityItems = [];
-    valueList.value = [];
-    form.value.valueItems = [];
+    form.value.vids = [];
     emit("kwa-event", []);
     form.value.treeIds?.forEach((item) => {
       let list = kwaTree.value.find((kwa) => kwa.keyId === item)?.abilityList || [];
@@ -196,7 +262,6 @@ const handleChange = (changeValue) => {
   }
 };
 
-const valueList = ref([]);
 const kwaEvent = ref([]);
 const addHandleChange = (arr) => {
   const newArr = arr?.map((arrItem) => {
@@ -205,57 +270,123 @@ const addHandleChange = (arr) => {
       return {
         kwaName: fullName,
         kwaId,
+        // 移除 vid 字段
       };
     }
   });
-  valueList.value = []
-  form.value.valueItems = []
-  //  价值 
-  if(arr[0]?.vlist){
-    arr[0]?.vlist.forEach((item) => {
-      const key = Object.keys(item)[0];
-      const value = item[key];
-      valueList.value.push({
-        name: value,
-        value: key,
-      });
+  kwaEvent.value = newArr;
+  // 统一发送包含 kwas 和 vids 的对象
+  emitKwaAndVids();
+};
+
+const addHandleValueChange = (vids) => {
+  form.value.vids = vids;
+  // 统一发送包含 kwas 和 vids 的对象
+  emitKwaAndVids();
+};
+
+// 同时发送 kwas 和 vids
+const emitKwaAndVids = () => {
+  // 直接发送 kwas 数组和 vids 数组，它们是同级别的
+  // 注意：虽然 vids 是数组，但只保存一个值
+  const result = {
+    kwas: kwaEvent.value || [],
+    vids: form.value.vids && form.value.vids.length > 0 ? [form.value.vids[0]] : []
+  };
+  emit("kwa-event", result);
+};
+
+// 价值
+const getCourseLibValue = () => {
+  if (["classroomLibAdd", "courseLibaAdd"].includes(type)) {
+    courseLibVTree().then((res) => {
+      if (res.code === "200") {
+        valueTreeData.value = res.data || [];
+        
+        // 复显价值 - 从 defaultValue 中提取 vids
+        // defaultValue 格式：对象 { kwas: [], vids: [] }
+        if (defaultValue && typeof defaultValue === 'object' && !Array.isArray(defaultValue) && defaultValue.vids && defaultValue.vids.length > 0) {
+          const vidToRestore = defaultValue.vids[0];
+          
+          if (vidToRestore && valueTreeData.value.length > 0) {
+            // 延迟执行，确保数据加载完成后再复显
+            setTimeout(() => {
+              // 从树形数据中找到对应的二级节点（子节点），然后反推一级节点（父节点/tab）
+              const findVidAndParent = (tree, targetVid) => {
+                const targetIdStr = String(targetVid);
+                
+                for (const item of tree) {
+                  // 检查当前节点是否匹配（支持字符串和数字类型）
+                  const itemIdStr = String(item.id);
+                  if (itemIdStr === targetIdStr) {
+                    // 如果是一级节点，继续查找其子节点
+                    if (item.level === 1 && item.subs && item.subs.length > 0) {
+                      const found = findVidAndParent(item.subs, targetVid);
+                      if (found) {
+                        return found;
+                      }
+                    }
+                    // 如果是二级节点，返回其 parentId（一级节点id）和自身id
+                    if (item.level === 2) {
+                      return {
+                        parentId: item.parentId,
+                        vid: item.id
+                      };
+                    }
+                  }
+                  
+                  // 递归查找子节点
+                  if (item.subs && item.subs.length > 0) {
+                    const found = findVidAndParent(item.subs, targetVid);
+                    if (found) {
+                      return found;
+                    }
+                  }
+                }
+                return null;
+              };
+              
+              const result = findVidAndParent(valueTreeData.value, vidToRestore);
+              console.log('价值回显 - vidToRestore:', vidToRestore, 'result:', result);
+              
+              if (result && result.parentId) {
+                // 由二级反推一级：设置一级 tab 为选中
+                // 确保 parentId 类型匹配
+                const parentIdStr = String(result.parentId);
+                activeValueTabId.value = parentIdStr;
+                // 设置选中的二级节点 id
+                form.value.vids = [String(result.vid)];
+                console.log('价值回显 - activeValueTabId:', activeValueTabId.value, 'vids:', form.value.vids);
+                
+                // 如果已经有 kwas 数据，触发一次 emit 以同步数据
+                if (kwaEvent.value && kwaEvent.value.length > 0) {
+                  emitKwaAndVids();
+                }
+              } else {
+                console.warn('价值回显失败 - 未找到对应的节点，vidToRestore:', vidToRestore, 'valueTreeData:', valueTreeData.value);
+                // 如果回显失败，默认选中第一个tab
+                if (valueCategories.value.length > 0 && !activeValueTabId.value) {
+                  activeValueTabId.value = String(valueCategories.value[0].id);
+                }
+              }
+            }, 300);
+          } else {
+            // 如果没有需要回显的值，默认选中第一个tab
+            if (valueCategories.value.length > 0 && !activeValueTabId.value) {
+              activeValueTabId.value = String(valueCategories.value[0].id);
+            }
+          }
+        }
+      }
     });
   }
-  kwaEvent.value = newArr;
-  
-  // 复显价值
-  if (defaultValue && defaultValue[0]?.vid && valueList.value.length > 0) {
-    const valueItem = valueList.value.find(item => item.value == defaultValue[0].vid);
-    if (valueItem) {
-      form.value.valueItems = [valueItem];
-    }
-  }
-  
-  emit("kwa-event", kwaEvent.value);
-};
-const addHandleValueChange = (arr) => {
-  kwaEvent.value[0].vid = Number(arr[0].value);
-  emit("kwa-event", kwaEvent.value);
 };
 
 
 onMounted(() => {
   getCourseLibKwa();
   getCourseLibType();
-  // 复显
-  if(defaultValue[0]?.vid){
-    // 延迟执行，确保数据加载完成后再复显
-    setTimeout(() => {
-      if (defaultValue[0]?.vid && valueList.value.length > 0) {
-        // 根据 vid 找到对应的价值项
-        const valueItem = valueList.value.find(item => item.value == defaultValue[0].vid);
-        if (valueItem) {
-          form.value.valueItems = [valueItem];
-        }
-      }
-    }, 500);
-  }
- 
+  getCourseLibValue();
 });
 // 导出函数
 defineExpose({
@@ -269,5 +400,46 @@ defineExpose({
 }
 .bgd-kwa .el-form-item__content {
   text-align: left;
+}
+
+/* 价值tab和复选框样式 */
+.value-tab-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.value-tab-item {
+  padding: 0 10px;
+  font-family: MicrosoftYaHei;
+  font-size: 14px;
+  color: #707070;
+  line-height: 19px;
+  cursor: pointer;
+  background: #ffffff;
+  border-radius: 13px;
+  border: 1px solid #d2d2d2;
+  min-height: 19px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.value-tab-item:hover {
+  background: #f5f7fa;
+}
+
+.value-tab-item.active {
+  background: #27a5ff;
+  color: white;
+  border: 1px solid #27a5ff;
+}
+
+.value-checkbox-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 </style>
