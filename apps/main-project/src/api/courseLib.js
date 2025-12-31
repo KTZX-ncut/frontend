@@ -69,6 +69,11 @@ export const courseLiTypeWR = () => {
     return request.page.get('/courseLib/type/getWR')
 }
 
+// 课堂 价值
+export const courseLibVTree = () => {
+    return request.page.get('/courseLib/v/tree')
+}
+
 export const login = () => {
     return request.fork.get('/login?loginName=test1&pwd=123456&catelog=2&loginway=1&roleId=516761049-234512f3-7c19-4580-abe2-ebfb1dd8db21&obsId=2c918af681fa6ea7018209a505c30672&userType=teacher')
 }

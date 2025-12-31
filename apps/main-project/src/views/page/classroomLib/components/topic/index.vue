@@ -285,7 +285,15 @@ export default defineComponent({
     }
 
     const handleKwaEvent = (obj) => {
-      item.value.kwas = obj
+      console.log("handleKwaEvent", obj);
+      // 如果 obj 是对象，包含 kwas 和 vids
+      if (obj && typeof obj === 'object' && !Array.isArray(obj) && obj.kwas !== undefined) {
+        item.value.kwas = obj.kwas;
+        item.value.vids = obj.vids || [];
+      } else {
+        // 兼容旧的数据格式（只有 kwas 数组）
+        item.value.kwas = obj;
+      }
       console.log('kwa-add', obj)
     }
 
