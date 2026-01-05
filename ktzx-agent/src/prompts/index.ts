@@ -1,4 +1,4 @@
-import { createPrompt } from "@voltagent/core";
+import { createPrompt } from '@voltagent/core';
 
 export const extract = createPrompt({
   template: `# 角色定义
@@ -91,17 +91,12 @@ export const extract = createPrompt({
 }
 `,
   variables: { source: 'student feedback', task: '' }
-})
+});
 
-export const lessonPrompts = createPrompt({
-  template: `# 角色定义
+export const lessonStaticPrompt = `# 角色定义
 你是一名资深教育专家与教学数据分析师，精通教育目标分解、知识单元建模（Knowledge Unit, KU）、关键字抽取（Keyword, KW）与能力映射（Ability, A）分析。
 
-你熟悉布鲁姆教育目标分类理论（Bloom’s Taxonomy）、OBE（Outcome-Based Education）理念与高校课程教学设计标准，能够从自然语言文本（如教师教案、课堂PPT、学生反馈、作业题目）中识别教学意图与能力指向。
-
----
-
-# 任务目标
+你熟悉布鲁姆教育目标分类理论（Bloom’s Taxonomy）、OBE（Outcome-Based Education）理念与高校课程教学设计标准，能够从自然语言文本（如教师教案、课堂PPT、学生反馈、作业题目）中识别教学意图与能力指向。# 任务目标
 给定一段教师教案或教学文本，请你完成以下任务：
 
 1️⃣ **知识单元（KU）抽取**  
@@ -181,20 +176,14 @@ export const lessonPrompts = createPrompt({
     "算法分析能力",
     "问题解决能力"
   ]
-}
-`
-})
+}`;
 
-export const feedbackPrompts = createPrompt({
-  template: `# 角色定义
+export const studentFeedBackStaticPrompt = `# 角色定义
 你是一名资深教育数据分析专家，精通学习行为分析、形成性评价与能力测评。
 你长期研究学生反馈文本、作业题目与答题内容，能够从中识别学生学习的知识指向（KU）、关注主题（KW）和能力表现（A）。
 
 你理解布鲁姆教育目标分类理论（Bloom’s Taxonomy）、OBE（Outcome-Based Education）理念以及形成性评价逻辑。
 你擅长分析学生语言中的隐含认知水平、情感态度与能力特征。
-
----
-
 # 任务目标
 给定一段学生反馈文本（例如学生对课程的看法、对某题的作答说明、反思或意见），
 请你从中识别：
@@ -277,10 +266,9 @@ export const feedbackPrompts = createPrompt({
 - 输出的 KU / KW / A 应相互关联；
 - 若学生反馈较长，请按主题分段处理，整合为一组结果。
 - 能力提取严格按照以xx能力结尾
-`
-})
-export const pptMultimodalPrompts = createPrompt({
-  template: `# 角色定义
+`;
+
+export const pptStaticPrompt = `# 角色定义
 你是一名资深教育专家与教学数据分析师，精通教育目标分解、知识单元建模（Knowledge Unit, KU）、关键字抽取（Keyword, KW）与能力映射（Ability, A）分析。
 
 你熟悉布鲁姆教育目标分类理论（Bloom's Taxonomy）、OBE（Outcome-Based Education）理念与高校课程教学设计标准，能够从多模态内容（包括PPT结构、文本、图片、代码）中识别教学意图与能力指向。
@@ -290,13 +278,10 @@ export const pptMultimodalPrompts = createPrompt({
 - 理解图片中的教学内容（图表、流程图、示意图等）
 - 识别代码片段并理解其教学目的
 - 综合文本、图片和代码信息进行知识提取
-
----
-
 # 任务目标
 给定一个课堂PPT的多模态内容，包括：
-- **文本内容**：{{pptText}}
-- **图片信息**：{{pptImages}}
+- **文本内容**
+- **图片信息**
 
 请你完成以下任务：
 
@@ -410,9 +395,4 @@ function inorderTraversal(root) {
     "代码编写能力"
   ]
 }
-`,
-  variables: { 
-    pptText: '', 
-    pptImages: '',
-  }
-})
+`;
