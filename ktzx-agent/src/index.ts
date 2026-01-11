@@ -34,8 +34,11 @@ new VoltAgent({
   },
   server: honoServer(),
   logger,
-  voltOpsClient: new VoltOpsClient({
-    publicKey: process.env.VOLTAGENT_PUBLIC_KEY || '',
-    secretKey: process.env.VOLTAGENT_SECRET_KEY || ''
-  })
+  voltOpsClient:
+    process.env.VOLTAGENT_PUBLIC_KEY && process.env.VOLTAGENT_SECRET_KEY
+      ? new VoltOpsClient({
+        publicKey: process.env.VOLTAGENT_PUBLIC_KEY,
+        secretKey: process.env.VOLTAGENT_SECRET_KEY
+      })
+      : undefined
 });

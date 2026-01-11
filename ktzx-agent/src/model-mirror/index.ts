@@ -1,8 +1,17 @@
 import { createOpenAI } from '@ai-sdk/openai';
-import 'dotenv/config';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 import OpenAI from 'openai';
 import { LlamaParseReader } from 'llama-cloud-services';
-import 'dotenv/config';
+
+const require = createRequire(import.meta.url);
+const dotenv = require('dotenv');
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// 显式指定 .env 路径，确保在任何目录下运行都能加载到环境变量
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 console.log('KEY-lyjc:', process.env.OPENAI_API_KEY);
 

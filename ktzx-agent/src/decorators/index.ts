@@ -1,13 +1,13 @@
 import { OpenAIChatLanguageModelOptions } from '@ai-sdk/openai';
 import { DynamicValue, LanguageModel } from '@voltagent/core';
-import { fileTools, pptSentenceTool, runWithConcurrency } from '../tools';
+import { fileTools, pptSentenceTool, concurrencyTool } from '../tools';
 
 /**
  * @InjectModelOptions 注解实现
  * 接收模型名称，并修改类的构造逻辑,以调用者的参数为准否则用默认模型
  */
 export const InjectModelOptions = (model: LanguageModel | DynamicValue<LanguageModel> | string) => {
-  return <T extends { new (...args: any[]): {} }>(constructor: T) => {
+  return <T extends { new(...args: any[]): {} }>(constructor: T) => {
     return class extends constructor {
       constructor(...args: any[]) {
         // 此处的args[0]就是劫持的构造函数的参数
@@ -18,13 +18,13 @@ export const InjectModelOptions = (model: LanguageModel | DynamicValue<LanguageM
           const existingTools = Array.isArray(args[0].tools)
             ? args[0].tools
             : args[0].tools
-            ? [args[0].tools]
-            : [];
+              ? [args[0].tools]
+              : [];
 
           args[0].tools = [
             ...existingTools,
             fileTools(console),
-            // runWithConcurrency,
+            concurrencyTool(),
             pptSentenceTool(console)
           ];
         }

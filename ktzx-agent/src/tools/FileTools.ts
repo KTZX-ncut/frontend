@@ -22,27 +22,44 @@ export const fileTools = (logger: any) =>
     }
   });
 
-export async function runWithConcurrency<T, R>(
-  items: T[],
-  taskExecutor: (item: T, index: number) => Promise<R>,
-  concurrencyLimit: number = 5,
-  taskName: string = 'Task'
-): Promise<R[]> {
-  const limit = pLimit(concurrencyLimit);
 
-  const tasks = items.map((item, index) => {
-    return limit(async () => {
-      try {
-        return await taskExecutor(item, index);
-      } catch (error) {
-        console.error(`[${taskName} ${index}] ❌ Failed:`, error);
-        throw error; // 或者返回默认值防止整个流程中断
-      }
+export const concurrencyTool = () => createTool({
+  name: 'batch_concurrent_processor',
+  description: '高效地并行处理大量项目（如文本块、URL 或数据记录），并带有速率限制。当你需要对多个输入同时执行相同的操作以节省时间，同时避免 API 速率限制错误 (429) 时，请使用此工具。返回聚合结果。同时为了节省大模型 API 额度，建议只在 PPT 这种文档切片中进行使用',
+  parameters: z.object({
+    items: z.array(z.any())
+      .describe("待处理的数据项列表。数组中的每一项将作为参数传递给 taskExecutor。"),
+
+    taskExecutor: z.function()
+      .describe("执行任务的异步函数。接收 (item, index) 作为参数，必须返回一个 Promise。"),
+
+    concurrencyLimit: z.number()
+      .int()
+      .min(1, "并发数至少为 1")
+      .default(5)
+      .describe("最大并发限制数。控制同时运行的 Promise 数量，默认为 5。"),
+
+    taskName: z.string()
+      .default("Task")
+      .describe("任务名称。用于日志记录或调试时的标识，默认为 'Task'。"),
+  }),
+  execute: async ({ items, taskExecutor, concurrencyLimit, taskName }) => {
+    const limit = pLimit(concurrencyLimit);
+
+    const tasks = items.map((item, index) => {
+      return limit(async () => {
+        try {
+          return await taskExecutor(item, index);
+        } catch (error) {
+          console.error(`[${taskName} ${index}] ❌ Failed:`, error);
+          throw error; // 或者返回默认值防止整个流程中断
+        }
+      });
     });
-  });
 
-  return Promise.all(tasks);
-}
+    return Promise.all(tasks);
+  }
+})
 
 export const pptSentenceTool = (log: any) =>
   createTool({

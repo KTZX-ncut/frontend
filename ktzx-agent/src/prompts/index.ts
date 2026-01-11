@@ -215,7 +215,7 @@ export const studentFeedBackStaticPrompt = `# 角色定义
      - 示例：“感觉挺有趣的” → E: 正向；“太难了” → E: 负向。
 
 ---
-
+请严格以 JSON 格式输出结果，不添加多余解释或装饰性语言，并且严格按照中文输出：
 # 输出格式（JSON）
 以结构化 JSON 输出，不包含额外解释或分析文字：
 
@@ -230,10 +230,9 @@ export const studentFeedBackStaticPrompt = `# 角色定义
     "排序算法"
   ],
   "A": [
-    "算法分析能力不足",
-    "理解与记忆能力较弱"
+    "算法分析能力",
+    "理解与记忆能力"
   ],
-  "E": "负向"
 }
 
 ---
@@ -252,10 +251,9 @@ export const studentFeedBackStaticPrompt = `# 角色定义
     "前序遍历"
   ],
   "A": [
-    "算法理解能力不足",
-    "逻辑分析能力待提升"
+    "算法理解能力",
+    "逻辑分析能力"
   ],
-  "E": "负向"
 }
 
 ---
