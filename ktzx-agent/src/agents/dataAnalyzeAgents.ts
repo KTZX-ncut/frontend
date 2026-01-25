@@ -1,4 +1,4 @@
-import { lessonStaticPrompt, pptStaticPrompt, studentFeedBackStaticPrompt } from '../prompts';
+import { lessonStaticPrompt, pptStaticPrompt, studentFeedBackStaticPrompt, courseEvaluationModelPrompt } from '../prompts';
 import AgentWrapper from './AgentWrapper';
 
 // 教师教案Agent、课堂反馈Agent
@@ -27,4 +27,13 @@ export const PPTAnalysisAgent = new AgentWrapper({
   id: 'extract-ppt-multimodal',
   name: 'ppt Plan Extractor',
   instructions: pptStaticPrompt
+}).getAgent();
+
+/* 
+  KU、KW、A 建模 Agent
+*/
+export const modelingCreateAgent = new AgentWrapper({
+  id: 'generate-course-evaluate-model',
+  name: 'course Model Generator',
+  instructions: courseEvaluationModelPrompt
 }).getAgent();

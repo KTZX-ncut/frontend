@@ -8,6 +8,8 @@ const WDD_HOST = import.meta.env.VITE_WDD_HOST;
 const HOST_ADMIN = import.meta.env.VITE_API_HOST_ADMIN;
 const HOST_COURSE = import.meta.env.VITE_API_HOST_COURSE;
 const HOST_EVALUATION = import.meta.env.VITE_API_HOST_EVALUATION;
+const HOST_AI = import.meta.env.VITE_API_VOLTAGENT;
+const BFF_API = import.meta.env.VITE_API_BFF;
 // 图片上传用到的域名
 export const host = import.meta.env.VITE_UPLOAD_HOST;
 const request = {
@@ -17,7 +19,9 @@ const request = {
   page: createAPI(`${WDD_HOST}/page`),
   fork: createAPI(`${WDD_HOST}/fork`),
   common: createAPI(`${WDD_HOST}/common`),
-  term: createAPI(`${WDD_HOST}/term`)
+  term: createAPI(`${WDD_HOST}/term`),
+  ai: createAPI(`${HOST_AI}`),
+  bff: createAPI(`${BFF_API}`)
 };
 
 // request.js 物理机配置

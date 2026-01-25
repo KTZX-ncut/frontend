@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "strict": true,
+    "jsx": "preserve",
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "lib": ["ESNext", "DOM"],
+    "skipLibCheck": true,
+    "allowJs": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@ui/*": ["../../packages/ui/*"],
+      "@vue-office/docx": ["node_modules/@vue-office/docx/lib/v3"],
+      "@vue-office/excel": ["node_modules/@vue-office/docx/lib/v3"],
+      "@vue-office/pdf": ["node_modules/@vue-office/pdf/lib/v3"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "env.d.ts"],
+  "exclude": ["node_modules"]
+}

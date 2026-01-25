@@ -56,7 +56,7 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, './src'),
         '@ui': path.resolve(__dirname, '../../packages/ui'),
         '@vue-office/docx': '@vue-office/docx/lib/v3',
-        '@vue-office/excel': '@vue-office/docx/lib/v3',
+        '@vue-office/excel': '@vue-office/excel/lib/v3',
         '@vue-office/pdf': '@vue-office/pdf/lib/v3'
       }
     },

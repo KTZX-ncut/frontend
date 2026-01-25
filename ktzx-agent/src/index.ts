@@ -6,7 +6,7 @@ import { mirrorOpenAi } from './model-mirror';
 import { honoServer } from '@voltagent/server-hono';
 import { dataAnalyzeWorkflow, dataExtractWorkflow } from './workflows';
 import { weatherTool } from './tools';
-import { lessonPlanAgent, feedbackAgent, PPTAnalysisAgent } from './agents';
+import { lessonPlanAgent, feedbackAgent, PPTAnalysisAgent, modelingCreateAgent } from './agents';
 
 // Create a logger instance
 const logger = createPinoLogger({
@@ -26,7 +26,8 @@ new VoltAgent({
   agents: {
     lessonPlanAgent,
     feedbackAgent,
-    PPTAnalysisAgent
+    PPTAnalysisAgent,
+    modelingCreateAgent
   },
   workflows: {
     dataAnalyzeWorkflow,

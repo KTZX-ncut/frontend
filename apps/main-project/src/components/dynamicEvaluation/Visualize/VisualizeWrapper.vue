@@ -23,6 +23,9 @@
         <KGraph />
       </div>
     </el-tab-pane>
+    <el-tab-pane label="workflow" name="sixth" class="h-[800px]">
+      <StageOne class="h-full" />
+    </el-tab-pane>
   </el-tabs>
 </template>
 
@@ -35,6 +38,7 @@ import { ref } from 'vue';
 import { TabsPaneContext } from 'element-plus';
 import AbilityMapping from '../../evaluation/subcomponents/AbilityMapping.vue';
 import KGraph from '../../evaluation/subcomponents/KWAGraphNew.vue';
+import StageOne from './AI/StageOne.vue';
 
 const activeName = ref('first');
 const handleClick = (tab: TabsPaneContext) => {

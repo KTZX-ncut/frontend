@@ -21,6 +21,9 @@ export class Neo4JClient {
     if (this.instance) {
       await this.instance.close()
     }
-
   }
+}
+
+const test = () => {
+  console.log('first');
 }

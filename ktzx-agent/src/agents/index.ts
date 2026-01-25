@@ -1,1 +1,1 @@
-export { lessonPlanAgent, feedbackAgent, PPTAnalysisAgent } from './dataAnalyzeAgents';
+export { lessonPlanAgent, feedbackAgent, PPTAnalysisAgent, modelingCreateAgent } from './dataAnalyzeAgents';

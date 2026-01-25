@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "strict": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "types": [
+      "node"
+    ],
+    "jsx": "react-jsx",
+    "jsxImportSource": "hono/jsx",
+    "outDir": "./dist",
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true, // 允许写 .ts，输出时自动转为 .js
+    "noEmit": false // 现在可以为 false 了,
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}

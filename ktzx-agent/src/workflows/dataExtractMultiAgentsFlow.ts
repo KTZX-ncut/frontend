@@ -43,20 +43,38 @@ export const dataExtractWorkflow = createWorkflowChain({
       // 处理教学教案
       andWhen({
         id: 'when-to-extract-lessonPlan',
-        condition: async ({ data }) => {
+        condition: async ({ data, logger }) => {
           const lessonPlanPath = data.teachingMaterials.lessonPlanPath;
           return !!lessonPlanPath;
         },
         // condition: async ({ data }) => false,
         step: andThen({
           id: 'extract-lessonPlan',
-          execute: async ({ data, logger }) => {
-            const lessonData = await lessonPlanAgent.generateText(
+          execute: async ({ data, logger, writer }) => {
+            const lessonData = await lessonPlanAgent.streamText(
               data?.teachingMaterials?.lessonPlanPath as string
             );
+            let fullText = '';
+            for await (const chunk of lessonData.fullStream) {
+              writer.write({
+                type: 'lessonplan-resoning',
+                output: { content: chunk }
+              });
+              console.log(chunk);
+              // 累加正文内容，以便最后解析 JSON
+              if (chunk.type === 'text-delta') {
+                fullText += chunk.text;
+              }
+            }
 
-            logger.info('lessonData', { feedBackData: lessonData.text })
-            return JSON.parse(lessonData.text)
+            // 3. 等流结束后，解析最终的文本并返回给工作流下一步
+            try {
+              return JSON.parse(fullText);
+            } catch (e) {
+              console.error('Failed to parse AI JSON:', fullText);
+              // 如果解析失败，可以尝试用框架内置的工具修复或返回原始文本
+              return { raw: fullText };
+            }
           }
         })
       }),
@@ -70,12 +88,31 @@ export const dataExtractWorkflow = createWorkflowChain({
         // condition: async ({ data }) => false,
         step: andThen({
           id: 'extract-studentFeedback',
-          execute: async ({ data, logger }) => {
-            const feedBackData = await feedbackAgent.generateText(
+          execute: async ({ data, logger, writer }) => {
+            const feedBackData = await feedbackAgent.streamText(
               data?.teachingMaterials?.studentFeedbackPath as string
-            )
-            logger.info('feedBackData', { feedBackData: feedBackData.text })
-            return JSON.parse(feedBackData.text)
+            );
+            let fullText = '';
+            for await (const chunk of feedBackData.fullStream) {
+              writer.write({
+                type: 'feedback-resoning',
+                output: { content: chunk }
+              });
+              console.log(chunk);
+              // 累加正文内容，以便最后解析 JSON
+              if (chunk.type === 'text-delta') {
+                fullText += chunk.text;
+              }
+            }
+
+            // 3. 等流结束后，解析最终的文本并返回给工作流下一步
+            try {
+              return JSON.parse(fullText);
+            } catch (e) {
+              console.error('Failed to parse AI JSON:', fullText);
+              // 如果解析失败，可以尝试用框架内置的工具修复或返回原始文本
+              return { raw: fullText };
+            }
           }
         })
       }),
@@ -85,12 +122,34 @@ export const dataExtractWorkflow = createWorkflowChain({
           const pptPath = data.teachingMaterials.pptPath;
           return !!pptPath;
         },
+        // condition: async ({ data }) => false,
         step: andThen({
           id: 'extract-ppt-multimodal',
-          execute: async ({ data, logger }) => {
-            const pptMultiData = await PPTAnalysisAgent.generateText(data?.teachingMaterials?.pptPath as string)
-            logger.info('pptMultiData', { feedBackData: pptMultiData.text })
-            return JSON.parse(pptMultiData.text)
+          execute: async ({ data, logger, writer }) => {
+            const pptMultiData = await PPTAnalysisAgent.streamText(
+              data?.teachingMaterials?.pptPath as string
+            );
+            let fullText = '';
+            for await (const chunk of pptMultiData.fullStream) {
+              writer.write({
+                type: 'ppt-resoning',
+                output: { content: chunk }
+              });
+              console.log(chunk);
+              // 累加正文内容，以便最后解析 JSON
+              if (chunk.type === 'text-delta') {
+                fullText += chunk.text;
+              }
+            }
+
+            // 3. 等流结束后，解析最终的文本并返回给工作流下一步
+            try {
+              return JSON.parse(fullText);
+            } catch (e) {
+              console.error('Failed to parse AI JSON:', fullText);
+              // 如果解析失败，可以尝试用框架内置的工具修复或返回原始文本
+              return { raw: fullText };
+            }
           }
         })
       })
