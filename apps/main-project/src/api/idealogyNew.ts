@@ -101,3 +101,12 @@ export const getClassroominfo = (): Promise<UniExport> => {
 export const getAllQuestionLabels = (classroomId: string): Promise<UniExport> => {
   return request.evaluation.get(`/evaluation/ideology/getAllPaperIdeologyEvaluation?classroomId=${classroomId}`);
 }
+
+//流式输出
+export const streamChat = (params: {
+  prompt: string;
+  onMessage: (chunk: string) => void;
+  onComplete: () => void;
+}) => {
+  // 使用SSE或WebSocket实现
+};

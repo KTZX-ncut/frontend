@@ -260,6 +260,28 @@
         <el-main style="-ms-overflow-style: none; /* IE 和 Edge */ scrollbar-width: none; /* Firefox */">
           <!--右侧内容部分-->
           <el-card style="max-width: 910px; margin-left: 30px; margin-top: 50px">
+            <el-main style="-ms-overflow-style: none; /* IE 和 Edge */ scrollbar-width: none; /* Firefox */">
+              <!--右侧内容部分-->
+              <el-card style="max-width: 910px; margin-left: 30px; margin-top: 50px">
+                <!-- 添加学生画像分析区域 -->
+                <div class="student-profile-container" v-if="showStudentProfile">
+                  <div class="profile-header">
+                    <el-text style="font-size: 18px; font-weight: bold;">📊 学生画像分析 - {{ selectedStudentName }}</el-text>
+                    <el-button type="primary" size="small" @click="regenerateProfile" :loading="isStreaming">重新生成</el-button>
+                  </div>
+                  <div class="profile-content">
+                    <div class="suggestion-box">
+                      <div class="suggestion-content" v-html="formattedProfileSuggestion"></div>
+                      <div v-if="isStreaming" class="streaming-cursor">|</div>
+                    </div>
+                  </div>
+                </div>
+
+                <router-view></router-view>
+              </el-card>
+              <span style="...">北方工业大学2024&nbsp;CopyRight</span>
+            </el-main>
+
             <router-view></router-view>
           </el-card>
           <span style="
@@ -339,6 +361,12 @@ const defaultActive = ref('');
 const router = useRouter(); // 获取路由实例
 
 const imageUrl = ref('https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png');
+
+// 学生画像相关
+const showStudentProfile = ref(true);
+const isStreaming = ref(false);
+const selectedStudentName = ref('李明');
+const profileSuggestionText = ref('');
 
 // 清除登录信息的方法
 function clearLoginInfo() {
@@ -470,6 +498,158 @@ const handleVisibleChange = (visible) => {
   }
 }
 
+// 学生画像数据
+const mockStudentProfileData = {
+  "👤 学生画像摘要": "李明同学学习参与度较高，但知识掌握程度存在明显分化，属于‘积极投入但理解不均衡’的类型。最突出的优势是学习态度认真，参与积极；最需关注的风险是部分核心知识点掌握薄弱，且整体学习投入度有下滑趋势，可能影响后续学习效果。",
+  "📚 知识点掌握分析": {
+    "优势领域（掌握率 ≥80%）": [
+      "集合与逻辑（掌握率：92%）",
+      "函数定义域（掌握率：88%）"
+    ],
+    "薄弱环节（掌握率 ≤50%）": [
+      {
+        "知识点": "三角函数图像变换",
+        "掌握率": "34%",
+        "可能原因": "概念理解不清或图像变换规律掌握不牢，导致在具体题目中无法正确应用。"
+      },
+      {
+        "知识点": "导数计算",
+        "掌握率": "41%",
+        "可能原因": "对求导公式、法则的记忆或运用不熟练，或在复合函数求导等步骤上容易出错。"
+      },
+      {
+        "知识点": "应用题建模",
+        "掌握率": "50%",
+        "可能原因": "将实际问题转化为数学语言的能力有待加强，或在解题思路上不够清晰。"
+      }
+    ]
+  },
+  "⚠️ 行为与趋势预警": [
+    "参与度趋势显示为‘下降’，虽然当前预测参与度（62）尚可，但需警惕学习动力可能有所减弱。",
+    "参与度得分（85）较高，但整体正确率（58%）偏低，可能存在‘盲目刷题’或对部分知识点理解不透彻就急于做题的情况。"
+  ],
+  "🎯 个性化优化建议": {
+    "给学生的建议": [
+      "针对薄弱点进行精准突破：建议每天花15-20分钟，专门复习‘三角函数图像变换’和‘导数计算’的公式与典型例题，先理解后练习，确保做一题会一类。",
+      "优化练习方法：在做题前，先回顾相关知识点；做题后，重点分析错题，总结错误原因（是概念不清、计算失误还是思路错误），避免无效刷题。",
+      "主动寻求反馈：遇到反复出错的题目或模糊的概念，及时标记并向老师或同学请教，厘清思路。"
+    ],
+    "给教师/助教的建议": [
+      "关注其学习状态：可与李明同学进行一次简短交流，了解其近期学习感受，对下降趋势给予关心和鼓励，帮助其重拾学习节奏。",
+      "提供针对性资源：为其推送‘三角函数图像变换’和‘导数应用’相关的微课视频或专题练习，并可在课堂上或课后对其薄弱环节进行个别点拨。"
+    ]
+  }
+};
+
+// 格式化建议为HTML
+const formatProfileSuggestionToHtml = (data) => {
+  let html = '';
+
+  // 学生画像摘要
+  if (data['👤 学生画像摘要']) {
+    html += '<div class="suggestion-section">';
+    html += '<h4>👤 学生画像摘要</h4>';
+    html += `<p>${data['👤 学生画像摘要']}</p>`;
+    html += '</div>';
+  }
+
+  // 知识点掌握分析
+  if (data['📚 知识点掌握分析']) {
+    html += '<div class="suggestion-section">';
+    html += '<h4>📚 知识点掌握分析</h4>';
+
+    if (data['📚 知识点掌握分析']['优势领域（掌握率 ≥80%）']) {
+      html += '<p><strong>✅ 优势领域：</strong></p><ul>';
+      data['📚 知识点掌握分析']['优势领域（掌握率 ≥80%）'].forEach(item => {
+        html += `<li>${item}</li>`;
+      });
+      html += '</ul>';
+    }
+
+    if (data['📚 知识点掌握分析']['薄弱环节（掌握率 ≤50%）']) {
+      html += '<p><strong>⚠️ 薄弱环节：</strong></p><ul>';
+      data['📚 知识点掌握分析']['薄弱环节（掌握率 ≤50%）'].forEach(item => {
+        html += `<li><strong>${item.知识点}</strong> (${item.掌握率}) - ${item.可能原因}</li>`;
+      });
+      html += '</ul>';
+    }
+    html += '</div>';
+  }
+
+  // 行为与趋势预警
+  if (data['⚠️ 行为与趋势预警']) {
+    html += '<div class="suggestion-section">';
+    html += '<h4>⚠️ 行为与趋势预警</h4>';
+    html += '<ul>';
+    data['⚠️ 行为与趋势预警'].forEach(item => {
+      html += `<li>${item}</li>`;
+    });
+    html += '</ul>';
+    html += '</div>';
+  }
+
+  // 个性化优化建议
+  if (data['🎯 个性化优化建议']) {
+    html += '<div class="suggestion-section">';
+    html += '<h4>🎯 个性化优化建议</h4>';
+
+    if (data['🎯 个性化优化建议']['给学生的建议']) {
+      html += '<p><strong>📝 给学生的建议：</strong></p><ol>';
+      data['🎯 个性化优化建议']['给学生的建议'].forEach(item => {
+        html += `<li>${item}</li>`;
+      });
+      html += '</ol>';
+    }
+
+    if (data['🎯 个性化优化建议']['给教师/助教的建议']) {
+      html += '<p><strong>👨‍🏫 给教师/助教的建议：</strong></p><ol>';
+      data['🎯 个性化优化建议']['给教师/助教的建议'].forEach(item => {
+        html += `<li>${item}</li>`;
+      });
+      html += '</ol>';
+    }
+    html += '</div>';
+  }
+
+  return html;
+};
+
+// 计算属性
+const formattedProfileSuggestion = computed(() => {
+  if (!profileSuggestionText.value) return '';
+  if (profileSuggestionText.value.includes('<div>')) {
+    return profileSuggestionText.value;
+  }
+  try {
+    const data = JSON.parse(profileSuggestionText.value);
+    return formatProfileSuggestionToHtml(data);
+  } catch {
+    return profileSuggestionText.value.replace(/\n/g, '<br>');
+  }
+});
+
+// 模拟流式输出
+const mockProfileStreamOutput = async () => {
+  isStreaming.value = true;
+  profileSuggestionText.value = '';
+
+  const jsonString = JSON.stringify(mockStudentProfileData, null, 2);
+  const chunks = jsonString.split('');
+
+  for (let i = 0; i < chunks.length; i++) {
+    await new Promise(resolve => setTimeout(resolve, 10));
+    profileSuggestionText.value += chunks[i];
+  }
+
+  isStreaming.value = false;
+};
+
+// 重新生成
+const regenerateProfile = async () => {
+  await mockProfileStreamOutput();
+  ElMessage.success('学生画像已重新生成');
+};
+
 // 钩子函数用来刷新后重新获取数据
 
 onMounted(() => {
@@ -519,6 +699,7 @@ onMounted(() => {
         message: '获取导航失败'
       });
     });
+  mockProfileStreamOutput();
 });
 </script>
 <style lang="less" scoped>
@@ -688,5 +869,92 @@ onMounted(() => {
   transition: transform 0.2s ease;
   outline: none;
   cursor: pointer;
+}
+.student-profile-container {
+  margin-bottom: 20px;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  background: white;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e4e7ed;
+  background: #f5f7fa;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.profile-content {
+  padding: 16px;
+}
+
+.suggestion-box {
+  padding: 16px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #2c3e50;
+  text-align: left;
+}
+
+.suggestion-content {
+  white-space: pre-wrap;
+  word-break: break-word;
+  text-align: left;
+}
+
+.suggestion-content :deep(.suggestion-section) {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  text-align: left;
+}
+
+.suggestion-content :deep(h4) {
+  margin: 0 0 10px 0;
+  color: #0064B1;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: left;
+}
+
+.suggestion-content :deep(p) {
+  margin: 8px 0;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.suggestion-content :deep(ul),
+.suggestion-content :deep(ol) {
+  margin: 8px 0;
+  padding-left: 20px;
+  text-align: left;
+}
+
+.suggestion-content :deep(li) {
+  margin: 4px 0;
+  text-align: left;
+}
+
+.streaming-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 20px;
+  background-color: #0064B1;
+  margin-left: 4px;
+  animation: blink 1s infinite;
+  vertical-align: middle;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
 }
 </style>

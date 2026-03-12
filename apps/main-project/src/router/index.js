@@ -293,6 +293,12 @@ const routes = [
         component: () => import('../components/Idealogy/ClassroomGraph/ClassroomGraphWrapper.vue')
       },
       {
+        path: 'evaluation/allClassroomGraph', // 大论文-总体评价
+        name: 'IdealogyAllClassroomGraph',
+        // component: () => import('../components/Idealogy/AllClassroomGraph.vue')
+        component: () => import('../components/Idealogy/ClassroomGraph/vitualGraph.vue')
+      },
+      {
         path: 'evasys/accessible/coursetarget', // 达成性评价模型-课程目标
         name: 'CourseTarget',
         // component: () => import('../components/evaluation/CourseTarget.vue')
