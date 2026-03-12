@@ -16,6 +16,38 @@
       <el-button type="primary" v-blur-on-click @click="changeTreeExpand" style="margin-left: 0.8vw"
         >展开/收起全部</el-button
       >
+      <el-button
+        type="success"
+        v-blur-on-click
+        style="margin-left: 0.8vw"
+        :disabled="!canEditSelected"
+        @click="bannerEdit"
+        >编辑</el-button
+      >
+      <el-button
+        type="primary"
+        v-blur-on-click
+        style="margin-left: 0.8vw"
+        :disabled="!canAddSiblingSelected"
+        @click="bannerAddSibling"
+        >同级新增</el-button
+      >
+      <el-button
+        type="primary"
+        v-blur-on-click
+        style="margin-left: 0.8vw"
+        :disabled="!canAddChildSelected"
+        @click="bannerAddChild"
+        >下级新增</el-button
+      >
+      <el-button
+        type="danger"
+        v-blur-on-click
+        style="margin-left: 0.8vw"
+        :disabled="!canDeleteSelected"
+        @click="bannerDelete"
+        >删除</el-button
+      >
       <!--            <el-button type="success" style="margin-left: 0.8vw;" >保存</el-button>-->
     </el-header>
 
@@ -53,6 +85,8 @@
           draggable
           :props="defaultProps"
           node-key="id"
+          highlight-current
+          :current-node-key="selectedNode?.id"
           :expand-on-click-node="true"
           ref="nodeExpand"
           @node-click="handleNodeClick"
@@ -162,7 +196,7 @@ import { ElMessage, ElMessageBox, ElMessageBoxOptions } from 'element-plus';
 import type Node from 'element-plus/es/components/tree/src/model/node';
 import type { DragEvents } from 'element-plus/es/components/tree/src/model/useDragNode';
 import type { NodeDropType } from 'element-plus/es/components/tree/src/tree.type';
-import { ref, reactive, onMounted, nextTick, onBeforeUnmount, toRaw } from 'vue';
+import { ref, reactive, onMounted, nextTick, onBeforeUnmount, toRaw, computed } from 'vue';
 import request from '../../utils/request';
 import { exportTreeToCSV } from '../../utils/exportTreeToCSV';
 import { expandKeys } from 'element-plus/es/components/table-v2/src/common';
@@ -172,6 +206,8 @@ import isEqual from 'lodash/isEqual';
 const treeData = ref([]);
 const expandedKeys = ref([]); // 用于存储展开的节点的键值
 const nodeExpand = ref(null);
+
+const selectedNode = ref<any | null>(null);
 
 const nullNodeNum = ref(0);
 //展开所有或收起所有
@@ -198,6 +234,54 @@ const defaultProps = {
   expanded: 'expanded'
 };
 
+const findNodeById = (nodes, id) => {
+  if (!nodes || !id) return null;
+  for (const node of nodes) {
+    if (node.id === id) return node;
+    if (node.children && node.children.length > 0) {
+      const found = findNodeById(node.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+};
+
+const syncSelectedNode = nodes => {
+  if (selectedNode.value?.id) {
+    const found = findNodeById(nodes, selectedNode.value.id);
+    if (found) {
+      selectedNode.value = found;
+      return;
+    }
+  }
+  selectedNode.value = nodes && nodes.length > 0 ? nodes[0] : null;
+};
+
+const canEditSelected = computed(() => !!selectedNode.value && selectedNode.value.pid !== '0');
+const canAddSiblingSelected = computed(() => !!selectedNode.value && selectedNode.value.pid !== '0');
+const canAddChildSelected = computed(() => !!selectedNode.value);
+const canDeleteSelected = computed(() => !!selectedNode.value && selectedNode.value.pid !== '0');
+
+const bannerEdit = () => {
+  if (!selectedNode.value) return;
+  editNode(selectedNode.value);
+};
+
+const bannerAddSibling = () => {
+  if (!selectedNode.value) return;
+  addSiblingNode(selectedNode.value);
+};
+
+const bannerAddChild = () => {
+  if (!selectedNode.value) return;
+  addChildNode(selectedNode.value);
+};
+
+const bannerDelete = () => {
+  if (!selectedNode.value) return;
+  confirmDeleteNodes(selectedNode.value);
+};
+
 //获取初始教学单位数据
 const getTreeData = () => {
   request.admin
@@ -208,6 +292,7 @@ const getTreeData = () => {
         // console.log(treeData.value)
         nullNodeNum.value = 0;
         initialize(treeData.value);
+        syncSelectedNode(treeData.value);
         // console.log("getTreeData 被触发");
         console.log(treeData.value);
       }
@@ -561,6 +646,7 @@ const clickNode = (event, node, dom) => {
     openedPopNode.value = {};
   }
   // console.log(node)
+  selectedNode.value = node;
   if (node.pid === '0') return;
   node.popVisible = true;
   openedPopNode.value = node;
@@ -577,6 +663,7 @@ const closePopNode = event => {
 
 const handleNodeClick = (data, node, event) => {
   // 在这里添加你的其他节点点击逻辑（如果有的话）
+  selectedNode.value = data;
 
   // 关闭弹窗
   if (openedPopNode.value && openedPopNode.value.popVisible) {
