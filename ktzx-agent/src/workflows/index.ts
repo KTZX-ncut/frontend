@@ -1,14 +1,15 @@
-import { Agent, createWorkflowChain } from "@voltagent/core";
-import { z } from "zod";
+import { Agent, createWorkflowChain } from '@voltagent/core';
+import { z } from 'zod';
 
-export {dataAnalyzeWorkflow} from './dataAnalyze'
+export { dataAnalyzeWorkflow } from './dataAnalyze';
+export { dataExtractWorkflow } from './dataExtractMultiAgentsFlow';
 
 // ==============================================================================
 // Example: Human-in-the-Loop Expense Approval Workflow
 // Concepts: Suspend/resume and step-level schemas
 //
 // Test Scenarios for VoltOps Platform
-// 
+//
 // Scenario 1: Small expense (auto-approved)
 // Input JSON:
 // {

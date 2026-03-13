@@ -25,6 +25,15 @@
           :isQuestionType="true"
         />
       </el-form-item>
+
+      <el-form-item label="价值" class="kwa-form-item" v-if="valueTreeData && valueTreeData.length">
+        <value-tab-checkbox-group
+          v-model="form.vids"
+          :tree-data="valueTreeData"
+          @change="handleChange"
+        />
+      </el-form-item>
+      
     </el-form>
 
     <el-form v-if="['courseLibaAdd', 'classroomLibAdd'].includes(type)" label-position="left" :model="form" label-width="60px">
@@ -69,9 +78,10 @@
 
 <script setup>
 import { ref, onMounted, defineEmits, computed } from "vue";
-import { courseLibKwaMap, courseLibKwaTree, courseLibType, taskKwa } from "@/api/courseLib";
+import { courseLibKwaMap, courseLibKwaTree, courseLibType, taskKwa, courseLibVTree } from "@/api/courseLib";
 import { classroomLibKwaTree, classroomLibKwaMap, classroomLibType } from "@/api/classroomLib.js";
 import CustomCheckboxGroup from '../CustomCheckboxGroup/index.vue';
+import ValueTabCheckboxGroup from '../ValueTabCheckboxGroup/index.vue';
 const emit = defineEmits(["child-event"]);
 const props = defineProps({
   type: {
@@ -86,12 +96,14 @@ const props = defineProps({
 console.log("kea-props", props);
 const { type, defaultValue } = props;
 const form = ref({
-  queTypeIds: ['0'] // 设置默认值为 "全部"
+  queTypeIds: ['0'], // 设置默认值为 "全部"
+  vids: [] // 价值选中的ID数组
 });
 const kwaMap = ref(null);
 const kwaTree = ref(null);
 const courseType = ref(null);
 const abilityList = ref([]);
+const valueTreeData = ref([]);
 
 const init = () => {
   form.value = {};
@@ -181,6 +193,17 @@ const getCourseLibType = () => {
   }
 };
 
+// 价值
+const getCourseLibValue = () => {
+  if (["classroomLibSearch", "courseLibSearch"].includes(type)) {
+    courseLibVTree().then((res) => {
+      if (res.code === "200") {
+        valueTreeData.value = res.data || [];
+      }
+    });
+  }
+};
+
 const handleQueTypeChange = (value) => {
   if (value.includes('0')) {
     // 如果选择了"全部"，设置为 ['0'] 用于显示选中状态
@@ -263,6 +286,7 @@ const abilityListOptions = computed(() => {
 onMounted(() => {
   getCourseLibKwa();
   getCourseLibType();
+  getCourseLibValue();
 });
 // 导出函数
 defineExpose({
@@ -271,9 +295,6 @@ defineExpose({
 </script>
 
 <style>
-.bgd-kwa .el-form-item {
-  /* margin-bottom: 1px !important; */
-}
 .bgd-kwa .el-form-item__content {
   text-align: left;
 }

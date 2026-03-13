@@ -13,6 +13,19 @@
         <PyramidComp />
       </div>
     </el-tab-pane>
+    <el-tab-pane label="能力映射" name="forth">
+      <div style="" class="w-[100%] overflow-auto flex items-center justify-center">
+        <AbilityMapping />
+      </div>
+    </el-tab-pane>
+    <el-tab-pane label="KWA" name="fivth">
+      <div style="" class="w-[100vw] overflow-auto flex items-center justify-center">
+        <KGraph />
+      </div>
+    </el-tab-pane>
+    <el-tab-pane label="workflow" name="sixth" class="h-[800px]">
+      <StageOne class="h-full" />
+    </el-tab-pane>
   </el-tabs>
 </template>
 
@@ -23,6 +36,9 @@ import Universe from './Universe.vue';
 import PyramidComp from './PyramidComp.vue';
 import { ref } from 'vue';
 import { TabsPaneContext } from 'element-plus';
+import AbilityMapping from '../../evaluation/subcomponents/AbilityMapping.vue';
+import KGraph from '../../evaluation/subcomponents/KWAGraphNew.vue';
+import StageOne from './AI/StageOne.vue';
 
 const activeName = ref('first');
 const handleClick = (tab: TabsPaneContext) => {

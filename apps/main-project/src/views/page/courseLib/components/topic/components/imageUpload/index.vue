@@ -1,6 +1,6 @@
 <template>
   <el-upload
-    style="width: 16px; height: 20px;"
+    style="width: 16px; height: 20px; display: flex;"
     :action="action"
     :accept="'.jpg,.png,.jpeg,.webp,.bmp,.tif,.tiff'"
     :data="data"
