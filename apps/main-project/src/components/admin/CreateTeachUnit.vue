@@ -42,7 +42,20 @@
         :disabled="!canDeleteSelected"
         @click="bannerDelete"
       >删除</el-button>
+      <el-button type="primary" v-blur-on-click style="margin-left: 0.8vw" @click="openHistoryTermDialog">复制</el-button>
     </el-header>
+
+    <el-dialog v-model="historyTermDialogVisible" title="历史学期" width="640px">
+      <el-table :data="historyTermList" style="width: 100%">
+        <el-table-column type="index" width="60" label="#" />
+        <el-table-column prop="termname" label="学期名称" />
+        <el-table-column label="操作" width="140">
+          <template #default="{ row }">
+            <el-button type="primary" link @click="copyFromTerm(row)">复制学期</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
 
     <!-- 主体内容 -->
     <el-main style="padding: 0">
@@ -166,6 +179,8 @@ const nodeExpand = ref(null);
 
 const selectedNode = ref<any | null>(null);
 const nullNodeNum = ref(0);
+const historyTermDialogVisible = ref(false);
+const historyTermList = ref<any[]>([]);
 
 // 展开/收起控制
 const expandAll = ref(false);
@@ -233,6 +248,44 @@ const bannerAddChild = () => {
 const bannerDelete = () => {
   if (!selectedNode.value) return;
   confirmDeleteNodes(selectedNode.value);
+};
+
+const openHistoryTermDialog = async () => {
+  await getHistoryTermList();
+  historyTermDialogVisible.value = true;
+};
+
+const getHistoryTermList = async () => {
+  try {
+    const res = await request.course.get('/coursemangt/course/allterm');
+    if (res.code === 200) {
+      historyTermList.value = res.data || [];
+      return;
+    }
+    ElMessage.error(res.msg || '获取历史学期失败');
+  } catch (error) {
+    ElMessage.error('获取历史学期失败');
+  }
+};
+
+const copyFromTerm = async (term) => {
+  const termId = term.term_id ?? term.id;
+  if (!termId) {
+    ElMessage.error('未找到学期ID');
+    return;
+  }
+  try {
+    const res = await request.admin.post('/sysmangt/units/copy', { copyTerm: termId });
+    if (res.code === 200) {
+      ElMessage.success('复制学期成功');
+      historyTermDialogVisible.value = false;
+      getTreeData();
+      return;
+    }
+    ElMessage.error(res.msg || '复制学期失败');
+  } catch (error) {
+    ElMessage.error('复制学期失败');
+  }
 };
 
 // 获取初始数据

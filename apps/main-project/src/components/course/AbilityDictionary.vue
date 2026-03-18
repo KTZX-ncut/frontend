@@ -12,7 +12,7 @@
       <el-button type="danger" @click="changeTreeExpand" style="margin-left: 0.8vw">全部展开/关闭</el-button>
       <el-button type="success" style="margin-left: 0.8vw">保存</el-button>
       <el-button type="primary" @click="create1stNode" style="margin-left: 0.8vw;">新增一级节点</el-button>
-      <el-button type="success" @click="openPreProfessionDialog" class="ml-[0.8vw]">复制历史数据</el-button>
+      <!-- <el-button type="success" @click="openPreProfessionDialog" class="ml-[0.8vw]">复制历史数据</el-button> -->
     </el-header>
 
     <el-main style="padding: 0">
