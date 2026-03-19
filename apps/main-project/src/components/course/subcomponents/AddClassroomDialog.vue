@@ -31,10 +31,10 @@
               <el-input v-model="newform.practiceTime" placeholder="请输入实践学时"></el-input>
             </el-form-item>
 
-            <el-form-item label="主讲教师" prop="mainTeacher">
+            <el-form-item label="主讲教师" prop="teacherId">
               <el-cascader
                 ref="mainteacherref"
-                v-model="mainteacherid"
+                v-model="newform.teacherId"
                 :options="teacherlist"
                 placeholder="请选择主讲教师"
                 :props="{ value: 'id', label: 'label', children: 'children', emitPath: false }"
@@ -48,10 +48,10 @@
               >
               </el-cascader>
             </el-form-item>
-            <el-form-item label="实验教师" prop="elementTeacher">
+            <el-form-item label="实验教师" prop="labTeacherId">
               <el-cascader
                 ref="labteacherref"
-                v-model="labteacherid"
+                v-model="newform.labTeacherId"
                 :options="teacherlist"
                 placeholder="请选择实验教师"
                 :props="{ value: 'id', label: 'label', children: 'children', emitPath: false }"
@@ -65,10 +65,10 @@
               >
               </el-cascader>
             </el-form-item>
-            <el-form-item label="实践教师" prop="practiceTeacher">
+            <el-form-item label="实践教师" prop="practiceTeacherId">
               <el-cascader
                 ref="practiceteacherref"
-                v-model="practiceteacherid"
+                v-model="newform.practiceTeacherId"
                 :options="teacherlist"
                 placeholder="请选择实践教师"
                 :props="{ value: 'id', label: 'label', children: 'children', emitPath: false }"
@@ -107,10 +107,8 @@ const profileStore = useProfileStore();
 username.value = profileStore.profilename;
 
 const AdddialogVisible = ref(false);
+const formRef = ref(null);
 
-const mainteacherid = ref('');
-const labteacherid = ref('');
-const practiceteacherid = ref('');
 const mainteachername = ref('');
 const labteachername = ref('');
 const practiceteachername = ref('');
@@ -137,22 +135,37 @@ const resetForm = () => {
   newform.teachTime = '';
   newform.labTime = '';
   newform.practiceTime = '';
-  mainteacherid.value = '';
-  labteacherid.value = '';
-  practiceteacherid.value = '';
+  newform.teacherId = '';
+  newform.labTeacherId = '';
+  newform.practiceTeacherId = '';
+  mainteachername.value = '';
+  labteachername.value = '';
+  practiceteachername.value = '';
 };
 
 const emit = defineEmits(['formSubmitted']);
 defineExpose({ init });
+
+const validateSelectField = message => {
+  return (rule, value, callback) => {
+    if (value === undefined || value === null || value === '') {
+      callback(new Error(message));
+      return;
+    }
+    callback();
+  };
+};
 
 const rules = reactive({
   classroomName: [{ required: true, message: '请输入课堂名称', trigger: 'blur' }],
   teachTime: [{ required: true, message: '请输入讲授时长', trigger: 'blur' }],
   labTime: [{ required: true, message: '请输入实验时长', trigger: 'blur' }],
   practiceTime: [{ required: true, message: '请输入实践时长', trigger: 'blur' }],
-  mainTeacher: [{ required: true, message: '请输入主讲教师', trigger: 'blur' }],
-  elementTeacher: [{ required: true, message: '请输入实验教师', trigger: 'blur' }],
-  practiceTeacher: [{ required: true, message: '请输入实践教师', trigger: 'blur' }]
+  teacherId: [{ validator: validateSelectField('请输入主讲教师'), trigger: ['change', 'blur'] }],
+  labTeacherId: [{ validator: validateSelectField('请输入实验教师'), trigger: ['change', 'blur'] }],
+  practiceTeacherId: [
+    { validator: validateSelectField('请输入实践教师'), trigger: ['change', 'blur'] }
+  ]
 });
 
 function init(courseinfo) {
@@ -224,36 +237,46 @@ const findNodeById = (nodes, id) => {
 };
 
 const handleCascaderChange = (data, value) => {
-  if (value && value.length > 0) {
+  const fieldMap = {
+    mainteacher: 'teacherId',
+    labteacher: 'labTeacherId',
+    practiceteacher: 'practiceTeacherId'
+  };
+  const field = fieldMap[data] || '';
+  if (value !== undefined && value !== null && value !== '') {
     const lastSelectedNode = findNodeById(teacherlist.value, value);
     if (lastSelectedNode) {
       if (data === 'mainteacher') {
-        mainteacherid.value = lastSelectedNode.id;
+        newform.teacherId = lastSelectedNode.id;
         mainteachername.value = lastSelectedNode.label;
       } else if (data === 'labteacher') {
-        labteacherid.value = lastSelectedNode.id;
+        newform.labTeacherId = lastSelectedNode.id;
         labteachername.value = lastSelectedNode.label;
       } else if (data === 'practiceteacher') {
-        practiceteacherid.value = lastSelectedNode.id;
+        newform.practiceTeacherId = lastSelectedNode.id;
         practiceteachername.value = lastSelectedNode.label;
       }
     }
   } else {
     // 如果没有选中任何节点，可以根据需求清空 teacherid 或设置为默认值
     if (data === 'mainteacher') {
-      mainteacherid.value = null;
-      mainteachername.value = null;
+      newform.teacherId = '';
+      mainteachername.value = '';
     } else if (data === 'labteacher') {
-      labteacherid.value = null;
-      labteachername.value = null;
+      newform.labTeacherId = '';
+      labteachername.value = '';
     } else if (data === 'practiceteacher') {
-      practiceteacherid.value = null;
-      practiceteachername.value = null;
+      newform.practiceTeacherId = '';
+      practiceteachername.value = '';
     }
+  }
+  if (field) {
+    formRef.value?.validateField(field);
   }
 };
 
 const closeDialog = () => {
+  formRef.value?.clearValidate();
   AdddialogVisible.value = false;
 };
 
@@ -271,11 +294,11 @@ async function submitForm() {
       courseId: newform.courseid,
       classroomName: newform.classroomName,
       creatorName: username.value,
-      teacherId: mainteacherid.value,
+      teacherId: newform.teacherId,
       teacherName: mainteachername.value,
-      labTeacherId: labteacherid.value,
+      labTeacherId: newform.labTeacherId,
       labTeacher: labteachername.value,
-      practiceTeacherId: practiceteacherid.value,
+      practiceTeacherId: newform.practiceTeacherId,
       practiceTeacher: practiceteachername.value,
       teachTime: newform.teachTime,
       labTime: newform.labTime,

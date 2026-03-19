@@ -89,6 +89,10 @@ function createAPI(url) {
       if (res?.result === false) {
         ElMessage.error(res.message);
       }
+      if(res.code !== 200){
+        ElMessage.error(res.msg || '请求失败');
+        return Promise.reject(res.data);
+      }
       // console.log('res----', res)
       // 如果是返回的文件
       if (response.config.responseType === 'blob') {

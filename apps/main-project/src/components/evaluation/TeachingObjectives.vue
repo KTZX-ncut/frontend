@@ -812,7 +812,7 @@ const exportExcel = async () => {
 
 onMounted(async () => {
   filterTableLoading.value = true;
-  await vStore.fetchV();
+  // await vStore.fetchV();
   getKWAData();
   document.addEventListener('click', closePopNode);
 });
