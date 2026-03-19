@@ -275,7 +275,7 @@ const copyFromTerm = async (term) => {
     return;
   }
   try {
-    const res = await request.admin.post('/sysmangt/units/copy', { copyTerm: termId });
+    const res = await request.admin.post('/sysmangt/units/copy', termId);
     if (res.code === 200) {
       ElMessage.success('复制学期成功');
       historyTermDialogVisible.value = false;
