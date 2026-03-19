@@ -41,6 +41,21 @@ jobs:
       #   run: |
       #     mkdir dist
 
+      - name: Clean old dist before upload
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HW_MAIN_SERVER_HOST }}
+          username: ${{ secrets.HW_MAIN_SERVER_USER }}
+          key: ${{ secrets.HW_MAIN_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          script: |
+            set -e
+            cd ${{ secrets.HW_MAIN_DEPLOY_PATH }}
+            echo "上传前删除旧 dist 与临时包，避免磁盘占满"
+            rm -rf ./dist
+            rm -rf ./temp/apps/main-project/dist
+            mkdir -p ./temp
+
       - name: Upload new dist
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -61,9 +76,7 @@ jobs:
           script: |
             set -e  # 只要有一个命令失败，整个脚本立即退出
             cd ${{ secrets.HW_MAIN_DEPLOY_PATH }}
-            echo "删除旧包"
-            rm -rf ./dist
-            mkdir ./dist
+            mkdir -p ./dist
             echo "从临时文件夹中复制到目标文件夹"
             cp -r ${{ secrets.HW_MAIN_DEPLOY_PATH }}/temp/apps/main-project/dist/* ${{ secrets.HW_MAIN_DEPLOY_PATH }}/dist || true
             echo "删除临时dist" 
