@@ -299,6 +299,11 @@ const routes = [
         component: () => import('../components/Idealogy/ClassroomGraph/vitualGraph.vue')
       },
       {
+        path: 'evaluation/stuUintEva', // 大论文-学生评价
+        name: 'IdealogyStuUnitEva',
+        component: () => import('../components/dynamicEvaluation/StudentsGraph/stuUnitGraph.vue')
+      },
+      {
         path: 'evasys/accessible/coursetarget', // 达成性评价模型-课程目标
         name: 'CourseTarget',
         // component: () => import('../components/evaluation/CourseTarget.vue')
