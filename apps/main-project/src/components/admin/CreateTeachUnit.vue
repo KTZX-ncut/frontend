@@ -12,37 +12,51 @@
         justify-content: flex-start;
       "
     >
-      <el-button type="success" v-blur-on-click style="margin-left: 0.8vw" @click="exportData">导出</el-button>
-      <el-button type="primary" v-blur-on-click @click="changeTreeExpand" style="margin-left: 0.8vw">展开/收起全部</el-button>
+      <el-button type="success" v-blur-on-click style="margin-left: 0.8vw" @click="exportData"
+        >导出</el-button
+      >
+      <el-button type="primary" v-blur-on-click @click="changeTreeExpand" style="margin-left: 0.8vw"
+        >展开/收起全部</el-button
+      >
       <el-button
         type="success"
         v-blur-on-click
         style="margin-left: 0.8vw"
         :disabled="!canEditSelected"
         @click="bannerEdit"
-      >编辑</el-button>
+        >编辑</el-button
+      >
       <el-button
         type="primary"
         v-blur-on-click
         style="margin-left: 0.8vw"
         :disabled="!canAddSiblingSelected"
         @click="bannerAddSibling"
-      >同级新增</el-button>
+        >同级新增</el-button
+      >
       <el-button
         type="primary"
         v-blur-on-click
         style="margin-left: 0.8vw"
         :disabled="!canAddChildSelected"
         @click="bannerAddChild"
-      >下级新增</el-button>
+        >下级新增</el-button
+      >
       <el-button
         type="danger"
         v-blur-on-click
         style="margin-left: 0.8vw"
         :disabled="!canDeleteSelected"
         @click="bannerDelete"
-      >删除</el-button>
-      <el-button type="primary" v-blur-on-click style="margin-left: 0.8vw" @click="openHistoryTermDialog">复制</el-button>
+        >删除</el-button
+      >
+      <el-button
+        type="primary"
+        v-blur-on-click
+        style="margin-left: 0.8vw"
+        @click="openHistoryTermDialog"
+        >复制</el-button
+      >
     </el-header>
 
     <el-dialog v-model="historyTermDialogVisible" title="历史学期" width="640px">
@@ -74,14 +88,21 @@
         <div style="width: 385px">名称</div>
         <div style="width: 850px">
           <div style="display: flex; flex: auto; justify-content: space-between">
-            <div style="width: 200px; border-right: 1px solid #bbbbbb; border-left: 1px solid #bbbbbb">层级码</div>
+            <div
+              style="width: 200px; border-right: 1px solid #bbbbbb; border-left: 1px solid #bbbbbb"
+            >
+              层级码
+            </div>
             <div style="width: 700px; flex: 1">备注</div>
           </div>
         </div>
       </div>
 
       <!-- 树容器 -->
-      <div class="tree-container" style="height: calc(100% - 25px); overflow: auto; min-width: 1236px">
+      <div
+        class="tree-container"
+        style="height: calc(100% - 25px); overflow: auto; min-width: 1236px"
+      >
         <el-tree
           :data="treeData"
           draggable
@@ -101,17 +122,47 @@
           @node-collapse="closeNode"
         >
           <template #default="{ node }">
-            <div style="display: flex; justify-content: space-between; flex: auto; text-align: left">
+            <div
+              style="display: flex; justify-content: space-between; flex: auto; text-align: left"
+            >
               <!-- 弹窗按钮区域 -->
               <el-popover
                 :visible="node.data.popVisible"
                 placement="right"
                 popper-style="background-color: rgba(255, 255, 255, 0.5)"
               >
-                <el-button style="margin-top: 6px; width: 100%" type="success" plain round @click="editNode(node.data)">编辑</el-button><br />
-                <el-button style="margin-top: 6px; width: 100%" type="primary" plain round @click="addSiblingNode(node.data)">同级新增</el-button><br />
-                <el-button style="margin-top: 6px; width: 100%" type="primary" plain round @click="addChildNode(node.data)">下级新增</el-button><br />
-                <el-button style="margin-top: 6px; width: 100%" type="danger" plain round @click="confirmDeleteNodes(node.data)">删除</el-button>
+                <el-button
+                  style="margin-top: 6px; width: 100%"
+                  type="success"
+                  plain
+                  round
+                  @click="editNode(node.data)"
+                  >编辑</el-button
+                ><br />
+                <el-button
+                  style="margin-top: 6px; width: 100%"
+                  type="primary"
+                  plain
+                  round
+                  @click="addSiblingNode(node.data)"
+                  >同级新增</el-button
+                ><br />
+                <el-button
+                  style="margin-top: 6px; width: 100%"
+                  type="primary"
+                  plain
+                  round
+                  @click="addChildNode(node.data)"
+                  >下级新增</el-button
+                ><br />
+                <el-button
+                  style="margin-top: 6px; width: 100%"
+                  type="danger"
+                  plain
+                  round
+                  @click="confirmDeleteNodes(node.data)"
+                  >删除</el-button
+                >
 
                 <template #reference>
                   <el-input
@@ -160,11 +211,7 @@
 
 <script lang="ts" setup>
 import { Document, Folder } from '@element-plus/icons-vue';
-import {
-  ElMessage,
-  ElMessageBox,
-  ElMessageBoxOptions,
-} from 'element-plus';
+import { ElMessage, ElMessageBox, ElMessageBoxOptions } from 'element-plus';
 import type Node from 'element-plus/es/components/tree/src/model/node';
 import type { DragEvents } from 'element-plus/es/components/tree/src/model/useDragNode';
 import type { NodeDropType } from 'element-plus/es/components/tree/src/tree.type';
@@ -188,7 +235,7 @@ const changeTreeExpand = () => {
   expandAll.value = !expandAll.value;
   expandedKeys.value = [];
   const allNodes = nodeExpand.value.store._getAllNodes();
-  allNodes.forEach((n) => {
+  allNodes.forEach(n => {
     n.expanded = expandAll.value;
     if (expandAll.value) expandedKeys.value.push(n.key);
   });
@@ -215,7 +262,7 @@ const findNodeById = (nodes, id) => {
 };
 
 // 同步选中节点
-const syncSelectedNode = (nodes) => {
+const syncSelectedNode = nodes => {
   if (selectedNode.value?.id) {
     const found = findNodeById(nodes, selectedNode.value.id);
     if (found) {
@@ -228,7 +275,9 @@ const syncSelectedNode = (nodes) => {
 
 // 权限计算
 const canEditSelected = computed(() => !!selectedNode.value && selectedNode.value.pid !== '0');
-const canAddSiblingSelected = computed(() => !!selectedNode.value && selectedNode.value.pid !== '0');
+const canAddSiblingSelected = computed(
+  () => !!selectedNode.value && selectedNode.value.pid !== '0'
+);
 const canAddChildSelected = computed(() => !!selectedNode.value);
 const canDeleteSelected = computed(() => !!selectedNode.value && selectedNode.value.pid !== '0');
 
@@ -268,14 +317,14 @@ const getHistoryTermList = async () => {
   }
 };
 
-const copyFromTerm = async (term) => {
+const copyFromTerm = async term => {
   const termId = term.term_id ?? term.id;
   if (!termId) {
     ElMessage.error('未找到学期ID');
     return;
   }
   try {
-    const res = await request.admin.post('/sysmangt/units/copy', termId);
+    const res = await request.admin.post(`/sysmangt/units/copy?copyTerm=${termId}`);
     if (res.code === 200) {
       ElMessage.success('复制学期成功');
       historyTermDialogVisible.value = false;
@@ -290,21 +339,24 @@ const copyFromTerm = async (term) => {
 
 // 获取初始数据
 const getTreeData = () => {
-  request.admin.get('/sysmangt/units').then(res => {
-    if (res.code === 200) {
-      treeData.value = res.data;
-      nullNodeNum.value = 0;
-      initialize(treeData.value);
-      syncSelectedNode(treeData.value);
-      console.log('getTreeData 被触发', treeData.value);
-    }
-  }).catch(() => {
-    ElMessage({ type: 'error', message: '获取教学单位失败' });
-  });
+  request.admin
+    .get('/sysmangt/units')
+    .then(res => {
+      if (res.code === 200) {
+        treeData.value = res.data;
+        nullNodeNum.value = 0;
+        initialize(treeData.value);
+        syncSelectedNode(treeData.value);
+        console.log('getTreeData 被触发', treeData.value);
+      }
+    })
+    .catch(() => {
+      ElMessage({ type: 'error', message: '获取教学单位失败' });
+    });
 };
 
 // 初始化节点状态
-const initialize = (nodes) => {
+const initialize = nodes => {
   nodes.forEach(node => {
     node.popVisible = false;
     node.inputVisible = false;
@@ -316,7 +368,7 @@ const initialize = (nodes) => {
 };
 
 // 删除确认
-const confirmDeleteNodes = (deletedNode) => {
+const confirmDeleteNodes = deletedNode => {
   const message =
     deletedNode.children && deletedNode.children.length > 0
       ? `是否删除节点 "${deletedNode.obsname}" 及其子节点？`
@@ -326,19 +378,23 @@ const confirmDeleteNodes = (deletedNode) => {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
-  }).then(() => {
-    ElMessageBox.confirm('确定要删除该节点吗？', '请再次确认', {
-      confirmButtonText: '是',
-      cancelButtonText: '否',
-      type: 'warning'
-    }).then(() => {
-      deleteNodes(deletedNode);
-    }).catch(() => {});
-  }).catch(() => {});
+  })
+    .then(() => {
+      ElMessageBox.confirm('确定要删除该节点吗？', '请再次确认', {
+        confirmButtonText: '是',
+        cancelButtonText: '否',
+        type: 'warning'
+      })
+        .then(() => {
+          deleteNodes(deletedNode);
+        })
+        .catch(() => {});
+    })
+    .catch(() => {});
 };
 
 // 批量删除
-const deleteNodes = (deletedNode) => {
+const deleteNodes = deletedNode => {
   let idlist = [];
   if (deletedNode.children && deletedNode.children.length > 0) {
     idlist = findChildNodes(deletedNode.children, [deletedNode.id]);
@@ -346,20 +402,23 @@ const deleteNodes = (deletedNode) => {
     idlist.push(deletedNode.id);
   }
 
-  request.admin.post('/sysmangt/units/delete', idlist).then(res => {
-    if (res.code === 200) {
-      ElMessage({ type: 'success', message: `节点 "${deletedNode.obsname}" 已删除` });
-      getTreeData();
-      idlist.forEach(id => {
-        const index = expandedKeys.value.indexOf(id);
-        if (index > -1) expandedKeys.value.splice(index, 1);
-      });
-    } else if (res.code === 404) {
-      ElMessage({ type: 'error', message: '批量删除教学单位出错' });
-    }
-  }).catch(() => {
-    ElMessage({ type: 'error', message: '删除节点失败' });
-  });
+  request.admin
+    .post('/sysmangt/units/delete', idlist)
+    .then(res => {
+      if (res.code === 200) {
+        ElMessage({ type: 'success', message: `节点 "${deletedNode.obsname}" 已删除` });
+        getTreeData();
+        idlist.forEach(id => {
+          const index = expandedKeys.value.indexOf(id);
+          if (index > -1) expandedKeys.value.splice(index, 1);
+        });
+      } else if (res.code === 404) {
+        ElMessage({ type: 'error', message: '批量删除教学单位出错' });
+      }
+    })
+    .catch(() => {
+      ElMessage({ type: 'error', message: '删除节点失败' });
+    });
 };
 
 // 查找子节点
@@ -391,7 +450,7 @@ const openNode = (nodeData, node) => {
   }
 };
 
-const removeExpandedKeys = (node) => {
+const removeExpandedKeys = node => {
   if (node.childNodes && node.childNodes.length > 0) {
     node.childNodes.forEach(childNode => {
       removeExpandedKeys(childNode);
@@ -406,7 +465,7 @@ const closeNode = (nodeData, node) => {
 };
 
 // 新增节点
-const addSiblingNode = async (addedNode) => {
+const addSiblingNode = async addedNode => {
   nullNodeNum.value += 1;
   const newNodeData = {
     id: addedNode.id,
@@ -415,19 +474,22 @@ const addSiblingNode = async (addedNode) => {
     type: '1',
     smObs: { obsname: '未命名节点', remark: '' }
   };
-  request.admin.post('/sysmangt/units/create', newNodeData).then(res => {
-    if (res.code === 200) {
-      ElMessage({ type: 'success', message: '新增同级教学单位成功' });
-      getTreeData();
-    } else {
-      ElMessage.error(res.msg);
-    }
-  }).catch(() => {
-    ElMessage({ type: 'error', message: '新增同级教学单位失败' });
-  });
+  request.admin
+    .post('/sysmangt/units/create', newNodeData)
+    .then(res => {
+      if (res.code === 200) {
+        ElMessage({ type: 'success', message: '新增同级教学单位成功' });
+        getTreeData();
+      } else {
+        ElMessage.error(res.msg);
+      }
+    })
+    .catch(() => {
+      ElMessage({ type: 'error', message: '新增同级教学单位失败' });
+    });
 };
 
-const addChildNode = (addedNode) => {
+const addChildNode = addedNode => {
   nullNodeNum.value += 1;
   const newNodeData = {
     id: addedNode.id,
@@ -436,17 +498,20 @@ const addChildNode = (addedNode) => {
     type: '2',
     smObs: { obsname: '未命名节点', remark: '' }
   };
-  request.admin.post('/sysmangt/units/create', newNodeData).then(res => {
-    if (res.code === 200) {
-      ElMessage({ type: 'success', message: '新增下级教学单位成功' });
-      expandedKeys.value.push(addedNode.id);
-      getTreeData();
-    } else {
-      ElMessage.error(res.msg);
-    }
-  }).catch(() => {
-    ElMessage({ type: 'error', message: '新增下级教学单位失败' });
-  });
+  request.admin
+    .post('/sysmangt/units/create', newNodeData)
+    .then(res => {
+      if (res.code === 200) {
+        ElMessage({ type: 'success', message: '新增下级教学单位成功' });
+        expandedKeys.value.push(addedNode.id);
+        getTreeData();
+      } else {
+        ElMessage.error(res.msg);
+      }
+    })
+    .catch(() => {
+      ElMessage({ type: 'error', message: '新增下级教学单位失败' });
+    });
 };
 
 // 拖拽处理
@@ -507,7 +572,7 @@ const insertDraggingNode = (draggingNode, dropNode, dropType) => {
   }
 };
 
-const deleteOldDraggingNode = (draggingNode) => {
+const deleteOldDraggingNode = draggingNode => {
   findParent(draggingNode);
   if (!parentData.value.parentNode) {
     treeData.value.splice(parentData.value.childrenIndex, 1);
@@ -529,7 +594,7 @@ const clickNode = (event, node, dom) => {
   openedPopNode.value = node;
 };
 
-const closePopNode = (event) => {
+const closePopNode = event => {
   if (openedPopNode.value && !event.target.closest('.el-popover')) {
     openedPopNode.value.popVisible = false;
     openedPopNode.value = {};
@@ -550,7 +615,7 @@ onBeforeUnmount(() => {
 
 // 编辑节点
 const nodeInput = ref(null);
-const editNode = (node) => {
+const editNode = node => {
   node.tempData = node.obsname;
   node.inputVisible = true;
   node.popVisible = false;
@@ -564,7 +629,7 @@ const editNode = (node) => {
   });
 };
 
-const handleBlur = (node) => {
+const handleBlur = node => {
   nextTick(() => {
     node.popVisible = false;
     if (node.tempData !== node.obsname) {
@@ -574,14 +639,17 @@ const handleBlur = (node) => {
         obsdeep: node.obsdeep,
         remark: ''
       };
-      request.admin.post('/sysmangt/units/update', editData).then(res => {
-        if (res.code === 200) {
-          ElMessage({ type: 'success', message: '修改教学单位名称成功' });
-          getTreeData();
-        }
-      }).catch(() => {
-        ElMessage({ type: 'error', message: '修改教学单位名称失败' });
-      });
+      request.admin
+        .post('/sysmangt/units/update', editData)
+        .then(res => {
+          if (res.code === 200) {
+            ElMessage({ type: 'success', message: '修改教学单位名称成功' });
+            getTreeData();
+          }
+        })
+        .catch(() => {
+          ElMessage({ type: 'error', message: '修改教学单位名称失败' });
+        });
     } else {
       ElMessage({ type: 'info', message: '无修改字段' });
     }

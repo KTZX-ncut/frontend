@@ -35,7 +35,7 @@ jobs:
 
       - name: Build
         working-directory: apps/main-project
-        run: pnpm run build -- --mode prod.hw192
+        run: pnpm run build --mode prod.hw192
       # - name: Create test dist
       #   run: |
       #     mkdir -p apps/main-project/dist
