@@ -89,7 +89,7 @@ function createAPI(url) {
       if (res?.result === false) {
         ElMessage.error(res.message);
       }
-      if(res.code !== 200){
+      if(res.code != 200){
         ElMessage.error(res.msg || '请求失败');
         return Promise.reject(res.data);
       }
