@@ -53,7 +53,7 @@
       </template>
       <div v-if="previewFileType === 'pdf'" class="preview-container">
         <!-- <PdfPreview ref="pdfPreviewRef" :fileUrl="previewFileUrl" /> -->
-        <PdfLoadingPreview :fileUrl="previewFileUrl" />
+        <PdfLoadingPreview :isClose="close" :fileUrl="previewFileUrl" />
       </div>
       <div v-if="previewFileType === 'word'" class="preview-container">
         <WordPreview ref="wordPreviewRef" :fileUrl="previewFileUrl" />
@@ -83,6 +83,7 @@ const previewVisible = ref(false);
 const previewFileType = ref('');
 const previewFileUrl = ref('');
 const dialogWidth = ref('65%');
+const close = ref(false);
 
 const pdfPreviewRef = ref(null);
 const wordPreviewRef = ref(null);
@@ -162,6 +163,7 @@ const previewFile = async file => {
     ElMessage.error('无法预览此文件类型，目前预览功能仅支持pdf和docx文件格式');
     return;
   }
+  close.value = false;
   previewFileUrl.value = fileUrl;
   previewVisible.value = true;
 };

@@ -85,19 +85,22 @@ function createAPI(url) {
   axiosData.interceptors.response.use(
     response => {
       let res = response.data;
+      const isBinaryResponse = ['blob', 'arraybuffer'].includes(response.config.responseType);
+
+      // 文件预览/下载接口可能返回 206，二进制响应不走业务码校验
+      if (isBinaryResponse) {
+        return res;
+      }
+
       // 课程、课堂、问卷、实验、组卷异常提示
       if (res?.result === false) {
         ElMessage.error(res.message);
       }
-      if(res.code != 200){
+      if (res?.code != 200) {
         ElMessage.error(res.msg || '请求失败');
         return Promise.reject(res.data);
       }
-      // console.log('res----', res)
-      // 如果是返回的文件
-      if (response.config.responseType === 'blob') {
-        return res;
-      }
+
       // 兼容服务端返回的字符串数据
       if (typeof res === 'string') {
         res = res ? JSON.parse(res) : res;

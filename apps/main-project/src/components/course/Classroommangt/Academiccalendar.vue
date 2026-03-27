@@ -172,6 +172,7 @@ const previewFile = async file => {
     ElMessage.error('无法预览此文件类型，目前预览功能仅支持pdf和docx文件格式');
     return;
   }
+  close.value = false;
   previewFileUrl.value = fileUrl;
   previewVisible.value = true;
 };

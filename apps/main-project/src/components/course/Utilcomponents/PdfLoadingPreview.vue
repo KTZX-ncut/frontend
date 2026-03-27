@@ -11,7 +11,7 @@
 
 <script setup>
 import PdfPreview from './PdfPreview.vue';
-import { ref, onMounted, onBeforeUnmount, computed, watch, onUnmounted } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import LoadingSpinner from '../Classroommangt/LoadingSpinner.vue';
 
 const pdfPreviewRef = ref(null);
@@ -24,7 +24,7 @@ const props = defineProps({
   },
   isClose: {
     type: Boolean,
-    required: true
+    default: false
   }
 });
 
@@ -37,9 +37,8 @@ watch(
   newVal => {
     // console.log(newVal);
     if (newVal) {
-      pdfPreviewRef.value.cancelCurrentTasks();
+      pdfPreviewRef.value?.cancelCurrentTasks();
       isLoading.value = true;
-      props.isClose = false;
     }
   },
   { deep: true, immediate: true }
@@ -50,11 +49,8 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  pdfPreviewRef.value.cancelCurrentTasks();
+  pdfPreviewRef.value?.cancelCurrentTasks();
 });
-// onUnmounted(() => {
-//   pdfPreviewRef.value.cancelCurrentTasks();
-// });
 </script>
 
 <style lang="less" scoped>

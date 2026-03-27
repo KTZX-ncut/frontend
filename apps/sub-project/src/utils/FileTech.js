@@ -1,6 +1,6 @@
 import NProgress from 'nprogress';
 import request from './request';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessage } from 'element-plus';
 
 export const download = (file, url) => {
   const dotIndex = file.filename.lastIndexOf('.');
@@ -24,23 +24,20 @@ export const download = (file, url) => {
       }
     })
     .then(response => {
-      // console.log(response);
-      const reader = new FileReader();
-      reader.readAsDataURL(response);
-      //  读取完的回调事件
-      reader.onload = e => {
-        let a = document.createElement('a');
-        a.download = file.filename;
-        a.style.display = 'none';
-        let url = reader.result;
-        a.href = url;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        // 移除进度条
-        NProgress.done();
-        ElMessage.success('下载成功');
-      };
+      const blob = response instanceof Blob ? response : new Blob([response]);
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+
+      a.download = file.filename;
+      a.style.display = 'none';
+      a.href = downloadUrl;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(downloadUrl);
+
+      NProgress.done();
+      ElMessage.success('下载成功');
     })
     .catch(error => {
       console.error('There was a problem with the fetch operation:', error);
