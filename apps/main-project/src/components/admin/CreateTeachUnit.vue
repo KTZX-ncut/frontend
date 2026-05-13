@@ -54,7 +54,8 @@
         type="primary"
         v-blur-on-click
         style="margin-left: 0.8vw"
-        @click="openHistoryTermDialog"
+        disabled
+        title="后端已取消按学期复制组织架构，当前版本不可用"
         >复制</el-button
       >
     </el-header>
@@ -300,8 +301,7 @@ const bannerDelete = () => {
 };
 
 const openHistoryTermDialog = async () => {
-  await getHistoryTermList();
-  historyTermDialogVisible.value = true;
+  ElMessage.warning('当前版本已取消按学期复制组织架构');
 };
 
 const getHistoryTermList = async () => {

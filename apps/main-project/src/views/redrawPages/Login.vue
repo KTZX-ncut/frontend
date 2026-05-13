@@ -70,8 +70,8 @@
               <div class="flex flex-col flex-wrap content-between overflow-auto radio-wrap">
                 <el-radio
                   v-for="role in roledata.simpleRoleList"
-                  :key="role.roleid"
-                  :label="role.id"
+                  :key="getRoleOptionKey(role)"
+                  :label="getRoleOptionKey(role)"
                 >
                   <div style="font-size: 16px; color: #666">{{ role.rolename }}</div>
                 </el-radio>
@@ -146,8 +146,8 @@
               <div class="flex flex-col flex-wrap content-between">
                 <el-radio
                   v-for="role in roledata.simpleRoleList"
-                  :key="role.roleid"
-                  :label="role.id"
+                  :key="getRoleOptionKey(role)"
+                  :label="getRoleOptionKey(role)"
                 >
                   <div style="font-size: 16px; color: #666">
                     {{ role.rolename }}
@@ -281,6 +281,9 @@ const selectedRoleId = ref(null);
 //默认选择第一个角色序号
 // const selectedRoleId = ref(data.simpleRoleList[0].roleid);
 
+const getRoleOptionKey = role =>
+  [role.roleid, role.obsid, role.obsdeep].filter(item => item !== undefined && item !== null).join('|');
+
 const rules = reactive({
   loginname: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
@@ -379,7 +382,9 @@ const login = () => {
 
 const confirmRole = () => {
   // const selectedRole = roledata.simpleRoleList.find(role => role.roleid === selectedRoleId.value);
-  const selectedRole = roledata.simpleRoleList.find(role => role.id === selectedRoleId.value);
+  const selectedRole = roledata.simpleRoleList.find(
+    role => getRoleOptionKey(role) === selectedRoleId.value
+  );
   if (selectedRole) {
     loginuserFrom.value.roleid = selectedRole.roleid;
     loginuserFrom.value.obsid = selectedRole.obsid;

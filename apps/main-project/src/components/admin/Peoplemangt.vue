@@ -177,12 +177,13 @@
             <el-table-column label="所属院系" width="150">
               <template #default="{ row }">
                 <!-- <el-input style="width: 100%; height: 25px;" v-model="row.obsname"></el-input> -->
-                <el-cascader v-model="row.obsname" :ref="el => setCascaderRef(el, row)" :options="obsmenulist"
-                  :id="row.id" :show-all-levels="false" @change="handleBlur(row)" :props="{
-                    value: 'obsname',
+                <el-cascader v-model="row.obsid" :ref="el => setCascaderRef(el, row)" :options="obsmenulist"
+                  :id="row.id" :show-all-levels="false" @change="value => handleObsChange(row, value)" :props="{
+                    value: 'id',
                     label: 'obsname',
                     children: 'children',
-                    checkStrictly: true
+                    checkStrictly: true,
+                    emitPath: false
                   }" filterable>
                 </el-cascader>
                 <!-- <div v-else style="width: 100%; height: 25px;"
@@ -275,12 +276,13 @@
             </el-table-column>
             <el-table-column prop="obsname" :label="unitName" width="150">
               <template #default="{ row }">
-                <el-cascader v-model="row.obsname" :ref="el => setCascaderRef(el, row)" :options="obsmenulist"
-                  :id="row.id" :show-all-levels="false" @change="handleBlur(row)" :props="{
-                    value: 'obsname',
+                <el-cascader v-model="row.obsid" :ref="el => setCascaderRef(el, row)" :options="obsmenulist"
+                  :id="row.id" :show-all-levels="false" @change="value => handleObsChange(row, value)" :props="{
+                    value: 'id',
                     label: 'obsname',
                     children: 'children',
-                    checkStrictly: true
+                    checkStrictly: true,
+                    emitPath: false
                   }" filterable>
                 </el-cascader>
               </template>
@@ -416,6 +418,16 @@ const removeFirstLayer = node => {
     };
   }
   return node;
+};
+
+const findObsById = (nodes, id) => {
+  if (!nodes || !id) return null;
+  for (const node of nodes) {
+    if (node.id === id) return node;
+    const found = findObsById(node.children, id);
+    if (found) return found;
+  }
+  return null;
 };
 
 //左侧树中选取的机构
@@ -747,6 +759,29 @@ const handleBlur = (row, editingField = '', dataField = '') => {
       getPeopleList();
     }
   });
+};
+
+const handleObsChange = async (row, obsid) => {
+  if (!obsid || obsid === row._lastObsid) return;
+  row._lastObsid = obsid;
+  const selectedObs = findObsById(obsmenulist.value, obsid);
+  try {
+    const res = await request.admin.post('/sysmangt/personnelmangt/update', {
+      id: row.id,
+      catelog: row.catelog,
+      obsid
+    });
+    if (res.code === 200) {
+      row.obsname = selectedObs?.obsname || row.obsname;
+      ElMessage.success('修改成功');
+    } else {
+      ElMessage.error(res.msg);
+      getPeopleList();
+    }
+  } catch (error) {
+    ElMessage.error('修改失败' + error);
+    getPeopleList();
+  }
 };
 
 const changeStatus = async (row, value) => {

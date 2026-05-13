@@ -2,7 +2,7 @@
   <!-- <div style="width: 100vw; background-color: #eef7ff"> -->
   <div :style="{ width: '100vw', backgroundColor: 'var(--bg-color)' }">
     <el-container class="layout-container-demo">
-      <History :isOpen="isOpen" @close="handleClose" />
+      <!-- <History :isOpen="isOpen" @close="handleClose" /> -->
       <el-header
         style="
           background-color: var(--bg-title-bar);
@@ -137,12 +137,12 @@
                             >切换角色</el-dropdown-item
                           >
                           <el-dropdown-item @click="handleLogout">退出登录</el-dropdown-item>
-                          <el-dropdown-item v-if="!historyStore.nowUsr" @click="handleHistory"
+                          <!-- <el-dropdown-item v-if="!historyStore.nowUsr" @click="handleHistory"
                             >查看历史学期</el-dropdown-item
                           >
                           <el-dropdown-item v-else @click="backToNow"
                             >返回当前学期</el-dropdown-item
-                          >
+                          > -->
                         </template>
                         <template v-else>
                           <el-dropdown-item
@@ -345,7 +345,7 @@
 </template>
 
 <script lang="ts" setup>
-import History from '../../components/History/History.vue';
+// import History from '../../components/History/History.vue';
 import '@/assets/css/taildwind.css';
 import intro from '@/utils/introConfigure.js';
 import { ref, reactive, computed, onMounted, toRaw, nextTick } from 'vue';
