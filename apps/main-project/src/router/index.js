@@ -44,6 +44,11 @@ const routes = [
     component: () => import('../views/redrawPages/Login.vue')
   },
   {
+    path: '/debug/secretary-tools',
+    name: 'SecretaryToolsDebug',
+    component: () => import('../views/debug/SecretaryToolsDebug.vue')
+  },
+  {
     path: '/homes/studenthome',
     name: 'StudentHomePage',
     // component: () => import('../views/studentHomePage.vue')
@@ -114,6 +119,31 @@ const routes = [
         component: () => import('../components/admin/Rolepurview.vue')
       },
       {
+        path: 'sysmangt/userroleassign',
+        name: 'UserRoleAssign', // 用户角色配置
+        component: () => import('../components/admin/UserRoleAssign.vue')
+      },
+      {
+        path: 'sysmangt/secretary/professioncreate',
+        name: 'SecretaryCreateProfession', // 教学秘书新增专业
+        component: () => import('../components/admin/SecretaryCreateProfession.vue')
+      },
+      {
+        path: 'sysmangt/secretary/classcreate',
+        name: 'SecretaryCreateClass', // 教学秘书新增班级
+        component: () => import('../components/admin/SecretaryCreateClass.vue')
+      },
+      {
+        path: 'sysmangt/secretary/coursecreate',
+        name: 'SecretaryCreateCourse', // 教学秘书新增课程
+        component: () => import('../components/admin/SecretaryCreateCourse.vue')
+      },
+      {
+        path: 'sysmangt/secretary/classroomcreate',
+        name: 'SecretaryCreateClassroom', // 教学秘书新增课堂
+        component: () => import('../components/admin/SecretaryCreateClassroom.vue')
+      },
+      {
         path: 'sysmangt/schoolmangt',
         name: 'SchoolMangt', // 学校配置
         component: () => import('../components/admin/SchoolMangt.vue')
@@ -131,7 +161,8 @@ const routes = [
       {
         path: 'sysmangt/peoplemangt',
         name: 'PeopleManagement', //人员管理
-        component: () => import('../components/admin/Peoplemangt.vue')
+        // component: () => import('../components/admin/Peoplemangt.vue')
+        component: () => import('../components/admin/UserRoleAssign.vue')
       },
       {
         path: 'sysmangt/collegemangt',
@@ -519,6 +550,11 @@ const router = createRouter({
 // });
 
 router.beforeEach((to, from, next) => {
+  if (to.path.startsWith('/debug/')) {
+    next();
+    return;
+  }
+
   // 尝试从 sessionStorage 中获取用户信息
   const storedUserInfo = sessionStorage.getItem('users');
 
