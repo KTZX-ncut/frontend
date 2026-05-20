@@ -1,6 +1,13 @@
 node_modules
 dist/
 **/dist/
+build/
+*.log
+.env*
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
 
 # IntelliJ IDEA
 .idea/
