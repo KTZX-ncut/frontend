@@ -187,12 +187,12 @@ const routes = [
       {
         path: 'coursemangt/coursemangt', // 课程管理
         name: 'CourseManagement',
-        component: () => import('../components/course/Coursemangt.vue')
+        component: () => import('../components/admin/SecretaryCreateCourse.vue')
       },
       {
         path: 'coursemangt/classroom', // 课堂管理
         name: 'ClassRoomManagement',
-        component: () => import('../components/course/Classroommangt.vue')
+        component: () => import('../components/admin/SecretaryCreateClassroom.vue')
       },
       {
         path: 'evaluation/ability', // 能力字典

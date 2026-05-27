@@ -220,7 +220,7 @@ const getCandidateTree = async scopeType => {
   try {
     if (scopeType === SCOPE_TYPES.PROFESSION) {
       const res = assertSuccess(await request.admin.get('/sysmangt/professionmangt/professionRP'));
-      return res.data || [];
+      return res.data?.length ? res.data : mockCandidateTree;
     }
     if (scopeType === SCOPE_TYPES.COURSE) {
       const res = assertSuccess(await request.course.post('/coursemangt/course/courseRP'));

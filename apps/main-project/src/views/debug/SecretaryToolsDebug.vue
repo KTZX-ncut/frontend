@@ -19,14 +19,20 @@
     />
 
     <el-tabs v-model="activeTab" class="debug-tabs">
+      <el-tab-pane label="角色管理" name="roleManage">
+        <Rolemangt />
+      </el-tab-pane>
+      <el-tab-pane label="角色授权" name="rolePurview">
+        <Rolepurview />
+      </el-tab-pane>
+      <el-tab-pane label="学校配置" name="school">
+        <SchoolMangt />
+      </el-tab-pane>
       <el-tab-pane label="角色配置" name="roleAssign">
         <UserRoleAssign />
       </el-tab-pane>
       <el-tab-pane label="新增专业" name="profession">
         <SecretaryCreateProfession />
-      </el-tab-pane>
-      <el-tab-pane label="新增班级" name="class">
-        <SecretaryCreateClass />
       </el-tab-pane>
       <el-tab-pane label="新增课程" name="course">
         <SecretaryCreateCourse />
@@ -40,13 +46,15 @@
 
 <script setup>
 import { computed, ref } from 'vue';
+import Rolemangt from '../../components/admin/Rolemangt.vue';
+import Rolepurview from '../../components/admin/Rolepurview.vue';
+import SchoolMangt from '../../components/admin/SchoolMangt.vue';
 import UserRoleAssign from '../../components/admin/UserRoleAssign.vue';
 import SecretaryCreateProfession from '../../components/admin/SecretaryCreateProfession.vue';
 import SecretaryCreateCourse from '../../components/admin/SecretaryCreateCourse.vue';
 import SecretaryCreateClassroom from '../../components/admin/SecretaryCreateClassroom.vue';
-import SecretaryCreateClass from '../../components/admin/SecretaryCreateClass.vue';
 
-const activeTab = ref('roleAssign');
+const activeTab = ref('roleManage');
 const hasToken = computed(() => Boolean(sessionStorage.getItem('token')));
 </script>
 
