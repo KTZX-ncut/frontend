@@ -161,8 +161,8 @@ const routes = [
       {
         path: 'sysmangt/peoplemangt',
         name: 'PeopleManagement', //人员管理
-        // component: () => import('../components/admin/Peoplemangt.vue')
-        component: () => import('../components/admin/UserRoleAssign.vue')
+        component: () => import('../components/admin/Peoplemangt.vue')
+        // component: () => import('../components/admin/UserRoleAssign.vue')
       },
       {
         path: 'sysmangt/collegemangt',
