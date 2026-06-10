@@ -1,29 +1,12 @@
 import {
   createRouter,
-  createWebHistory,
-  onBeforeRouteLeave,
-  createWebHashHistory,
-  useRoute
+  createWebHistory
 } from 'vue-router';
 import useMain from '../stores/useMain';
 import { storeToRefs } from 'pinia';
-const rolehome = [
-  'teacherhomne',
-  'adminhome',
-  'superadminhome',
-  'secretariatehome',
-  'academicaffairshome',
-  'deanhome',
-  'departmenthome',
-  'majormanagerhome',
-  'coursemanagerhome',
-  'professionhome',
-  'assistanthome',
-  'courseteacherhome',
-  'studenthome',
-  'page',
-  'defaulthome'
-];
+import { RoleHomeEnum } from './roleTabs.js';
+
+const rolehome = [...Object.values(RoleHomeEnum), 'studenthome', 'page'];
 // superadminhome 超级管理员首页
 // secretariatehome 教学秘书首页
 // academicaffairshome 教务处首页
@@ -33,7 +16,6 @@ const rolehome = [
 // coursemanagerhome 课程负责人首页
 
 const pathHeader = `/homes/:rolehome(${rolehome.join('|')})`;
-const route = useRoute();
 
 console.log('pathHeader', pathHeader);
 const routes = [
@@ -161,8 +143,8 @@ const routes = [
       {
         path: 'sysmangt/peoplemangt',
         name: 'PeopleManagement', //人员管理
-        // component: () => import('../components/admin/Peoplemangt.vue')
-        component: () => import('../components/admin/UserRoleAssign.vue')
+        component: () => import('../components/admin/Peoplemangt.vue')
+        // component: () => import('../components/admin/UserRoleAssign.vue')
       },
       {
         path: 'sysmangt/collegemangt',
@@ -285,7 +267,7 @@ const routes = [
       },
       {
         path: 'evasys/formative/coursetarget', // 形成性评价模型-课程目标
-        name: 'CourseTarget',
+        name: 'FormativeCourseTarget',
         component: () => import('../components/evaluation/CourseTarget.vue')
       },
       {
@@ -325,7 +307,7 @@ const routes = [
       },
       {
         path: 'evasys/accessible/coursetarget', // 达成性评价模型-课程目标
-        name: 'CourseTarget',
+        name: 'AttainmentCourseTarget',
         // component: () => import('../components/evaluation/CourseTarget.vue')
         component: () => import('../components/evaluation/evaluationNew/CourseAim.vue')
       },
@@ -384,90 +366,111 @@ const routes = [
       // 课程页
       {
         path: pathHeader + '/exam/coursequelib',
+        name: 'CourseQuestionLib',
         component: () => import('../views/page/courseLib/index.vue')
       },
       {
         path: pathHeader + '/exam/coursequelib/type',
+        name: 'CourseQuestionLibType',
         component: () => import('../views/page/courseLib/type/index.vue')
       },
       {
         path: pathHeader + '/exam/coursequelib/sync',
+        name: 'CourseQuestionLibSync',
         component: () => import('../views/page/courseLib/sync/index.vue')
       },
       // 课堂页
       {
         path: pathHeader + '/exam/classroomquelib',
+        name: 'ClassroomQuestionLib',
         component: () => import('../views/page/classroomLib/index.vue')
       },
       {
         path: pathHeader + '/exam/classroomquelib/classroomQTS',
+        name: 'ClassroomQuestionLibType',
         component: () => import('../views/page/classroomLib/type/index.vue')
       },
       // 作业测试
       {
         path: pathHeader + '/exam/test/testmangt',
+        name: 'TestManagement',
         component: () => import('../views/page/taskMgmt/index.vue')
       },
       {
         path: pathHeader + '/exam/test/past',
+        name: 'PastTestManagement',
         component: () => import('../views/page/taskMgmt/prevTask/index.vue')
       },
       {
         path: pathHeader + '/exam/test/taskMgmt/view',
+        name: 'TestManagementView',
         component: () => import('../views/page/taskMgmt/view/index.vue')
       },
       {
         path: pathHeader + '/exam/test/tpAssembly',
+        name: 'TestPaperAssembly',
         component: () => import('../views/page/taskMgmt/tpAssembly/index.vue')
       },
       {
         path: pathHeader + '/exam/test/taskList',
+        name: 'TestTaskList',
         component: () => import('../views/page/taskMgmt/taskList/index.vue')
       },
       {
         path: pathHeader + '/exam/test/assignGrading',
+        name: 'AssignGrading',
         component: () => import('../views/page/taskMgmt/assignGrading/index.vue')
       },
       // 实验
       {
         path: pathHeader + '/exam/experimental/labmangt',
+        name: 'LabManagement',
         component: () => import('../views/page/practice/index.vue')
       },
       {
         path: pathHeader + '/exam/experimental/view',
+        name: 'LabView',
         component: () => import('../views/page/practice/view/index.vue')
       },
       {
         path: pathHeader + '/exam/experimental/student',
+        name: 'LabStudent',
         component: () => import('../views/page/practice/student/index.vue')
       },
       {
         path: pathHeader + '/exam/experimental/practiceInfo',
+        name: 'LabPracticeInfo',
         component: () => import('../views/page/practice/info/index.vue')
       },
       {
         path: pathHeader + '/exam/experimental/correct',
+        name: 'LabCorrect',
         component: () => import('../views/page/practice/correct/index.vue')
       },
       // 问卷
       {
         path: pathHeader + '/exam/questionnaire',
+        name: 'Questionnaire',
         component: () => import('../views/page/ques/list/index.vue')
       },
       {
         path: pathHeader + '/exam/edit',
+        name: 'QuestionnaireEdit',
         component: () => import('../views/page/ques/edit/index.vue')
       },
       {
         path: pathHeader + '/exam/studentList',
+        name: 'QuestionnaireStudentList',
         component: () => import('../views/page/ques/studentList/index.vue')
       },
       {
         path: pathHeader + '/exam/view',
+        name: 'QuestionnaireView',
         component: () => import('../views/page/ques/view/index.vue')
       },
       {
         path: pathHeader + '/exp/scoreList',
+        name: 'ScoreList',
         component: () => import('../views/page/grade/list/index.vue')
       },
       {
