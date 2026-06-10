@@ -1,7 +1,7 @@
 <template>
   <el-container style="height: 92vh">
     <!-- 头部操作栏 -->
-    <el-header
+    <!-- <el-header
       style="
         height: auto;
         padding: 5px 0;
@@ -58,7 +58,7 @@
         title="后端已取消按学期复制组织架构，当前版本不可用"
         >复制</el-button
       >
-    </el-header>
+    </el-header> -->
 
     <el-dialog v-model="historyTermDialogVisible" title="历史学期" width="640px">
       <el-table :data="historyTermList" style="width: 100%">

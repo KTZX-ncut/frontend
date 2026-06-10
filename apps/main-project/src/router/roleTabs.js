@@ -1,3 +1,126 @@
+/**
+ * ========================================================================
+ * 角色侧边栏菜单配置
+ * ========================================================================
+ *
+ * 【各角色菜单结构】
+ *
+ * ■ 教学秘书 (SECRETARIATE)
+ *   - 学期管理
+ *   - 教学单位管理
+ *   - 人员管理
+ *   - 角色管理
+ *   - 角色授权
+ *   - 学校配置
+ *   - 角色配置
+ *   - 专业配置
+ *   - 课堂信息管理（组）
+ *     - 教学日历
+ *     - 课程教案
+ *     - 课堂学生名单
+ *
+ * ■ 专业负责人 (MAJOR_MANAGER) / 专业 (PROFESSION)
+ *   - 课程管理
+ *   - 课堂管理
+ *   - 能力字典
+ *
+ * ■ 课程负责人 (COURSE_MANAGER)
+ *   - 教学大纲
+ *   - 课程资源
+ *   - 配置课程信息
+ *   - 课程题库（组）
+ *     - 题型设定
+ *     - 题库同步
+ *   - 形成性评价模型（组）
+ *     - 关键字
+ *     - 能力
+ *     - 基本教学目标
+ *     - 知识单元
+ *     - 知识能力图谱
+ *   - 达成性评价模型（组）
+ *     - 课程目标
+ *     - 考核项设计
+ *     - 考核方案
+ *   - 思政价值评价（组）
+ *     - 价值标签
+ *     - 思政知识单元
+ *   - 评估与画像（组）
+ *     - 形成性评价（子组）：学生报告、学生画像、课堂画像
+ *     - 达成性评价（子组）：评价结果、生成报告
+ *     - 思政评价（子组）：学生画像、课堂画像
+ *     - 总体评价（已注释）
+ *
+ * ■ 任课教师 (COURSE_TEACHER) / 教师 (TEACHER / TEACHER_LEGACY)
+ *   - 教学大纲
+ *   - 课堂信息管理（组）
+ *     - 教学日历
+ *     - 课程教案
+ *     - 课堂学生名单
+ *   - 课程资源
+ *   - 课程题库
+ *   - 课堂题库（组）
+ *     - 题型设定
+ *   - 作业测试（组）
+ *     - 作业测试
+ *     - 往届作业
+ *   - 实验实践（组）
+ *     - 实验管理
+ *   - 问卷发布
+ *   - 外部数据管理（组）
+ *     - 外部数据类型
+ *     - 外部数据导入
+ *   - 形成性评价模型（组）
+ *     - 知识单元
+ *     - 知识能力图谱
+ *     - 画像名单
+ *     - 画像数据管理
+ *   - 达成性评价模型（组）
+ *     - 考核方案
+ *     - 画像名单
+ *   - 思政价值评价（组）
+ *     - 画像名单
+ *     - 价值标签
+ *     - 画像数据管理
+ *   - 图谱
+ *   - 评估与画像（组）
+ *     - 形成性评价（子组）：学生报告、学生画像、课堂画像
+ *     - 达成性评价（子组）：评价结果、生成报告
+ *     - 思政评价（子组）：学生画像、课堂画像
+ *
+ * ========================================================================
+ * 【如何新增菜单/子级菜单】
+ *
+ * 1. 新增一个独立 tab（一级菜单项）：
+ *    (1) 在 AppTabEnum 中新增枚举值，如: MY_TAB: 'MY_TAB'
+ *    (2) 在 APP_TAB_CONFIG 中添加配置: [AppTabEnum.MY_TAB]: { name: '显示名称', routeName: '路由name' }
+ *    (3) 确保 router/index.js 中已注册对应的 routeName
+ *    (4) 在 ROLE_MENU_TREE_CONFIG 对应角色数组中添加 AppTabEnum.MY_TAB
+ *
+ * 2. 新增一个分组（带子菜单的折叠项）：
+ *    使用 group(groupKey, name, children) 创建：
+ *      const MY_GROUP = group('MY_GROUP_KEY', '分组名称', [
+ *        AppTabEnum.CHILD_TAB_1,
+ *        AppTabEnum.CHILD_TAB_2
+ *      ]);
+ *    然后在 ROLE_MENU_TREE_CONFIG 对应角色数组中添加 MY_GROUP
+ *
+ * 3. 新增三级菜单（组内嵌套子组）：
+ *    在 group 的 children 中嵌套 group：
+ *      const PARENT = group('PARENT_KEY', '父级', [
+ *        group('CHILD_GROUP_KEY', '子分组', [
+ *          AppTabEnum.TAB_A,
+ *          AppTabEnum.TAB_B
+ *        ]),
+ *        AppTabEnum.TAB_C
+ *      ]);
+ *
+ * 4. 同一 tab 在不同角色中显示不同子项时：
+ *    创建带 _FOR_XXX 后缀的变体常量，如 FORMATIVE_EVALUATION_MODEL_FOR_TEACHER
+ *    在各角色配置中引用对应的变体
+ *
+ * ========================================================================
+ */
+
 export const RoleHomeEnum = Object.freeze({
   TEACHER: 'teacherhomne',
   TEACHER_LEGACY: 'teacherhome',
@@ -90,7 +213,8 @@ export const AppTabEnum = Object.freeze({
   TEST_PAST: 'TEST_PAST',
   LAB_MANAGEMENT: 'LAB_MANAGEMENT',
   QUESTIONNAIRE: 'QUESTIONNAIRE',
-  SCORE_LIST: 'SCORE_LIST'
+  SCORE_LIST: 'SCORE_LIST',
+  OVERALL_EVALUATION: 'OVERALL_EVALUATION'
 });
 
 export const AppMenuGroupEnum = Object.freeze({
@@ -141,18 +265,18 @@ export const APP_TAB_CONFIG = Object.freeze({
   [AppTabEnum.FORMATIVE_COURSE_TARGET]: { name: '课程目标', routeName: 'FormativeCourseTarget' },
   [AppTabEnum.FORMATIVE_IDEALOGY]: { name: '思政价值', routeName: 'Idealogy-dy' },
   [AppTabEnum.VALUE_LABEL]: { name: '价值标签', routeName: 'Idealogy' },
-  [AppTabEnum.VALUE_KNOWLEDGE_UNIT]: { name: '知识单元', routeName: 'IdealogyKnowledgeUnit' },
-  [AppTabEnum.IDEALOGY_PORTRAIT_LIST]: { name: '学生名单', routeName: 'IdealogyList' },
-  [AppTabEnum.IDEALOGY_PORTRAIT_DATA]: { name: '数据管理', routeName: 'IdealogyDatamanage' },
+  [AppTabEnum.VALUE_KNOWLEDGE_UNIT]: { name: '思政知识单元', routeName: 'IdealogyKnowledgeUnit' },
+  [AppTabEnum.IDEALOGY_PORTRAIT_LIST]: { name: '画像名单', routeName: 'IdealogyList' },
+  [AppTabEnum.IDEALOGY_PORTRAIT_DATA]: { name: '画像数据管理', routeName: 'IdealogyDatamanage' },
   [AppTabEnum.IDEALOGY_STUDENT_PORTRAIT]: { name: '学生画像', routeName: 'IdealogyStudentPortrait' },
   [AppTabEnum.IDEALOGY_CLASSROOM_PORTRAIT]: { name: '课堂画像', routeName: 'IdealogyClassroomPortraita' },
   [AppTabEnum.ATTAINMENT_COURSE_TARGET]: { name: '课程目标', routeName: 'AttainmentCourseTarget' },
-  [AppTabEnum.ASSESSMENT_ITEMS]: { name: '考核项', routeName: 'AssessmentItems' },
+  [AppTabEnum.ASSESSMENT_ITEMS]: { name: '考核项设计', routeName: 'AssessmentItems' },
   [AppTabEnum.ASSESSMENT_PLAN]: { name: '考核方案', routeName: 'AssessmentTable' },
   [AppTabEnum.STUDENT_REPORT]: { name: '学生报告', routeName: 'StudentReport' },
   [AppTabEnum.STUDENT_GRAPH]: { name: '学生画像', routeName: 'StudentGraph' },
   [AppTabEnum.CLASSROOM_GRAPH]: { name: '课堂画像', routeName: 'ClassroomGraph' },
-  [AppTabEnum.ACADEMIC_TRANSCRIPT]: { name: '评价名单', routeName: 'AcademicTranscript' },
+  [AppTabEnum.ACADEMIC_TRANSCRIPT]: { name: '评价结果', routeName: 'AcademicTranscript' },
   [AppTabEnum.CLASSROOM_REPORT]: { name: '生成报告', routeName: 'ClassroomReport' },
   [AppTabEnum.ATTAINMENT_GRAPH_LIST]: { name: '画像名单', routeName: 'attainmentGraphList' },
   [AppTabEnum.EXTERNAL_DATA_TYPE_CREATE]: { name: '外部数据类型', routeName: 'ExternalDataTypeCreate' },
@@ -164,9 +288,10 @@ export const APP_TAB_CONFIG = Object.freeze({
   [AppTabEnum.CLASSROOM_QUESTION_TYPE]: { name: '题型设定', routeName: 'ClassroomQuestionLibType' },
   [AppTabEnum.TEST_MANAGEMENT]: { name: '作业测试', routeName: 'TestManagement' },
   [AppTabEnum.TEST_PAST]: { name: '往届作业', routeName: 'PastTestManagement' },
-  [AppTabEnum.LAB_MANAGEMENT]: { name: '实验', routeName: 'LabManagement' },
+  [AppTabEnum.LAB_MANAGEMENT]: { name: '实验管理', routeName: 'LabManagement' },
   [AppTabEnum.QUESTIONNAIRE]: { name: '问卷发布', routeName: 'Questionnaire' },
-  [AppTabEnum.SCORE_LIST]: { name: '成绩', routeName: 'ScoreList' }
+  [AppTabEnum.SCORE_LIST]: { name: '成绩', routeName: 'ScoreList' },
+  // [AppTabEnum.OVERALL_EVALUATION]: { name: '总体评价', routeName: 'attainmentGraphList' }
 });
 
 const LEGACY_MENU_URL_TO_TAB_KEY = Object.freeze({
@@ -244,10 +369,18 @@ const FORMATIVE_EVALUATION_MODEL = group(
     AppTabEnum.FORMATIVE_ABILITY,
     AppTabEnum.FORMATIVE_TEACHING_OBJECTIVES,
     AppTabEnum.FORMATIVE_KNOWLEDGE_UNIT,
-    AppTabEnum.FORMATIVE_PORTRAIT_MANAGEMENT,
-    AppTabEnum.FORMATIVE_GRAPH_LIST,
+    AppTabEnum.FORMATIVE_KWA_GRAPH
+  ]
+);
+
+const FORMATIVE_EVALUATION_MODEL_FOR_TEACHER = group(
+  AppMenuGroupEnum.FORMATIVE_EVALUATION_MODEL,
+  '形成性评价模型',
+  [
+    AppTabEnum.FORMATIVE_KNOWLEDGE_UNIT,
     AppTabEnum.FORMATIVE_KWA_GRAPH,
-    AppTabEnum.FORMATIVE_COURSE_TARGET
+    AppTabEnum.FORMATIVE_GRAPH_LIST,
+    AppTabEnum.FORMATIVE_PORTRAIT_MANAGEMENT
   ]
 );
 
@@ -257,22 +390,54 @@ const ATTAINMENT_EVALUATION_MODEL = group(
   [AppTabEnum.ATTAINMENT_COURSE_TARGET, AppTabEnum.ASSESSMENT_ITEMS, AppTabEnum.ASSESSMENT_PLAN]
 );
 
+const ATTAINMENT_EVALUATION_MODEL_FOR_TEACHER = group(
+  AppMenuGroupEnum.ATTAINMENT_EVALUATION_MODEL,
+  '达成性评价模型',
+  [AppTabEnum.ASSESSMENT_PLAN, AppTabEnum.ATTAINMENT_GRAPH_LIST]
+);
+
 const IDEOLOGY_EVALUATION = group(AppMenuGroupEnum.IDEOLOGY_EVALUATION, '思政价值评价', [
   AppTabEnum.VALUE_LABEL,
-  AppTabEnum.VALUE_KNOWLEDGE_UNIT,
+  AppTabEnum.VALUE_KNOWLEDGE_UNIT
+]);
+
+const IDEOLOGY_EVALUATION_FOR_TEACHER = group(AppMenuGroupEnum.IDEOLOGY_EVALUATION, '思政价值评价', [
   AppTabEnum.IDEALOGY_PORTRAIT_LIST,
-  AppTabEnum.IDEALOGY_PORTRAIT_DATA,
-  AppTabEnum.IDEALOGY_STUDENT_PORTRAIT,
-  AppTabEnum.IDEALOGY_CLASSROOM_PORTRAIT
+  AppTabEnum.VALUE_LABEL,
+  AppTabEnum.IDEALOGY_PORTRAIT_DATA
 ]);
 
 const EVALUATION_AND_PORTRAIT = group(AppMenuGroupEnum.EVALUATION_AND_PORTRAIT, '评估与画像', [
-  AppTabEnum.STUDENT_REPORT,
-  AppTabEnum.STUDENT_GRAPH,
-  AppTabEnum.CLASSROOM_GRAPH,
-  AppTabEnum.ACADEMIC_TRANSCRIPT,
-  AppTabEnum.CLASSROOM_REPORT,
-  AppTabEnum.ATTAINMENT_GRAPH_LIST
+  group('EVAL_FORMATIVE_PORTRAIT', '形成性评价', [
+    AppTabEnum.STUDENT_REPORT,
+    AppTabEnum.STUDENT_GRAPH,
+    AppTabEnum.CLASSROOM_GRAPH
+  ]),
+  group('EVAL_ATTAINMENT_PORTRAIT', '达成性评价', [
+    AppTabEnum.ACADEMIC_TRANSCRIPT,
+    AppTabEnum.CLASSROOM_REPORT
+  ]),
+  group('EVAL_IDEOLOGY_PORTRAIT', '思政评价', [
+    AppTabEnum.IDEALOGY_STUDENT_PORTRAIT,
+    AppTabEnum.IDEALOGY_CLASSROOM_PORTRAIT
+  ]),
+  AppTabEnum.OVERALL_EVALUATION
+]);
+
+const EVALUATION_AND_PORTRAIT_FOR_TEACHER = group(AppMenuGroupEnum.EVALUATION_AND_PORTRAIT, '评估与画像', [
+  group('EVAL_FORMATIVE_PORTRAIT', '形成性评价', [
+    AppTabEnum.STUDENT_REPORT,
+    AppTabEnum.STUDENT_GRAPH,
+    AppTabEnum.CLASSROOM_GRAPH
+  ]),
+  group('EVAL_ATTAINMENT_PORTRAIT', '达成性评价', [
+    AppTabEnum.ACADEMIC_TRANSCRIPT,
+    AppTabEnum.CLASSROOM_REPORT
+  ]),
+  group('EVAL_IDEOLOGY_PORTRAIT', '思政评价', [
+    AppTabEnum.IDEALOGY_STUDENT_PORTRAIT,
+    AppTabEnum.IDEALOGY_CLASSROOM_PORTRAIT
+  ])
 ]);
 
 const EXAM_QUESTION_LIB_FOR_COURSE = group(AppMenuGroupEnum.EXAM_QUESTION_LIB, '考试题库', [
@@ -296,8 +461,17 @@ const TEST_GROUP = group(AppMenuGroupEnum.TEST, '作业测试', [
 ]);
 
 const PRACTICE_GROUP = group(AppMenuGroupEnum.PRACTICE, '实验实践', [
-  AppTabEnum.LAB_MANAGEMENT,
-  AppTabEnum.SCORE_LIST
+  AppTabEnum.LAB_MANAGEMENT
+]);
+
+const CLASSROOM_QUESTION_LIB_GROUP = group('CLASSROOM_QUESTION_LIB_GROUP', '课堂题库', [
+  AppTabEnum.CLASSROOM_QUESTION_TYPE
+]);
+
+const CLASSROOM_INFO_GROUP = group('CLASSROOM_INFO_MANAGEMENT', '课堂信息管理', [
+  AppTabEnum.ACADEMIC_CALENDAR,
+  AppTabEnum.LESSON_PLAN,
+  AppTabEnum.CLASS_STUDENT_LIST
 ]);
 
 const EXTERNAL_DATA_GROUP = group(AppMenuGroupEnum.EXTERNAL_DATA, '外部数据管理', [
@@ -307,14 +481,15 @@ const EXTERNAL_DATA_GROUP = group(AppMenuGroupEnum.EXTERNAL_DATA, '外部数据�
 
 export const ROLE_MENU_TREE_CONFIG = Object.freeze({
   [RoleHomeEnum.SECRETARIATE]: [
-    AppTabEnum.TERM_MANAGEMENT,
+    // AppTabEnum.TERM_MANAGEMENT,
     AppTabEnum.TEACH_UNIT_MANAGEMENT,
     AppTabEnum.PEOPLE_MANAGEMENT,
-    AppTabEnum.ROLE_MANAGEMENT,
-    AppTabEnum.ROLE_PURVIEW,
+    // AppTabEnum.ROLE_MANAGEMENT,
+    // AppTabEnum.ROLE_PURVIEW,
     AppTabEnum.SCHOOL_MANAGEMENT,
     AppTabEnum.USER_ROLE_ASSIGN,
-    AppTabEnum.PROFESSION_MANAGEMENT
+    AppTabEnum.PROFESSION_MANAGEMENT,
+    // CLASSROOM_INFO_GROUP
   ],
   [RoleHomeEnum.MAJOR_MANAGER]: [
     AppTabEnum.COURSE_MANAGEMENT,
@@ -329,9 +504,12 @@ export const ROLE_MENU_TREE_CONFIG = Object.freeze({
   [RoleHomeEnum.COURSE_MANAGER]: [
     AppTabEnum.INSTRUCTIONAL_PROGRAM,
     AppTabEnum.COURSE_RESOURCES,
-    AppTabEnum.PAST_COURSE,
-    AppTabEnum.COURSE_QUESTION_LIB,
-    EXAM_QUESTION_LIB_FOR_COURSE,
+    // AppTabEnum.PAST_COURSE,
+    group('COURSE_QUESTION_LIB_GROUP', '课程题库', [
+      AppTabEnum.COURSE_QUESTION_TYPE,
+      AppTabEnum.COURSE_QUESTION_SYNC
+    ]),
+    // EXAM_QUESTION_LIB_FOR_COURSE,
     FORMATIVE_EVALUATION_MODEL,
     ATTAINMENT_EVALUATION_MODEL,
     IDEOLOGY_EVALUATION,
@@ -339,54 +517,54 @@ export const ROLE_MENU_TREE_CONFIG = Object.freeze({
   ],
   [RoleHomeEnum.COURSE_TEACHER]: [
     AppTabEnum.INSTRUCTIONAL_PROGRAM,
-    AppTabEnum.COURSE_MANAGER_HOME,
+    CLASSROOM_INFO_GROUP,
     AppTabEnum.COURSE_RESOURCES,
     AppTabEnum.COURSE_QUESTION_LIB,
-    AppTabEnum.CLASSROOM_QUESTION_LIB,
-    EXAM_QUESTION_LIB_FOR_TEACHER,
+    CLASSROOM_QUESTION_LIB_GROUP,
+    // EXAM_QUESTION_LIB_FOR_TEACHER,
     TEST_GROUP,
     PRACTICE_GROUP,
     AppTabEnum.QUESTIONNAIRE,
     EXTERNAL_DATA_GROUP,
-    FORMATIVE_EVALUATION_MODEL,
-    ATTAINMENT_EVALUATION_MODEL,
-    IDEOLOGY_EVALUATION,
+    FORMATIVE_EVALUATION_MODEL_FOR_TEACHER,
+    ATTAINMENT_EVALUATION_MODEL_FOR_TEACHER,
+    IDEOLOGY_EVALUATION_FOR_TEACHER,
     AppTabEnum.FORMATIVE_GRAPH,
-    EVALUATION_AND_PORTRAIT
+    EVALUATION_AND_PORTRAIT_FOR_TEACHER
   ],
   [RoleHomeEnum.TEACHER]: [
     AppTabEnum.INSTRUCTIONAL_PROGRAM,
-    AppTabEnum.COURSE_MANAGER_HOME,
+    CLASSROOM_INFO_GROUP,
     AppTabEnum.COURSE_RESOURCES,
     AppTabEnum.COURSE_QUESTION_LIB,
-    AppTabEnum.CLASSROOM_QUESTION_LIB,
-    EXAM_QUESTION_LIB_FOR_TEACHER,
+    CLASSROOM_QUESTION_LIB_GROUP,
+    // EXAM_QUESTION_LIB_FOR_TEACHER,
     TEST_GROUP,
     PRACTICE_GROUP,
     AppTabEnum.QUESTIONNAIRE,
     EXTERNAL_DATA_GROUP,
-    FORMATIVE_EVALUATION_MODEL,
-    ATTAINMENT_EVALUATION_MODEL,
-    IDEOLOGY_EVALUATION,
+    FORMATIVE_EVALUATION_MODEL_FOR_TEACHER,
+    ATTAINMENT_EVALUATION_MODEL_FOR_TEACHER,
+    IDEOLOGY_EVALUATION_FOR_TEACHER,
     AppTabEnum.FORMATIVE_GRAPH,
-    EVALUATION_AND_PORTRAIT
+    EVALUATION_AND_PORTRAIT_FOR_TEACHER
   ],
   [RoleHomeEnum.TEACHER_LEGACY]: [
     AppTabEnum.INSTRUCTIONAL_PROGRAM,
-    AppTabEnum.COURSE_MANAGER_HOME,
+    CLASSROOM_INFO_GROUP,
     AppTabEnum.COURSE_RESOURCES,
     AppTabEnum.COURSE_QUESTION_LIB,
-    AppTabEnum.CLASSROOM_QUESTION_LIB,
-    EXAM_QUESTION_LIB_FOR_TEACHER,
+    CLASSROOM_QUESTION_LIB_GROUP,
+    // EXAM_QUESTION_LIB_FOR_TEACHER,
     TEST_GROUP,
     PRACTICE_GROUP,
     AppTabEnum.QUESTIONNAIRE,
     EXTERNAL_DATA_GROUP,
-    FORMATIVE_EVALUATION_MODEL,
-    ATTAINMENT_EVALUATION_MODEL,
-    IDEOLOGY_EVALUATION,
+    FORMATIVE_EVALUATION_MODEL_FOR_TEACHER,
+    ATTAINMENT_EVALUATION_MODEL_FOR_TEACHER,
+    IDEOLOGY_EVALUATION_FOR_TEACHER,
     AppTabEnum.FORMATIVE_GRAPH,
-    EVALUATION_AND_PORTRAIT
+    EVALUATION_AND_PORTRAIT_FOR_TEACHER
   ],
   [RoleHomeEnum.DEFAULT]: []
 });
