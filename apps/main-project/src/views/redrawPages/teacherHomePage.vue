@@ -184,7 +184,7 @@
                   <!-- 二级菜单 -->
                   <el-sub-menu
                     v-if="hasChildren(menu)"
-                    :index="menu.tabKey"
+                    :index="menu.tabKey || menu.groupKey || menu.id"
                     :key="menu.id"
                     style="border-top: 1px solid #efefef; position: relative"
                   >
@@ -199,7 +199,7 @@
                       <!-- 三级菜单 -->
                       <el-sub-menu
                         v-if="hasChildren(child)"
-                        :index="child.tabKey"
+                        :index="child.tabKey || child.groupKey || child.id"
                         :key="child.id"
                         style="border-top: 1px solid #efefef; position: relative"
                       >
@@ -214,7 +214,7 @@
                         </template>
                         <el-menu-item
                           v-for="grandchild in getChildrenMenus(child)"
-                          :index="grandchild.tabKey"
+                          :index="grandchild.tabKey || grandchild.groupKey || grandchild.id"
                           :key="grandchild.id"
                           style="border-top: 1px solid #efefef"
                           @click="navigateTo(grandchild)"
@@ -231,7 +231,7 @@
                       <!-- 无三级菜单 -->
                       <el-menu-item
                         v-else
-                        :index="child.tabKey"
+                        :index="child.tabKey || child.groupKey || child.id"
                         :key="child.id"
                         style="border-top: 1px solid #efefef"
                         @click="navigateTo(child)"
@@ -249,7 +249,7 @@
                   <!-- 无二级菜单 -->
                   <el-menu-item
                     v-else
-                    :index="menu.tabKey"
+                    :index="menu.tabKey || menu.groupKey || menu.id"
                     :key="menu.id"
                     @click="navigateTo(menu)"
                     style="border-top: 1px solid #efefef"

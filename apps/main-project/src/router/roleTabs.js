@@ -307,8 +307,6 @@ const EXTERNAL_DATA_GROUP = group(AppMenuGroupEnum.EXTERNAL_DATA, '外部数据�
 
 export const ROLE_MENU_TREE_CONFIG = Object.freeze({
   [RoleHomeEnum.SECRETARIATE]: [
-    AppTabEnum.COURSE_MANAGEMENT,
-    AppTabEnum.CLASSROOM_MANAGEMENT,
     AppTabEnum.TERM_MANAGEMENT,
     AppTabEnum.TEACH_UNIT_MANAGEMENT,
     AppTabEnum.PEOPLE_MANAGEMENT,

@@ -19,12 +19,50 @@
       </div>
     </div>
 
-    <div class="content-grid">
-      <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="panel form-panel">
+    <section class="panel list-panel">
+      <div class="panel-toolbar">
         <div class="panel-title">
-          <h3>录入专业信息</h3>
-          <span>用于建立课程归属的专业目录</span>
+          <h3>专业目录</h3>
+          <span>共 {{ professions.length }} 个专业</span>
         </div>
+        <div class="toolbar-actions">
+          <el-button type="primary" :icon="Plus" @click="dialogVisible = true">新增专业</el-button>
+          <el-button
+            type="danger"
+            :icon="Delete"
+            :disabled="!selectedRows.length"
+            :loading="loading.delete"
+            @click="deleteRows(selectedRows)"
+          >
+            删除所选
+          </el-button>
+        </div>
+      </div>
+      <el-table
+        :data="professions"
+        border
+        stripe
+        empty-text="暂无专业数据"
+        @selection-change="selectedRows = $event"
+      >
+        <el-table-column type="selection" width="42" />
+        <el-table-column prop="proname" label="专业名称" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="procode" label="专业代码" min-width="110" />
+        <el-table-column prop="reachpercent" label="达成阈值" min-width="110" />
+        <el-table-column label="专业负责人" min-width="180" show-overflow-tooltip>
+          <template #default="{ row }">{{ formatPeople(row.responsiblePersonList) }}</template>
+        </el-table-column>
+        <el-table-column prop="remark" label="备注" min-width="160" show-overflow-tooltip />
+        <el-table-column label="操作" width="90" fixed="right">
+          <template #default="{ row }">
+            <el-button text type="danger" :icon="Delete" @click="deleteRows([row])">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </section>
+
+    <el-dialog v-model="dialogVisible" title="录入专业信息" width="500px" :close-on-click-modal="false" @closed="resetForm">
+      <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <el-form-item label="专业名称" prop="proname">
           <el-input v-model="form.proname" placeholder="请输入专业名称" />
         </el-form-item>
@@ -37,53 +75,12 @@
         <el-form-item label="备注">
           <el-input v-model="form.remark" type="textarea" :rows="4" placeholder="请输入备注" />
         </el-form-item>
-        <div class="form-actions">
-          <el-button :icon="Refresh" @click="resetForm">重置</el-button>
-          <el-button type="primary" :icon="Plus" :loading="loading.submit" @click="submitForm">
-            保存专业
-          </el-button>
-        </div>
       </el-form>
-
-      <section class="panel list-panel">
-        <div class="panel-toolbar">
-          <div class="panel-title">
-            <h3>专业目录</h3>
-            <span>共 {{ professions.length }} 个专业</span>
-          </div>
-          <el-button
-            type="danger"
-            :icon="Delete"
-            :disabled="!selectedRows.length"
-            :loading="loading.delete"
-            @click="deleteRows(selectedRows)"
-          >
-            删除所选
-          </el-button>
-        </div>
-        <el-table
-          :data="professions"
-          border
-          stripe
-          empty-text="暂无专业数据"
-          @selection-change="selectedRows = $event"
-        >
-          <el-table-column type="selection" width="42" />
-          <el-table-column prop="proname" label="专业名称" min-width="150" show-overflow-tooltip />
-          <el-table-column prop="procode" label="专业代码" min-width="110" />
-          <el-table-column prop="reachpercent" label="达成阈值" min-width="110" />
-          <el-table-column label="专业负责人" min-width="180" show-overflow-tooltip>
-            <template #default="{ row }">{{ formatPeople(row.responsiblePersonList) }}</template>
-          </el-table-column>
-          <el-table-column prop="remark" label="备注" min-width="160" show-overflow-tooltip />
-          <el-table-column label="操作" width="90" fixed="right">
-            <template #default="{ row }">
-              <el-button text type="danger" :icon="Delete" @click="deleteRows([row])">删除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </section>
-    </div>
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="loading.submit" @click="submitForm">保存专业</el-button>
+      </template>
+    </el-dialog>
   </section>
 </template>
 
@@ -96,6 +93,7 @@ import request from '../../utils/request.js';
 const formRef = ref(null);
 const professions = ref([]);
 const selectedRows = ref([]);
+const dialogVisible = ref(false);
 
 const loading = reactive({
   list: false,
@@ -157,6 +155,7 @@ const submitForm = async () => {
     });
     if (res.code === 200) {
       ElMessage.success('新增专业成功');
+      dialogVisible.value = false;
       resetForm();
       await loadProfessions();
     }
@@ -274,13 +273,6 @@ onMounted(loadProfessions);
   line-height: 1;
 }
 
-.content-grid {
-  display: grid;
-  grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
-}
-
 .panel {
   background: #fff;
   border: 1px solid #e3e8ef;
@@ -295,12 +287,6 @@ onMounted(loadProfessions);
   border-bottom: 1px solid #edf1f5;
 }
 
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
 .list-panel {
   min-width: 0;
 }
@@ -309,11 +295,12 @@ onMounted(loadProfessions);
   margin-bottom: 14px;
 }
 
-@media (max-width: 980px) {
-  .content-grid {
-    grid-template-columns: 1fr;
-  }
+.toolbar-actions {
+  display: flex;
+  gap: 10px;
+}
 
+@media (max-width: 980px) {
   .summary-strip {
     grid-template-columns: 1fr;
   }

@@ -23,12 +23,55 @@
       </div>
     </div>
 
-    <div class="content-grid">
-      <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="panel form-panel">
+    <section class="panel list-panel">
+      <div class="panel-toolbar">
         <div class="panel-title">
-          <h3>录入课堂信息</h3>
-          <span>选择课程后配置教师和学时</span>
+          <h3>课堂列表</h3>
+          <span>共 {{ validClassroomCount }} 个课堂</span>
         </div>
+        <div class="toolbar-actions">
+          <el-button type="primary" :icon="Plus" @click="dialogVisible = true">新增课堂</el-button>
+          <el-button
+            type="danger"
+            :icon="Delete"
+            :disabled="!selectedRows.length"
+            :loading="loading.delete"
+            @click="deleteRows(selectedRows)"
+          >
+            删除所选
+          </el-button>
+        </div>
+      </div>
+      <el-table
+        :data="classrooms"
+        border
+        stripe
+        empty-text="暂无课堂数据"
+        @selection-change="selectedRows = $event"
+      >
+        <el-table-column type="selection" width="42" :selectable="row => Boolean(row.id)" />
+        <el-table-column prop="courseChineseName" label="课程名称" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="classroomName" label="课堂名称" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="teacherName" label="主讲教师" min-width="120" />
+        <el-table-column prop="labTeacher" label="实验教师" min-width="120" />
+        <el-table-column prop="practiceTeacher" label="实践教师" min-width="120" />
+        <el-table-column label="学时" min-width="130">
+          <template #default="{ row }">
+            {{ row.teachTime || 0 }}/{{ row.labTime || 0 }}/{{ row.practiceTime || 0 }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="90" fixed="right">
+          <template #default="{ row }">
+            <el-button text type="danger" :icon="Delete" :disabled="!row.id" @click="deleteRows([row])">
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </section>
+
+    <el-dialog v-model="dialogVisible" title="录入课堂信息" width="520px" :close-on-click-modal="false" @closed="resetForm">
+      <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <el-form-item label="课程名称" prop="courseId">
           <el-select
             v-model="form.courseId"
@@ -96,58 +139,12 @@
             @change="value => handleTeacherChange('practice', value)"
           />
         </el-form-item>
-        <div class="form-actions">
-          <el-button :icon="Refresh" @click="resetForm">重置</el-button>
-          <el-button type="primary" :icon="Plus" :loading="loading.submit" @click="submitForm">
-            保存课堂
-          </el-button>
-        </div>
       </el-form>
-
-      <section class="panel list-panel">
-        <div class="panel-toolbar">
-          <div class="panel-title">
-            <h3>课堂列表</h3>
-            <span>共 {{ validClassroomCount }} 个课堂</span>
-          </div>
-          <el-button
-            type="danger"
-            :icon="Delete"
-            :disabled="!selectedRows.length"
-            :loading="loading.delete"
-            @click="deleteRows(selectedRows)"
-          >
-            删除所选
-          </el-button>
-        </div>
-        <el-table
-          :data="classrooms"
-          border
-          stripe
-          empty-text="暂无课堂数据"
-          @selection-change="selectedRows = $event"
-        >
-          <el-table-column type="selection" width="42" :selectable="row => Boolean(row.id)" />
-          <el-table-column prop="courseChineseName" label="课程名称" min-width="150" show-overflow-tooltip />
-          <el-table-column prop="classroomName" label="课堂名称" min-width="150" show-overflow-tooltip />
-          <el-table-column prop="teacherName" label="主讲教师" min-width="120" />
-          <el-table-column prop="labTeacher" label="实验教师" min-width="120" />
-          <el-table-column prop="practiceTeacher" label="实践教师" min-width="120" />
-          <el-table-column label="学时" min-width="130">
-            <template #default="{ row }">
-              {{ row.teachTime || 0 }}/{{ row.labTime || 0 }}/{{ row.practiceTime || 0 }}
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="90" fixed="right">
-            <template #default="{ row }">
-              <el-button text type="danger" :icon="Delete" :disabled="!row.id" @click="deleteRows([row])">
-                删除
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </section>
-    </div>
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="loading.submit" @click="submitForm">保存课堂</el-button>
+      </template>
+    </el-dialog>
   </section>
 </template>
 
@@ -164,6 +161,7 @@ const courses = ref([]);
 const classrooms = ref([]);
 const teacherOptions = ref([]);
 const selectedRows = ref([]);
+const dialogVisible = ref(false);
 
 const loading = reactive({
   courses: false,
@@ -342,6 +340,7 @@ const submitForm = async () => {
 
     if (res.code === 200) {
       ElMessage.success(`新增课堂成功：${selectedCourse.value?.courseChineseName || ''}`);
+      dialogVisible.value = false;
       resetForm();
       await loadClassrooms();
     }
@@ -461,13 +460,6 @@ onMounted(() => {
   line-height: 1;
 }
 
-.content-grid {
-  display: grid;
-  grid-template-columns: minmax(330px, 440px) minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
-}
-
 .panel {
   background: #fff;
   border: 1px solid #e3e8ef;
@@ -482,14 +474,13 @@ onMounted(() => {
   border-bottom: 1px solid #edf1f5;
 }
 
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
 .panel-toolbar {
   margin-bottom: 14px;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 10px;
 }
 
 .el-select,
@@ -498,10 +489,6 @@ onMounted(() => {
 }
 
 @media (max-width: 980px) {
-  .content-grid {
-    grid-template-columns: 1fr;
-  }
-
   .summary-strip {
     grid-template-columns: 1fr;
   }

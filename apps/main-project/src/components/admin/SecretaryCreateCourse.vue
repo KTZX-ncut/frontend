@@ -23,12 +23,50 @@
       </div>
     </div>
 
-    <div class="content-grid">
-      <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="panel form-panel">
+    <section class="panel list-panel">
+      <div class="panel-toolbar">
         <div class="panel-title">
-          <h3>录入课程信息</h3>
-          <span>选择所属专业后填写课程基础信息</span>
+          <h3>课程目录</h3>
+          <span>共 {{ courses.length }} 门课程</span>
         </div>
+        <div class="toolbar-actions">
+          <el-button type="primary" :icon="Plus" @click="dialogVisible = true">新增课程</el-button>
+          <el-button
+            type="danger"
+            :icon="Delete"
+            :disabled="!selectedRows.length"
+            :loading="loading.delete"
+            @click="deleteRows(selectedRows)"
+          >
+            删除所选
+          </el-button>
+        </div>
+      </div>
+      <el-table
+        :data="courses"
+        border
+        stripe
+        empty-text="暂无课程数据"
+        @selection-change="selectedRows = $event"
+      >
+        <el-table-column type="selection" width="42" />
+        <el-table-column prop="courseChineseName" label="中文名称" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="courseEnglishName" label="英文名称" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="courseCode" label="课程代码" min-width="110" />
+        <el-table-column prop="professionName" label="所属专业" min-width="140" show-overflow-tooltip />
+        <el-table-column label="课程负责人" min-width="180" show-overflow-tooltip>
+          <template #default="{ row }">{{ formatPeople(row.responsiblePersonList) }}</template>
+        </el-table-column>
+        <el-table-column label="操作" width="90" fixed="right">
+          <template #default="{ row }">
+            <el-button text type="danger" :icon="Delete" @click="deleteRows([row])">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </section>
+
+    <el-dialog v-model="dialogVisible" title="录入课程信息" width="520px" :close-on-click-modal="false" @closed="resetForm">
+      <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
         <el-form-item label="学期">
           <el-input v-model="form.term" disabled />
         </el-form-item>
@@ -69,53 +107,12 @@
             @focus="loadTeachers"
           />
         </el-form-item>
-        <div class="form-actions">
-          <el-button :icon="Refresh" @click="resetForm">重置</el-button>
-          <el-button type="primary" :icon="Plus" :loading="loading.submit" @click="submitForm">
-            保存课程
-          </el-button>
-        </div>
       </el-form>
-
-      <section class="panel list-panel">
-        <div class="panel-toolbar">
-          <div class="panel-title">
-            <h3>课程目录</h3>
-            <span>共 {{ courses.length }} 门课程</span>
-          </div>
-          <el-button
-            type="danger"
-            :icon="Delete"
-            :disabled="!selectedRows.length"
-            :loading="loading.delete"
-            @click="deleteRows(selectedRows)"
-          >
-            删除所选
-          </el-button>
-        </div>
-        <el-table
-          :data="courses"
-          border
-          stripe
-          empty-text="暂无课程数据"
-          @selection-change="selectedRows = $event"
-        >
-          <el-table-column type="selection" width="42" />
-          <el-table-column prop="courseChineseName" label="中文名称" min-width="150" show-overflow-tooltip />
-          <el-table-column prop="courseEnglishName" label="英文名称" min-width="150" show-overflow-tooltip />
-          <el-table-column prop="courseCode" label="课程代码" min-width="110" />
-          <el-table-column prop="professionName" label="所属专业" min-width="140" show-overflow-tooltip />
-          <el-table-column label="课程负责人" min-width="180" show-overflow-tooltip>
-            <template #default="{ row }">{{ formatPeople(row.responsiblePersonList) }}</template>
-          </el-table-column>
-          <el-table-column label="操作" width="90" fixed="right">
-            <template #default="{ row }">
-              <el-button text type="danger" :icon="Delete" @click="deleteRows([row])">删除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </section>
-    </div>
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="loading.submit" @click="submitForm">保存课程</el-button>
+      </template>
+    </el-dialog>
   </section>
 </template>
 
@@ -131,6 +128,7 @@ const courses = ref([]);
 const teacherOptions = ref([]);
 const teacherIds = ref([]);
 const selectedRows = ref([]);
+const dialogVisible = ref(false);
 
 const loading = reactive({
   professions: false,
@@ -267,6 +265,7 @@ const submitForm = async () => {
       const courseRPResponse = await request.course.post('/coursemangt/course/courseRP/create', courseRPs);
       if (courseRPResponse.code === 200) {
         ElMessage.success('新增课程成功');
+        dialogVisible.value = false;
         resetForm();
         await loadCourses(true);
       }
@@ -387,13 +386,6 @@ onMounted(() => {
   line-height: 1;
 }
 
-.content-grid {
-  display: grid;
-  grid-template-columns: minmax(330px, 440px) minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
-}
-
 .panel {
   background: #fff;
   border: 1px solid #e3e8ef;
@@ -408,14 +400,13 @@ onMounted(() => {
   border-bottom: 1px solid #edf1f5;
 }
 
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
 .panel-toolbar {
   margin-bottom: 14px;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 10px;
 }
 
 .el-select,
@@ -424,10 +415,6 @@ onMounted(() => {
 }
 
 @media (max-width: 980px) {
-  .content-grid {
-    grid-template-columns: 1fr;
-  }
-
   .summary-strip {
     grid-template-columns: 1fr;
   }
