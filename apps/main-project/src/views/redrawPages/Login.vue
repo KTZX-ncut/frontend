@@ -1,15 +1,11 @@
 <template>
-  <div class="page flex flex-col">
-    <div class="section_1 flex-col relative">
-      <div class="inner relative flex-col">
-        <img
-          class="image_1 absolute"
-          referrerpolicy="no-referrer"
-          src="@/assets/images/redraw-images/title.png"
-        />
-        <div class="absolute block_1 flex flex-row justify-between items-center">
+  <div class="page">
+    <div class="section_1">
+      <div class="inner">
+        <span class="title_text">数字产业学院教学平台</span>
+        <div class="block_1 flex flex-row justify-between items-center">
           <div
-            style="width: 11.25vw; color: rgba(39, 165, 255, 1);"
+            style="width: 50%; color: rgba(39, 165, 255, 1);"
             @click="() => switchRole(loginForm.catelog, '1')"
             :class="
               loginForm.catelog === '1'
@@ -21,7 +17,7 @@
           </div>
           <div
             @click="() => switchRole(loginForm.catelog, '2')"
-            style="width: 11.25vw; color: rgba(39, 165, 255, 1);"
+            style="width: 50%; color: rgba(39, 165, 255, 1);"
             :class="
               loginForm.catelog === '2'
                 ? 'text-wrapper_1 flex flex-col cursor-pointer justify-center items-center h-full'
@@ -31,10 +27,8 @@
             <span class="text_2">教师登录</span>
           </div>
         </div>
-        <div v-if="!isText" class="wrapper absolute">
-          <div class="login-pannel flex">
-            <!--切换账号登录-->
-
+        <div v-if="!isText" class="wrapper">
+          <div class="login-pannel">
             <el-form :model="loginForm" :rules="rules" ref="ruleFormRef" size="large">
               <el-form-item prop="loginname">
                 <el-input
@@ -57,59 +51,26 @@
             </el-form>
           </div>
 
-          <div @click="login" class="text-wrapper_2 flex flex-col cursor-pointer absolute">
-            <span style="color: #0177cc" class="text_5 cursor-pointer">登录</span>
+          <div @click="login" class="login-btn cursor-pointer">
+            <span class="text_5">登录</span>
           </div>
 
-          <el-dialog :modelValue="showRoleModal" :show-close="false" :close-on-click-modal="false">
-            <template #header>
-              <div style="font-weight: bold; font-size: 18px" class="title">选 择 角 色</div>
-              <el-divider style="border-top: 1px solid #27a5ff !important" />
-            </template>
-            <el-radio-group v-model="selectedRoleId">
-              <div class="flex flex-col flex-wrap content-between overflow-auto radio-wrap">
-                <el-radio
-                  v-for="role in roledata.simpleRoleList"
-                  :key="role.roleid"
-                  :label="role.id"
-                >
-                  <div style="font-size: 16px; color: #666">{{ role.rolename }}</div>
-                </el-radio>
-              </div>
-            </el-radio-group>
-            <template #footer>
-              <div class="button" style="margin: 0 auto">
-                <el-button class="cancel" @click="showRoleModal = false">取消</el-button>
-                <el-button class="confirm" type="primary" @click="confirmRole">确认</el-button>
-              </div>
-            </template>
-          </el-dialog>
-          <img
-            class="image_2 absolute"
-            referrerpolicy="no-referrer"
-            src="@/assets/images/redraw-images/bar.png"
-          />
-          <div
-            class="text-wrapper_3 flex flex-col cursor-pointer justify-center items-center absolute"
-          >
-            <span
-              @click="
-                () => {
-                  isText = !isText;
-                }
-              "
-              class="text_6"
-              style="color: #fff"
-              >短信验证密码登录</span
-            >
+          <div class="divider-row">
+            <span class="divider-line"></span>
+            <span class="divider-text">or</span>
+            <span class="divider-line"></span>
           </div>
-          <span class="text_8 absolute">or</span>
+
+          <div
+            @click="() => { isText = !isText; }"
+            class="switch-btn cursor-pointer"
+          >
+            <span class="text_6">短信验证密码登录</span>
+          </div>
         </div>
 
-        <div v-else class="wrapper absolute">
-          <div class="login-pannel flex">
-            <!--切换账号登录-->
-
+        <div v-else class="wrapper">
+          <div class="login-pannel">
             <el-form :model="loginwithText" :rules="rules" ref="ruleFormRef" size="large">
               <el-form-item prop="phone">
                 <el-input
@@ -127,62 +88,55 @@
                 >
                 </el-input>
                 <el-button class="text">获取短信验证码</el-button>
-
-                <!-- 弹窗登录-->
               </el-form-item>
             </el-form>
           </div>
 
-          <div @click="login" class="text-wrapper_2 flex flex-col cursor-pointer absolute">
-            <span style="color: #0177cc" class="text_5">登录</span>
+          <div @click="login" class="login-btn cursor-pointer">
+            <span class="text_5">登录</span>
           </div>
 
-          <el-dialog :modelValue="showRoleModal" :show-close="false" :close-on-click-modal="false">
-            <template #header>
-              <div style="font-weight: bold; font-size: 18px" class="title">选 择 角 色</div>
-              <el-divider style="border-top: 1px solid #27a5ff !important" />
-            </template>
-            <el-radio-group v-model="selectedRoleId">
-              <div class="flex flex-col flex-wrap content-between">
-                <el-radio
-                  v-for="role in roledata.simpleRoleList"
-                  :key="role.roleid"
-                  :label="role.id"
-                >
-                  <div style="font-size: 16px; color: #666">
-                    {{ role.rolename }}
-                  </div>
-                </el-radio>
-              </div>
-            </el-radio-group>
-            <template #footer>
-              <div class="button" style="margin: 0 auto">
-                <el-button class="cancel" @click="showRoleModal = false">取消</el-button>
-                <el-button class="confirm" type="primary" @click="confirmRole">确认</el-button>
-              </div>
-            </template>
-          </el-dialog>
-          <img
-            class="image_2 absolute"
-            referrerpolicy="no-referrer"
-            src="@/assets/images/redraw-images/bar.png"
-          />
+          <div class="divider-row">
+            <span class="divider-line"></span>
+            <span class="divider-text">or</span>
+            <span class="divider-line"></span>
+          </div>
 
           <div
-            @click="
-              () => {
-                isText = !isText;
-              }
-            "
-            class="text-wrapper_3 flex flex-row cursor-pointer justify-center items-center absolute"
+            @click="() => { isText = !isText; }"
+            class="switch-btn cursor-pointer"
           >
-            <span class="text_6" style="color: #fff">账号密码登录</span>
+            <span class="text_6">账号密码登录</span>
           </div>
-          <span class="text_8 absolute">or</span>
         </div>
       </div>
-      <span class="text_7 flex" style="color: #5581ad">北方工业大学&#64;2024版权所有</span>
+      <span class="text_7">数字产业学院&#64;2024版权所有</span>
     </div>
+
+    <!-- 角色选择弹窗 - 放在面板外部 -->
+    <el-dialog :modelValue="showRoleModal" :show-close="false" :close-on-click-modal="false" append-to-body>
+      <template #header>
+        <div style="font-weight: bold; font-size: 18px" class="title">选 择 角 色</div>
+        <el-divider style="border-top: 1px solid #27a5ff !important" />
+      </template>
+      <el-radio-group v-model="selectedRoleId">
+        <div class="flex flex-col flex-wrap content-between overflow-auto radio-wrap">
+          <el-radio
+            v-for="role in roledata.simpleRoleList"
+            :key="role.roleid"
+            :label="role.id"
+          >
+            <div style="font-size: 16px; color: #666">{{ role.rolename }}</div>
+          </el-radio>
+        </div>
+      </el-radio-group>
+      <template #footer>
+        <div class="button" style="margin: 0 auto">
+          <el-button class="cancel" @click="showRoleModal = false">取消</el-button>
+          <el-button class="confirm" type="primary" @click="confirmRole">确认</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -452,6 +406,169 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
+.page {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.section_1 {
+  width: 100%;
+  height: 100%;
+  background: url('@/assets/images/redraw-images/background-new.jpg') center no-repeat;
+  background-size: cover;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-left: 35%;
+}
+
+.inner {
+  width: 420px;
+  min-width: 420px;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  padding: 36px 32px 28px;
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.title_text {
+  font-size: 24px;
+  font-weight: bold;
+  color: #0064b1;
+  letter-spacing: 3px;
+  white-space: nowrap;
+  font-family: MicrosoftYaHei, sans-serif;
+  margin-bottom: 24px;
+}
+
+.block_1 {
+  width: 100%;
+  height: 48px;
+  background: url('@/assets/images/redraw-images/blockbg.png') center no-repeat;
+  background-size: 100% 100%;
+  margin-bottom: 20px;
+}
+
+.text-wrapper_1 {
+  background-color: rgba(39, 165, 255, 1);
+  border-radius: 7px;
+  height: 46px;
+  color: #fff !important;
+}
+
+.text_1,
+.text_2 {
+  font-size: 16px;
+  letter-spacing: 2px;
+  font-family: MicrosoftYaHei;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login-pannel {
+  width: 100%;
+}
+
+.el-form {
+  width: 100%;
+  .el-form-item {
+    :deep(.el-input__wrapper) {
+      border: 2px solid rgba(204, 218, 226, 1);
+      border-radius: 10px;
+      box-shadow: 0px 1px 0px 0px rgba(255, 255, 255, 0.5);
+      height: 50px;
+    }
+    .el-input {
+      :deep(.el-input__prefix) {
+        width: 14px;
+        height: 16px;
+        margin-right: 15px;
+      }
+    }
+  }
+}
+
+.login-btn {
+  width: 100%;
+  height: 48px;
+  background-color: #fff;
+  border: 2px solid #27a5ff;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.text_5 {
+  color: #0177cc;
+  font-size: 16px;
+  letter-spacing: 4px;
+  font-family: MicrosoftYaHei;
+  font-weight: bold;
+}
+
+.divider-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin: 16px 0;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(39, 165, 255, 0.3);
+}
+
+.divider-text {
+  padding: 0 12px;
+  color: #999;
+  font-size: 13px;
+}
+
+.switch-btn {
+  width: 100%;
+  height: 48px;
+  border: 1px solid #27a5ff;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(39, 165, 255, 0.05);
+}
+
+.text_6 {
+  color: #27a5ff;
+  font-size: 15px;
+  letter-spacing: 2px;
+  font-family: MicrosoftYaHei;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.text_7 {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  font-family: MicrosoftYaHei;
+  text-align: center;
+  white-space: nowrap;
+  margin-top: 20px;
+}
+
 .text {
   position: absolute;
   right: 3%;
@@ -461,6 +578,7 @@ onMounted(() => {
   width: 140px;
   color: rgba(39, 165, 255, 1);
 }
+
 .confirm {
   width: 300px;
   height: 50px;
@@ -469,6 +587,7 @@ onMounted(() => {
   color: #fff;
   font-size: 16px;
 }
+
 .cancel {
   width: 300px;
   height: 50px;
@@ -477,51 +596,14 @@ onMounted(() => {
   color: #27a5ff;
   font-size: 16px;
 }
+
 :deep(.el-radio) {
   margin-bottom: 20px !important;
 }
+
 :deep(.el-radio-group) {
   width: 646px;
   margin: 0 auto;
-}
-.wrapper {
-  width: 425px;
-  top: 250px;
-}
-.image_1 {
-  top: 35px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-.inner {
-  width: 425px;
-  height: 540px;
-  margin: 200px 0 0 1075px;
-}
-.radio-wrap {
-  width: 646px;
-  height: 442px;
-}
-.radio-wrap::-webkit-scrollbar {
-  width: 8px; /* 垂直滚动条宽度 */
-  height: 8px; /* 水平滚动条高度 */
-}
-/* 滚动条上的滑块 */
-.radio-wrap::-webkit-scrollbar-thumb {
-  background-color: rgba(64, 158, 254, 0.5); /* 半透明灰色 */
-  border-radius: 4px;
-}
-
-/* 滚动条轨道 */
-.radio-wrap::-webkit-scrollbar-track {
-  background: #f0f0f0; /* 浅灰色 */
-}
-.page {
-  position: relative;
-  width: 1920px;
-  height: 1080px;
-  overflow: hidden;
-  // display: flex;
 }
 
 :deep(.el-dialog) {
@@ -534,252 +616,26 @@ onMounted(() => {
 
 :deep(.el-dialog__footer) {
   display: flex !important;
+  justify-content: center;
+  padding: 20px 40px;
 }
 
-.el-form {
-  width: 444px;
-  height: 54px;
-  // margin: 16px 0 0 1068px;
-  .el-form-item {
-    :deep(.el-input__wrapper) {
-      border: 2px solid rgba(204, 218, 226, 1);
-      border-radius: 10px;
-      box-shadow: 0px 1px 0px 0px rgba(255, 255, 255, 0.5);
-      height: 54px;
-    }
-    .el-input {
-      :deep(.el-input__prefix) {
-        width: 14px;
-        height: 16px; /* 调整图标大小 */
-        margin-right: 15px; /* 调整图标与文本之间的间距 */
-      }
-    }
-  }
+.radio-wrap {
+  width: 646px;
+  height: 442px;
 }
 
-.section_1 {
-  position: relative;
-  width: 1920px;
-  height: 1080px;
-  background: url('@/assets/images/redraw-images/background.png') 100% no-repeat;
-  background-size: 100% 100%;
+.radio-wrap::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.block_1 {
-  top: 120px;
-  left: 50%;
-  transform: translateX(-50%);
-  // box-shadow: 0px 1px 0px 0px rgba(255, 255, 255, 0.5);
-  // border-radius: 10px;
-  // width: 444px;
-  // height: 60px;
-  // border: 2px solid rgba(204, 218, 226, 1);
-  width: 380px;
-  height: 50px;
-  background: url('@/assets/images/redraw-images/blockbg.png') 0px 0px no-repeat;
-  // background-size: 380px 51px;
-  // margin: 31px 0 0 1068px;
+.radio-wrap::-webkit-scrollbar-thumb {
+  background-color: rgba(64, 158, 254, 0.5);
+  border-radius: 4px;
 }
 
-.text-wrapper_1 {
-  background-color: rgba(39, 165, 255, 1);
-  border-radius: 7px;
-  height: 48px;
-  width: 216px;
-  color: #fff !important;
-}
-
-.text_1 {
-  width: 82px;
-  height: 24px;
-  overflow-wrap: break-word;
-  font-size: 18px;
-  letter-spacing: 2.25px;
-  font-family: MicrosoftYaHei;
-  font-weight: normal;
-  text-align: center;
-  white-space: nowrap;
-  line-height: 24px;
-}
-
-.text_2 {
-  width: 81px;
-  height: 24px;
-  overflow-wrap: break-word;
-
-  font-size: 18px;
-  letter-spacing: 2.25px;
-  font-family: MicrosoftYaHei;
-  font-weight: normal;
-  text-align: right;
-  white-space: nowrap;
-  line-height: 24px;
-}
-
-.block_2 {
-  box-shadow: 0px 1px 0px 0px rgba(255, 255, 255, 0.5);
-  border-radius: 10px;
-  width: 444px;
-  height: 54px;
-  border: 2px solid rgba(204, 218, 226, 1);
-  margin: 16px 0 0 1068px;
-}
-
-.thumbnail_1 {
-  width: 14px;
-  height: 16px;
-  margin: 19px 0 0 21px;
-}
-
-.box_1 {
-  background-color: rgba(204, 218, 226, 1);
-  width: 1px;
-  height: 30px;
-  margin: 12px 0 0 17px;
-}
-
-.text_3 {
-  width: 89px;
-  height: 19px;
-  overflow-wrap: break-word;
-  color: rgba(204, 218, 226, 1);
-  font-size: 14px;
-  letter-spacing: 0.800000011920929px;
-  font-family: MicrosoftYaHei;
-  font-weight: normal;
-  text-align: left;
-  white-space: nowrap;
-  line-height: 19px;
-  margin: 17px 281px 0 21px;
-}
-
-.block_3 {
-  box-shadow: 0px 1px 0px 0px rgba(255, 255, 255, 0.5);
-  border-radius: 10px;
-  width: 444px;
-  height: 54px;
-  border: 2px solid rgba(204, 218, 226, 1);
-  margin: 16px 0 0 1068px;
-}
-
-.thumbnail_2 {
-  width: 14px;
-  height: 16px;
-  margin: 19px 0 0 21px;
-}
-
-.block_4 {
-  background-color: rgba(204, 218, 226, 1);
-  width: 1px;
-  height: 30px;
-  margin: 12px 0 0 17px;
-}
-
-.text_4 {
-  width: 74px;
-  height: 19px;
-  overflow-wrap: break-word;
-  color: rgba(204, 218, 226, 1);
-  font-size: 14px;
-  letter-spacing: 0.800000011920929px;
-  font-family: MicrosoftYaHei;
-  font-weight: normal;
-  text-align: left;
-  white-space: nowrap;
-  line-height: 19px;
-  margin: 17px 296px 0 21px;
-}
-
-.text-wrapper_2 {
-  width: 425px;
-  top: 200px;
-  background-color: #fff;
-  text-align: center;
-  background-color: #fff;
-  text-align: center;
-  border-radius: 10px;
-  height: 50px;
-  width: 425px;
-  // margin: 100px 0 0 1070px;
-}
-
-.text_5 {
-  width: 40px;
-  height: 21px;
-  overflow-wrap: break-word;
-  color: rgba(255, 255, 255, 1);
-  font-size: 16px;
-  letter-spacing: 4px;
-  font-family: MicrosoftYaHei;
-  font-weight: normal;
-  text-align: right;
-  white-space: nowrap;
-  line-height: 21px;
-  margin: 14px 0 0 202px;
-}
-
-.image_2 {
-  top: 300px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 425px;
-  height: 2px;
-  // margin: 36px 0 0 1071px;
-}
-
-.text-wrapper_3 {
-  top: 330px;
-  border-radius: 10px;
-
-  height: 50px;
-  border: 1px solid #ffffff;
-  width: 425px;
-}
-
-.text_6 {
-  width: 154px;
-  height: 21px;
-  overflow-wrap: break-word;
-  color: rgba(39, 165, 255, 1);
-  font-size: 16px;
-  letter-spacing: 3.200000047683716px;
-  font-family: MicrosoftYaHei;
-  font-weight: normal;
-  text-align: center;
-  white-space: nowrap;
-  line-height: 21px;
-  // margin: 14px 0 0 143px;
-}
-
-.text_7 {
-  width: 241px;
-  height: 24px;
-  overflow-wrap: break-word;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 18px;
-  font-family: MicrosoftYaHei;
-  font-weight: normal;
-  text-align: left;
-  white-space: nowrap;
-  line-height: 24px;
-  margin: 214px 0 48px 1180px;
-}
-
-.text_8 {
-  top: 290px;
-  color: #fff;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 22px;
-  height: 19px;
-  overflow-wrap: break-word;
-  // color: rgba(39, 165, 255, 0.4);
-  font-size: 14px;
-  letter-spacing: 3.5px;
-  font-family: MicrosoftYaHei;
-  font-weight: normal;
-  text-align: right;
-  white-space: nowrap;
-  line-height: 19px;
+.radio-wrap::-webkit-scrollbar-track {
+  background: #f0f0f0;
 }
 </style>

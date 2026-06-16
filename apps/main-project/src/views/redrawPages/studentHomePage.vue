@@ -17,8 +17,7 @@
               <div class="icon flex justify-center items-center">
                 <img style="width: 29px; height: 47px; padding-right: 5px" referrerpolicy="no-referrer"
                   src="@/assets/images/redraw-images/icon.png" />
-                <img style="width: 184px; height: 28px" referrerpolicy="no-referrer"
-                  src="@/assets/images/redraw-images/title.png" />
+                <span style="font-size: 22px; font-weight: bold; color: #0078cd; letter-spacing: 2px; white-space: nowrap;">数字产业学院教学平台</span>
                 <span class="term" style="
                     font-size: 24px;
                     width: 116px;
