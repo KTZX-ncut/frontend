@@ -88,6 +88,17 @@
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="开课年份">
+          <el-select v-model="form.termYear" disabled placeholder="-">
+            <el-option v-for="y in yearOptions" :key="y" :label="y + '年'" :value="y" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="开课学期">
+          <el-select v-model="form.termSeason" disabled placeholder="-">
+            <el-option label="春季学期" value="春季学期" />
+            <el-option label="秋季学期" value="秋季学期" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="课堂名称" prop="classroomName">
           <el-input v-model="form.classroomName" placeholder="请输入课堂名称" />
         </el-form-item>
@@ -149,11 +160,18 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Delete, Plus, Refresh } from '@element-plus/icons-vue';
 import request from '../../utils/request.js';
 import { useProfileStore } from '../../stores/profileStore.js';
+
+const yearOptions = computed(() => {
+  const current = new Date().getFullYear();
+  const years = [];
+  for (let y = current - 2; y <= current + 4; y++) years.push(String(y));
+  return years;
+});
 
 const profileStore = useProfileStore();
 const formRef = ref(null);
@@ -179,6 +197,8 @@ const teacherNames = reactive({
 
 const form = reactive({
   courseId: '',
+  termYear: '',
+  termSeason: '',
   classroomName: '',
   teachTime: '',
   labTime: '',
@@ -209,6 +229,13 @@ const teacherProps = {
 const selectedCourse = computed(() => courses.value.find(course => course.id === form.courseId));
 const validClassroomCount = computed(() => classrooms.value.filter(row => row.id).length);
 const coveredCourseCount = computed(() => new Set(classrooms.value.filter(row => row.id).map(row => row.courseId)).size);
+
+watch(() => form.courseId, () => {
+  const name = selectedCourse.value?.courseChineseName || '';
+  const match = name.match(/^(\d{4})(春季学期|秋季学期)-/);
+  form.termYear = match ? match[1] : '';
+  form.termSeason = match ? match[2] : '';
+});
 
 const flattenClassrooms = data => {
   const rows = [];
@@ -300,6 +327,8 @@ const handleTeacherChange = (type, value) => {
 
 const resetForm = () => {
   form.courseId = '';
+  form.termYear = '';
+  form.termSeason = '';
   form.classroomName = '';
   form.teachTime = '';
   form.labTime = '';

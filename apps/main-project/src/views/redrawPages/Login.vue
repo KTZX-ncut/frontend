@@ -66,17 +66,65 @@
               <div style="font-weight: bold; font-size: 18px" class="title">选 择 角 色</div>
               <el-divider style="border-top: 1px solid #27a5ff !important" />
             </template>
-            <el-radio-group v-model="selectedRoleId">
-              <div class="flex flex-col flex-wrap content-between overflow-auto radio-wrap">
-                <el-radio
-                  v-for="role in roledata.simpleRoleList"
-                  :key="getRoleOptionKey(role)"
-                  :label="getRoleOptionKey(role)"
+            <!-- 第一级：角色分类 -->
+            <div v-if="roleStep === 1">
+              <el-radio-group v-model="selectedRoleId">
+                <div class="flex flex-col flex-wrap content-between overflow-auto radio-wrap">
+                  <el-radio
+                    v-for="role in otherRoles"
+                    :key="getRoleOptionKey(role)"
+                    :label="getRoleOptionKey(role)"
+                  >
+                    <div style="font-size: 16px; color: #666">{{ role.rolename }}</div>
+                  </el-radio>
+                </div>
+              </el-radio-group>
+              <div class="role-category-list">
+                <div
+                  v-if="courseManagerRoles.length"
+                  class="role-category-item"
+                  @click="enterRoleCategory('课程负责人')"
                 >
-                  <div style="font-size: 16px; color: #666">{{ role.rolename }}</div>
-                </el-radio>
+                  <span>课程负责人</span>
+                  <span class="role-category-arrow">›</span>
+                </div>
+                <div
+                  v-if="courseTeacherRoles.length"
+                  class="role-category-item"
+                  @click="enterRoleCategory('任课教师')"
+                >
+                  <span>任课教师</span>
+                  <span class="role-category-arrow">›</span>
+                </div>
               </div>
-            </el-radio-group>
+            </div>
+            <!-- 第二级：学年学期筛选 -->
+            <div v-else>
+              <div class="role-filter">
+                <el-button text :icon="ArrowLeft" @click="backToRoleList">返回</el-button>
+                <span style="font-weight: bold; font-size: 15px">{{ activeCategory }}</span>
+              </div>
+              <div class="role-filter" style="margin-bottom: 12px">
+                <el-select v-model="filterYear" placeholder="选择年份" clearable size="default">
+                  <el-option v-for="y in filterYearOptions" :key="y" :label="y + '年'" :value="y" />
+                </el-select>
+                <el-select v-model="filterSeason" placeholder="选择学期" clearable size="default">
+                  <el-option label="春季学期" value="春季学期" />
+                  <el-option label="秋季学期" value="秋季学期" />
+                </el-select>
+              </div>
+              <el-radio-group v-model="selectedRoleId">
+                <div class="flex flex-col flex-wrap content-between overflow-auto radio-wrap">
+                  <el-radio
+                    v-for="role in filteredCategoryRoles"
+                    :key="getRoleOptionKey(role)"
+                    :label="getRoleOptionKey(role)"
+                  >
+                    <div style="font-size: 16px; color: #666">{{ role.rolename }}</div>
+                  </el-radio>
+                </div>
+              </el-radio-group>
+            </div>
             <template #footer>
               <div class="button" style="margin: 0 auto">
                 <el-button class="cancel" @click="showRoleModal = false">取消</el-button>
@@ -142,19 +190,65 @@
               <div style="font-weight: bold; font-size: 18px" class="title">选 择 角 色</div>
               <el-divider style="border-top: 1px solid #27a5ff !important" />
             </template>
-            <el-radio-group v-model="selectedRoleId">
-              <div class="flex flex-col flex-wrap content-between">
-                <el-radio
-                  v-for="role in roledata.simpleRoleList"
-                  :key="getRoleOptionKey(role)"
-                  :label="getRoleOptionKey(role)"
+            <!-- 第一级：角色分类 -->
+            <div v-if="roleStep === 1">
+              <el-radio-group v-model="selectedRoleId">
+                <div class="flex flex-col flex-wrap content-between">
+                  <el-radio
+                    v-for="role in otherRoles"
+                    :key="getRoleOptionKey(role)"
+                    :label="getRoleOptionKey(role)"
+                  >
+                    <div style="font-size: 16px; color: #666">{{ role.rolename }}</div>
+                  </el-radio>
+                </div>
+              </el-radio-group>
+              <div class="role-category-list">
+                <div
+                  v-if="courseManagerRoles.length"
+                  class="role-category-item"
+                  @click="enterRoleCategory('课程负责人')"
                 >
-                  <div style="font-size: 16px; color: #666">
-                    {{ role.rolename }}
-                  </div>
-                </el-radio>
+                  <span>课程负责人</span>
+                  <span class="role-category-arrow">›</span>
+                </div>
+                <div
+                  v-if="courseTeacherRoles.length"
+                  class="role-category-item"
+                  @click="enterRoleCategory('任课教师')"
+                >
+                  <span>任课教师</span>
+                  <span class="role-category-arrow">›</span>
+                </div>
               </div>
-            </el-radio-group>
+            </div>
+            <!-- 第二级：学年学期筛选 -->
+            <div v-else>
+              <div class="role-filter">
+                <el-button text :icon="ArrowLeft" @click="backToRoleList">返回</el-button>
+                <span style="font-weight: bold; font-size: 15px">{{ activeCategory }}</span>
+              </div>
+              <div class="role-filter" style="margin-bottom: 12px">
+                <el-select v-model="filterYear" placeholder="选择年份" clearable size="default">
+                  <el-option v-for="y in filterYearOptions" :key="y" :label="y + '年'" :value="y" />
+                </el-select>
+                <el-select v-model="filterSeason" placeholder="选择学期" clearable size="default">
+                  <el-option label="春季学期" value="春季学期" />
+                  <el-option label="秋季学期" value="秋季学期" />
+                </el-select>
+              </div>
+              <el-radio-group v-model="selectedRoleId">
+                <div class="flex flex-col flex-wrap content-between">
+                  <el-radio
+                    v-for="role in filteredCategoryRoles"
+                    :key="getRoleOptionKey(role)"
+                    :label="getRoleOptionKey(role)"
+                  >
+                    <div style="font-size: 16px; color: #666">{{ role.rolename }}</div>
+                  </el-radio>
+                </div>
+              </el-radio-group>
+            </div>
             <template #footer>
               <div class="button" style="margin: 0 auto">
                 <el-button class="cancel" @click="showRoleModal = false">取消</el-button>
@@ -189,7 +283,7 @@
 <script setup>
 import '@/assets/css/taildwind.css';
 import { ref, reactive, getCurrentInstance, onMounted, computed } from 'vue';
-import { User, Lock, Edit, Phone, MessageBox, Message } from '@element-plus/icons-vue';
+import { User, Lock, Edit, Phone, MessageBox, Message, ArrowLeft } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import request from '@/utils/request.js';
 import router from '@/router/index.js';
@@ -278,6 +372,56 @@ const handleClick = (tab, event) => {
 
 const roledata = reactive({});
 const selectedRoleId = ref(null);
+
+const roleStep = ref(1);
+const activeCategory = ref('');
+const filterYear = ref('');
+const filterSeason = ref('');
+
+const filterYearOptions = computed(() => {
+  const current = new Date().getFullYear();
+  const years = [];
+  for (let y = current - 2; y <= current + 4; y++) years.push(String(y));
+  return years;
+});
+
+const FILTERABLE_ROLE_SUFFIXES = ['课程负责人', '任课教师'];
+
+const courseManagerRoles = computed(() =>
+  (roledata.simpleRoleList || []).filter(role => (role.rolename || '').endsWith('课程负责人'))
+);
+
+const courseTeacherRoles = computed(() =>
+  (roledata.simpleRoleList || []).filter(role => (role.rolename || '').endsWith('任课教师'))
+);
+
+const otherRoles = computed(() =>
+  (roledata.simpleRoleList || []).filter(role => {
+    const name = role.rolename || '';
+    return !FILTERABLE_ROLE_SUFFIXES.some(suffix => name.endsWith(suffix));
+  })
+);
+
+const filteredCategoryRoles = computed(() => {
+  const source = activeCategory.value === '课程负责人' ? courseManagerRoles.value : courseTeacherRoles.value;
+  if (!filterYear.value && !filterSeason.value) return source;
+  const termPrefix = `${filterYear.value}${filterSeason.value}`;
+  return source.filter(role => (role.rolename || '').startsWith(termPrefix));
+});
+
+const enterRoleCategory = category => {
+  activeCategory.value = category;
+  filterYear.value = '';
+  filterSeason.value = '';
+  roleStep.value = 2;
+};
+
+const backToRoleList = () => {
+  roleStep.value = 1;
+  activeCategory.value = '';
+  filterYear.value = '';
+  filterSeason.value = '';
+};
 //默认选择第一个角色序号
 // const selectedRoleId = ref(data.simpleRoleList[0].roleid);
 
@@ -349,6 +493,7 @@ const login = () => {
               } else {
                 Object.assign(roledata, res.data);
                 //打开弹窗选择角色
+                roleStep.value = 1;
                 showRoleModal.value = true;
               }
             }
@@ -489,6 +634,39 @@ onMounted(() => {
   width: 646px;
   margin: 0 auto;
 }
+.role-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  .el-select {
+    width: 150px;
+  }
+}
+.role-category-list {
+  margin-top: 12px;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 8px;
+}
+.role-category-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px 14px 24px;
+  margin-bottom: 8px;
+  font-size: 16px;
+  color: #666;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+  &:hover {
+    background: rgba(39, 165, 255, 0.08);
+  }
+}
+.role-category-arrow {
+  font-size: 20px;
+  color: #27a5ff;
+}
 .wrapper {
   width: 425px;
   top: 250px;
@@ -505,7 +683,7 @@ onMounted(() => {
 }
 .radio-wrap {
   width: 646px;
-  height: 442px;
+  max-height: 442px;
 }
 .radio-wrap::-webkit-scrollbar {
   width: 8px; /* 垂直滚动条宽度 */

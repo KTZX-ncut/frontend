@@ -24,6 +24,7 @@
           选择学生</el-button
         >
         <el-button
+          v-if="MainStore.selectedRoute !== '/homes/courseteacherhome/sizheng/portraitList'"
           class="custom-nav-button custom-nav-button-info"
           type="primary"
           @click="handleUpload"

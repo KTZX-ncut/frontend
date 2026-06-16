@@ -67,9 +67,9 @@
 
     <el-dialog v-model="dialogVisible" title="录入课程信息" width="520px" :close-on-click-modal="false" @closed="resetForm">
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
-        <el-form-item label="学期">
+        <!-- <el-form-item label="学期">
           <el-input v-model="form.term" disabled />
-        </el-form-item>
+        </el-form-item> -->
         <el-form-item label="所属专业" prop="professionId">
           <el-select
             v-model="form.professionId"
@@ -84,6 +84,17 @@
               :label="profession.proname || profession.obsname"
               :value="profession.obsid || profession.id"
             />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="开课年份" prop="termYear">
+          <el-select v-model="form.termYear" placeholder="请选择年份">
+            <el-option v-for="y in yearOptions" :key="y" :label="y + '年'" :value="y" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="开课学期" prop="termSeason">
+          <el-select v-model="form.termSeason" placeholder="请选择学期">
+            <el-option label="春季学期" value="春季学期" />
+            <el-option label="秋季学期" value="秋季学期" />
           </el-select>
         </el-form-item>
         <el-form-item label="课程名称(中文)" prop="courseChineseName">
@@ -117,10 +128,17 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Delete, Plus, Refresh } from '@element-plus/icons-vue';
 import request from '../../utils/request.js';
+
+const yearOptions = computed(() => {
+  const current = new Date().getFullYear();
+  const years = [];
+  for (let y = current - 2; y <= current + 4; y++) years.push(String(y));
+  return years;
+});
 
 const formRef = ref(null);
 const professions = ref([]);
@@ -142,6 +160,8 @@ const form = reactive({
   term: '',
   schoolTermId: '',
   professionId: '',
+  termYear: String(new Date().getFullYear()),
+  termSeason: '',
   courseChineseName: '',
   courseEnglishName: '',
   courseCode: ''
@@ -149,6 +169,8 @@ const form = reactive({
 
 const rules = reactive({
   professionId: [{ required: true, message: '请选择所属专业', trigger: 'change' }],
+  termYear: [{ required: true, message: '请选择开课年份', trigger: 'change' }],
+  termSeason: [{ required: true, message: '请选择开课学期', trigger: 'change' }],
   courseChineseName: [{ required: true, message: '请输入课程中文名称', trigger: 'blur' }],
   courseEnglishName: [{ required: true, message: '请输入课程英文名称', trigger: 'blur' }],
   courseCode: [{ required: true, message: '请输入课程代码', trigger: 'blur' }]
@@ -229,6 +251,8 @@ const loadCourses = async (force = false) => {
 
 const resetForm = () => {
   form.professionId = '';
+  form.termYear = String(new Date().getFullYear());
+  form.termSeason = '';
   form.courseChineseName = '';
   form.courseEnglishName = '';
   form.courseCode = '';
@@ -253,7 +277,7 @@ const submitForm = async () => {
     loading.submit = true;
     const courseResponse = await request.course.post('/coursemangt/course/create', {
       schooltermId: form.schoolTermId,
-      courseChineseName: form.courseChineseName,
+      courseChineseName: `${form.termYear}${form.termSeason}-${form.courseChineseName}`,
       courseEnglishName: form.courseEnglishName,
       courseCode: form.courseCode,
       professionId: form.professionId
