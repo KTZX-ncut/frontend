@@ -848,6 +848,136 @@ onMounted(() => {
   }
 }
 
+.header .inner {
+  width: min(78.125rem, calc(100vw - 3rem)) !important;
+  max-width: 100%;
+  gap: 24px;
+}
+
+.header .icon {
+  min-width: 0;
+  flex: 1;
+  justify-content: flex-start;
+}
+
+.header .icon .term {
+  width: auto !important;
+  max-width: 34vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header .right {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.header .right > img {
+  flex: 0 0 auto;
+}
+
+.mainner {
+  min-width: 0;
+  max-width: min(26.875rem, 42vw);
+  gap: 10px;
+}
+
+.mainner .avatar {
+  flex: 0 0 2.875rem;
+  width: 2.875rem !important;
+  height: 2.875rem !important;
+  margin-left: 12px !important;
+}
+
+.mainner .text {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.group_4,
+.top,
+.bottom {
+  min-width: 0;
+}
+
+.top span {
+  display: block;
+  width: auto !important;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bottom {
+  justify-content: flex-start !important;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.bottom > div {
+  width: auto !important;
+  height: auto !important;
+  max-width: 100%;
+  overflow: visible !important;
+  text-align: left !important;
+  line-height: 1 !important;
+}
+
+.bottom :deep(.el-tag) {
+  max-width: 100%;
+  height: auto;
+  min-height: 24px;
+  white-space: normal;
+  line-height: 18px;
+  padding: 2px 8px;
+}
+
+.drop-down-icon {
+  flex: 0 0 auto;
+  margin-left: 8px !important;
+}
+
+.layout-container-demo > .el-container {
+  width: min(78.125rem, calc(100vw - 3rem)) !important;
+  max-width: 100%;
+}
+
+.layout-container-demo .el-main {
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.layout-container-demo .el-main :deep(.el-card) {
+  max-width: none !important;
+  width: calc(100% - 30px);
+  margin-right: 0;
+}
+
+@media (max-width: 900px) {
+  .header .inner {
+    width: calc(100vw - 1.5rem) !important;
+    gap: 12px;
+  }
+  .header .icon img:nth-of-type(2) {
+    display: none;
+  }
+  .header .icon .term {
+    max-width: 28vw;
+    margin-left: 8px !important;
+    font-size: 20px !important;
+  }
+  .mainner {
+    max-width: 58vw;
+  }
+  .mainner .avatar {
+    margin-left: 8px !important;
+    margin-right: 0 !important;
+  }
+  .layout-container-demo > .el-container {
+    width: calc(100vw - 1.5rem) !important;
+  }
+}
+
 .customTooltip * {
   color: #4a4a4a;
   font-size: 18px;
