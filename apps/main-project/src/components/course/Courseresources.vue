@@ -10,10 +10,12 @@
         justify-content: flex-end;
       "
     >
+      <el-button v-if="roleName === '课程负责人'" type="warning" style="margin-right: 8px;" @click="openCopyDialog">从历史课程复制</el-button>
       <el-upload ref="upload" :before-upload="beforeUpload" :show-file-list="false">
         <el-button v-if="roleName !== '任课教师'" type="primary" v-blur-on-click>上传</el-button>
       </el-upload>
     </el-header>
+    <CopyModelDialog ref="copyDialogRef" copy-type="resource" @copy-success="fetchCourseList" />
     <div style="max-height: 100%; height: 100%; overflow: auto">
       <el-table :data="formattedFilelist" style="width: 100%">
         <el-table-column type="selection" width="55"></el-table-column>
@@ -69,6 +71,7 @@
 
 <script setup>
 import PdfLoadingPreview from './Utilcomponents/PdfLoadingPreview.vue';
+import CopyModelDialog from './subcomponents/CopyModelDialog.vue';
 import { ref, onMounted, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import request from '../../utils/request.js';
@@ -244,6 +247,9 @@ const handleClosePreview = () => {
   }
   previewFileUrl.value = ''; // 清空预览的URL
 };
+
+const copyDialogRef = ref(null);
+function openCopyDialog() { copyDialogRef.value?.init(); }
 
 onMounted(() => {
   fetchCourseList();

@@ -1,6 +1,7 @@
 <template>
 	<el-container style="height: 92vh;">
 		<el-header style="height: auto; padding: 5px 0px; width:100%; text-align: left; background-color:#deebf7;">
+			<el-button type="warning" style="margin-left: 0.8vw;" @click="openCopyDialog">复制形成性评价建模</el-button>
 			<el-button type="success" style="margin-left: 0.8vw;" @click="addKeyword">新增</el-button>
 			<!-- <el-button type="primary" @click="openDictionary">从关键字字典选择</el-button> -->
 			<el-button type="danger" @click="openDeleteDialog">删除</el-button>
@@ -36,6 +37,7 @@
 				</div>
 			</el-dialog>
 		</el-header>
+		<CopyModelDialog ref="copyDialogRef" copy-type="formative" @copy-success="loadData" />
 		<el-main style="padding: 0;">
 
 			<!----------------------------------确认删除的弹框-------------------------------------->
@@ -130,6 +132,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { computed, onMounted, ref } from 'vue';
 import request from "../../utils/request";
 import _ from 'lodash';
+import CopyModelDialog from '../course/subcomponents/CopyModelDialog.vue';
 
 const tableSearchData = ref('');    // 主界面搜索框数据
 
@@ -159,6 +162,9 @@ const initialize = () => {
 		editRef.value.set(item.id, { "editName": false, "editDataValue": false, "editImportantlevelid": false, "editRemark": false });
 	});
 }
+
+const copyDialogRef = ref(null);
+function openCopyDialog() { copyDialogRef.value?.init(); }
 
 onMounted(() => {
 	loadData();
