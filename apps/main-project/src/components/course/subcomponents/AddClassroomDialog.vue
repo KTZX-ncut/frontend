@@ -115,6 +115,7 @@ const practiceteachername = ref('');
 
 const teacherlist = ref([]);
 const alreadyteacheridlist = ref([]);
+const selectedCourseInfo = ref({});
 
 const newform = reactive({
   courseid: '',
@@ -138,6 +139,7 @@ const resetForm = () => {
   newform.teacherId = '';
   newform.labTeacherId = '';
   newform.practiceTeacherId = '';
+  selectedCourseInfo.value = {};
   mainteachername.value = '';
   labteachername.value = '';
   practiceteachername.value = '';
@@ -174,7 +176,53 @@ function init(courseinfo) {
   AdddialogVisible.value = true;
   newform.courseid = courseinfo.courseid;
   newform.courseChineseName = courseinfo.coursename;
+  selectedCourseInfo.value = courseinfo.course || {};
 }
+
+const normalizeTermSeason = value => {
+  if (!value) return '';
+  const text = String(value);
+  if (text.includes('春')) return '春季学期';
+  if (text.includes('秋')) return '秋季学期';
+  return '';
+};
+
+const getCourseTermPrefix = () => {
+  const course = selectedCourseInfo.value || {};
+  const candidates = [
+    course.courseChineseName,
+    course.courseName,
+    course.termName,
+    course.currentterm,
+    course.schoolTermName,
+    course.term,
+    newform.courseChineseName
+  ].filter(Boolean);
+
+  for (const value of candidates) {
+    const text = String(value);
+    const match = text.match(/(\d{4})\s*年?\s*(春季学期|秋季学期|春|秋)/);
+    if (match) {
+      return `${match[1]}${normalizeTermSeason(match[2])}-`;
+    }
+  }
+
+  const year = course.termYear || course.year || course.schoolYear;
+  const season = normalizeTermSeason(course.termSeason || course.season || course.semester);
+  return year && season ? `${year}${season}-` : '';
+};
+
+const formatClassroomNameWithTerm = classroomName => {
+  const name = String(classroomName || '').trim();
+  if (!name) return name;
+
+  const prefix = getCourseTermPrefix();
+  if (!prefix || name.startsWith(prefix) || /^(\d{4})(春季学期|秋季学期)-/.test(name)) {
+    return name;
+  }
+
+  return `${prefix}${name}`;
+};
 
 const fetchData = () => {
   request.course
@@ -292,7 +340,7 @@ async function submitForm() {
     // 用户确认后执行以下代码
     const newClassroomform = ref({
       courseId: newform.courseid,
-      classroomName: newform.classroomName,
+      classroomName: formatClassroomNameWithTerm(newform.classroomName),
       creatorName: username.value,
       teacherId: newform.teacherId,
       teacherName: mainteachername.value,

@@ -175,11 +175,13 @@ function initialize(data) {
   let result = [];
 
   data.forEach(course => {
-    const { id: courseId, courseChineseName, classroomReqList } = course;
+    const { id: courseId, courseChineseName, classroomReqList, ...courseMeta } = course;
+    const classrooms = classroomReqList || [];
 
-    if (classroomReqList.length === 0) {
+    if (classrooms.length === 0) {
       // 如果没有课堂信息，直接添加课程信息
       result.push({
+        ...courseMeta,
         courseId,
         courseChineseName,
         classroomName: '',
@@ -196,11 +198,14 @@ function initialize(data) {
       });
     } else {
       // 有课堂信息时，处理每个课堂
-      classroomReqList.forEach(classroom => {
+      classrooms.forEach(classroom => {
         let processedClassroom = {
+          ...courseMeta,
           courseId,
           courseChineseName,
-          ...classroom
+          ...classroom,
+          termId: classroom.termId || courseMeta.termId,
+          termName: classroom.termName || courseMeta.termName
         };
         result.push(processedClassroom);
       });
@@ -244,7 +249,8 @@ const importClassroom = () => {};
 const addClassroom = row => {
   const courseinfo = {
     courseid: row.courseId,
-    coursename: row.courseChineseName
+    coursename: row.courseChineseName,
+    course: row
   };
   AdddialogVisible.value = true; // 打开弹窗
   AddDialogShow.value.init(courseinfo);

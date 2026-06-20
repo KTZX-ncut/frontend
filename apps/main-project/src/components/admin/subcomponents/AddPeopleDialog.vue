@@ -227,17 +227,18 @@
                   <template #default="{ row }">
                     <!-- <el-input style="width: 100%; height: 25px;" v-model="row.obsname"></el-input> -->
                     <el-cascader
-                      v-model="row.obsname"
+                      v-model="row.obsid"
                       :ref="el => setCascaderRef(el, row)"
                       :options="obsmenulist"
                       :id="row.id"
                       :show-all-levels="false"
-                      @change="handleBlur(row)"
+                      @change="value => handleObsChange(row, value)"
                       :props="{
-                        value: 'obsname',
+                        value: 'id',
                         label: 'obsname',
                         children: 'children',
-                        checkStrictly: true
+                        checkStrictly: true,
+                        emitPath: false
                       }"
                       filterable
                     >
@@ -335,6 +336,16 @@ const setCascaderRef = (el, row) => {
   }
 };
 
+const findObsById = (nodes, id) => {
+  if (!nodes || !id) return null;
+  for (const node of nodes) {
+    if (node.id === id) return node;
+    const found = findObsById(node.children, id);
+    if (found) return found;
+  }
+  return null;
+};
+
 const handleBlur = (row, editingField = '', dataField = '') => {
   nextTick(async () => {
     row[editingField] = false;
@@ -375,6 +386,27 @@ const handleBlur = (row, editingField = '', dataField = '') => {
       getPeopleList();
     }
   });
+};
+
+const handleObsChange = async (row, obsid) => {
+  if (!obsid || obsid === row._lastObsid) return;
+  row._lastObsid = obsid;
+  const selectedObs = findObsById(obsmenulist.value, obsid);
+  try {
+    const res = await request.admin.post('/sysmangt/personnelmangt/update', {
+      id: row.id,
+      catelog: row.catelog,
+      obsid
+    });
+    if (res.code === 200) {
+      row.obsname = selectedObs?.obsname || row.obsname;
+      ElMessage.success('修改成功');
+    } else {
+      ElMessage.error(res.msg);
+    }
+  } catch (error) {
+    ElMessage.error('修改失败' + error);
+  }
 };
 
 const handleClick = (row, editingField, dataField) => {
@@ -442,6 +474,23 @@ const rules = reactive({
 const formRef = ref(null);
 const obsmenulist = ref([]);
 
+const findObsNameById = (nodes, id) => {
+  if (!nodes || !id) return '';
+  for (const node of nodes) {
+    if (node.id === id) return node.obsname;
+    const childName = findObsNameById(node.children, id);
+    if (childName) return childName;
+  }
+  return '';
+};
+
+const getSelectedObsName = () => {
+  const selectedObsId = Array.isArray(newform.obsid)
+    ? newform.obsid[newform.obsid.length - 1]
+    : newform.obsid;
+  return findObsNameById(obsmenulist.value, selectedObsId) || newform.obsname;
+};
+
 //初始化，用于接受父组件传来的值，并发送请求获取菜单
 function init(form, oriobsmenulist) {
   dialogVisible.value = true;
@@ -466,7 +515,14 @@ defineExpose({ init });
 const submitForm = () => {
   formRef.value.validate(valid => {
     if (valid) {
+      const selectedObsName = getSelectedObsName();
+      if (!selectedObsName) {
+        ElMessage.error('请选择机构');
+        return;
+      }
       const { obsid, ...dataToSend } = newform;
+      dataToSend.obsid = Array.isArray(obsid) ? obsid[obsid.length - 1] : obsid;
+      dataToSend.obsname = selectedObsName;
       console.log(dataToSend);
       // 表单验证通过，处理表单提交逻辑
       request.admin

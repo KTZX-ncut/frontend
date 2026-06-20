@@ -14,13 +14,15 @@
           >
             <template
               v-for="iten in item.simpleRoleList.filter(
-                (s, index, self) => index === self.findIndex(t => t.roleid === s.roleid)
+                (s, index, self) =>
+                  index ===
+                  self.findIndex(t => `${t.roleid}-${t.obsid}-${t.obsdeep}` === `${s.roleid}-${s.obsid}-${s.obsdeep}`)
               )"
               :key="iten.id"
             >
               <div
                 class="flex items-center gap-2 text-base leading-8 text-gray-800 font-medium cursor-pointer"
-                @click="handleJump(iten)"
+                @click="handleJump(iten, item.id)"
               >
                 <i class="text-blue-500" v-if="iten.rolename.includes('主任')">🛡️</i>
                 <i class="text-green-500" v-else-if="iten.rolename.includes('任课教师')">👨‍🏫</i>
@@ -118,7 +120,7 @@ const setprofile = data => {
   sessionStorage.setItem('token', data.token);
 };
 
-const handleJump = async scope => {
+const handleJump = async (scope, termid) => {
   console.log(scope);
   const usr = JSON.parse(sessionStorage.getItem('users'));
   const tokenInfo = parseJWT(sessionStorage.getItem('token'));
@@ -134,8 +136,7 @@ const handleJump = async scope => {
   loginuserFrom.value.rolename = scope.rolename;
   loginuserFrom.value.obsid = scope.obsid;
   loginuserFrom.value.obsdeep = scope.obsdeep;
-  const token = sessionStorage.getItem('token');
-  loginuserFrom.value.termid = token;
+  loginuserFrom.value.termid = termid;
 
   const { code, msg } = await historyStore.fetchLogin(loginuserFrom.value);
   if (!(code === 200 && msg === 'success')) {

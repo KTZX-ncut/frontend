@@ -60,30 +60,6 @@
           <div @click="login" class="text-wrapper_2 flex flex-col cursor-pointer absolute">
             <span style="color: #0177cc" class="text_5 cursor-pointer">登录</span>
           </div>
-
-          <el-dialog :modelValue="showRoleModal" :show-close="false" :close-on-click-modal="false">
-            <template #header>
-              <div style="font-weight: bold; font-size: 18px" class="title">选 择 角 色</div>
-              <el-divider style="border-top: 1px solid #27a5ff !important" />
-            </template>
-            <el-radio-group v-model="selectedRoleId">
-              <div class="flex flex-col flex-wrap content-between overflow-auto radio-wrap">
-                <el-radio
-                  v-for="role in roledata.simpleRoleList"
-                  :key="role.roleid"
-                  :label="role.id"
-                >
-                  <div style="font-size: 16px; color: #666">{{ role.rolename }}</div>
-                </el-radio>
-              </div>
-            </el-radio-group>
-            <template #footer>
-              <div class="button" style="margin: 0 auto">
-                <el-button class="cancel" @click="showRoleModal = false">取消</el-button>
-                <el-button class="confirm" type="primary" @click="confirmRole">确认</el-button>
-              </div>
-            </template>
-          </el-dialog>
           <img
             class="image_2 absolute"
             referrerpolicy="no-referrer"
@@ -136,32 +112,6 @@
           <div @click="login" class="text-wrapper_2 flex flex-col cursor-pointer absolute">
             <span style="color: #0177cc" class="text_5">登录</span>
           </div>
-
-          <el-dialog :modelValue="showRoleModal" :show-close="false" :close-on-click-modal="false">
-            <template #header>
-              <div style="font-weight: bold; font-size: 18px" class="title">选 择 角 色</div>
-              <el-divider style="border-top: 1px solid #27a5ff !important" />
-            </template>
-            <el-radio-group v-model="selectedRoleId">
-              <div class="flex flex-col flex-wrap content-between">
-                <el-radio
-                  v-for="role in roledata.simpleRoleList"
-                  :key="role.roleid"
-                  :label="role.id"
-                >
-                  <div style="font-size: 16px; color: #666">
-                    {{ role.rolename }}
-                  </div>
-                </el-radio>
-              </div>
-            </el-radio-group>
-            <template #footer>
-              <div class="button" style="margin: 0 auto">
-                <el-button class="cancel" @click="showRoleModal = false">取消</el-button>
-                <el-button class="confirm" type="primary" @click="confirmRole">确认</el-button>
-              </div>
-            </template>
-          </el-dialog>
           <img
             class="image_2 absolute"
             referrerpolicy="no-referrer"
@@ -183,13 +133,89 @@
       </div>
       <span class="text_7 flex" style="color: #5581ad">北方工业大学&#64;2024版权所有</span>
     </div>
+
+    <el-dialog
+      class="role-dialog"
+      :modelValue="showRoleModal"
+      :show-close="false"
+      :close-on-click-modal="false"
+    >
+      <template #header>
+        <div class="role-dialog-title">选择角色</div>
+      </template>
+      <div v-if="roleStep === 1">
+        <el-radio-group v-model="selectedRoleId" class="role-radio-group">
+          <div class="role-option-list">
+            <el-radio
+              v-for="role in otherRoles"
+              :key="getRoleOptionKey(role)"
+              class="role-option-card"
+              :label="getRoleOptionKey(role)"
+            >
+              <div class="role-option-name">{{ role.rolename }}</div>
+            </el-radio>
+          </div>
+        </el-radio-group>
+        <div class="role-category-list">
+          <div
+            v-if="courseManagerRoles.length"
+            class="role-category-item"
+            @click="enterRoleCategory('课程负责人')"
+          >
+            <span>课程负责人</span>
+            <span class="role-category-arrow">›</span>
+          </div>
+          <div
+            v-if="courseTeacherRoles.length"
+            class="role-category-item"
+            @click="enterRoleCategory('任课教师')"
+          >
+            <span>任课教师</span>
+            <span class="role-category-arrow">›</span>
+          </div>
+        </div>
+      </div>
+      <div v-else>
+        <div class="role-filter role-filter-head">
+          <el-button text :icon="ArrowLeft" @click="backToRoleList">返回</el-button>
+          <span>{{ activeCategory }}</span>
+        </div>
+        <div class="role-filter role-filter-selects">
+          <el-select v-model="filterYear" placeholder="选择年份" clearable size="default">
+            <el-option v-for="y in filterYearOptions" :key="y" :label="y + '年'" :value="y" />
+          </el-select>
+          <el-select v-model="filterSeason" placeholder="选择学期" clearable size="default">
+            <el-option label="春季学期" value="春季学期" />
+            <el-option label="秋季学期" value="秋季学期" />
+          </el-select>
+        </div>
+        <el-radio-group v-model="selectedRoleId" class="role-radio-group">
+          <div class="role-option-list">
+            <el-radio
+              v-for="role in filteredCategoryRoles"
+              :key="getRoleOptionKey(role)"
+              class="role-option-card"
+              :label="getRoleOptionKey(role)"
+            >
+              <div class="role-option-name">{{ role.rolename }}</div>
+            </el-radio>
+          </div>
+        </el-radio-group>
+      </div>
+      <template #footer>
+        <div class="button role-dialog-actions">
+          <el-button class="cancel" @click="showRoleModal = false">取消</el-button>
+          <el-button class="confirm" type="primary" @click="confirmRole">确认</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import '@/assets/css/taildwind.css';
 import { ref, reactive, getCurrentInstance, onMounted, computed } from 'vue';
-import { User, Lock, Edit, Phone, MessageBox, Message } from '@element-plus/icons-vue';
+import { User, Lock, Edit, Phone, MessageBox, Message, ArrowLeft } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import request from '@/utils/request.js';
 import router from '@/router/index.js';
@@ -278,8 +304,61 @@ const handleClick = (tab, event) => {
 
 const roledata = reactive({});
 const selectedRoleId = ref(null);
+
+const roleStep = ref(1);
+const activeCategory = ref('');
+const filterYear = ref('');
+const filterSeason = ref('');
+
+const filterYearOptions = computed(() => {
+  const current = new Date().getFullYear();
+  const years = [];
+  for (let y = current - 2; y <= current + 4; y++) years.push(String(y));
+  return years;
+});
+
+const FILTERABLE_ROLE_SUFFIXES = ['课程负责人', '任课教师'];
+
+const courseManagerRoles = computed(() =>
+  (roledata.simpleRoleList || []).filter(role => (role.rolename || '').endsWith('课程负责人'))
+);
+
+const courseTeacherRoles = computed(() =>
+  (roledata.simpleRoleList || []).filter(role => (role.rolename || '').endsWith('任课教师'))
+);
+
+const otherRoles = computed(() =>
+  (roledata.simpleRoleList || []).filter(role => {
+    const name = role.rolename || '';
+    return !FILTERABLE_ROLE_SUFFIXES.some(suffix => name.endsWith(suffix));
+  })
+);
+
+const filteredCategoryRoles = computed(() => {
+  const source = activeCategory.value === '课程负责人' ? courseManagerRoles.value : courseTeacherRoles.value;
+  if (!filterYear.value && !filterSeason.value) return source;
+  const termPrefix = `${filterYear.value}${filterSeason.value}`;
+  return source.filter(role => (role.rolename || '').startsWith(termPrefix));
+});
+
+const enterRoleCategory = category => {
+  activeCategory.value = category;
+  filterYear.value = '';
+  filterSeason.value = '';
+  roleStep.value = 2;
+};
+
+const backToRoleList = () => {
+  roleStep.value = 1;
+  activeCategory.value = '';
+  filterYear.value = '';
+  filterSeason.value = '';
+};
 //默认选择第一个角色序号
 // const selectedRoleId = ref(data.simpleRoleList[0].roleid);
+
+const getRoleOptionKey = role =>
+  [role.roleid, role.obsid, role.obsdeep].filter(item => item !== undefined && item !== null).join('|');
 
 const rules = reactive({
   loginname: [
@@ -346,6 +425,7 @@ const login = () => {
               } else {
                 Object.assign(roledata, res.data);
                 //打开弹窗选择角色
+                roleStep.value = 1;
                 showRoleModal.value = true;
               }
             }
@@ -379,7 +459,9 @@ const login = () => {
 
 const confirmRole = () => {
   // const selectedRole = roledata.simpleRoleList.find(role => role.roleid === selectedRoleId.value);
-  const selectedRole = roledata.simpleRoleList.find(role => role.id === selectedRoleId.value);
+  const selectedRole = roledata.simpleRoleList.find(
+    role => getRoleOptionKey(role) === selectedRoleId.value
+  );
   if (selectedRole) {
     loginuserFrom.value.roleid = selectedRole.roleid;
     loginuserFrom.value.obsid = selectedRole.obsid;
@@ -478,11 +560,143 @@ onMounted(() => {
   font-size: 16px;
 }
 :deep(.el-radio) {
-  margin-bottom: 20px !important;
+  margin-bottom: 0 !important;
 }
 :deep(.el-radio-group) {
-  width: 646px;
+  width: 100%;
+  margin: 0;
+}
+:deep(.role-dialog) {
+  width: min(720px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  border-radius: 18px;
+  overflow: hidden;
+}
+:deep(.role-dialog .el-dialog__header) {
+  padding: 22px 28px 14px !important;
+  margin-right: 0;
+  background: linear-gradient(180deg, #f5fbff 0%, #ffffff 100%);
+  border-bottom: 1px solid rgba(39, 165, 255, 0.16);
+}
+:deep(.role-dialog .el-dialog__body) {
+  padding: 18px 28px 8px;
+  max-height: min(560px, calc(100vh - 210px));
+  overflow: auto;
+}
+:deep(.role-dialog .el-dialog__footer) {
+  padding: 18px 28px 24px;
+  border-top: 1px solid #edf4fb;
+}
+.role-dialog-title {
+  color: #111827;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+  text-align: center;
+}
+.role-radio-group {
+  display: block;
+}
+.role-option-list {
+  display: grid;
+  gap: 12px;
+  max-height: 360px;
+  overflow: auto;
+  padding: 2px 4px 2px 2px;
+}
+.role-option-card {
+  width: 100%;
+  min-height: 58px;
+  margin-right: 0;
+  padding: 0 16px;
+  border: 1px solid #e3edf7;
+  border-radius: 8px;
+  background: #fff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  :deep(.el-radio__label) {
+    min-width: 0;
+    flex: 1;
+  }
+  &:hover {
+    border-color: #8ecfff;
+    background: #f7fcff;
+    box-shadow: 0 8px 18px rgba(0, 120, 205, 0.08);
+  }
+  &.is-checked {
+    border-color: #27a5ff;
+    background: #eff9ff;
+  }
+}
+.role-option-name {
+  color: #4b5563;
+  font-size: 17px;
+  line-height: 24px;
+  white-space: normal;
+  word-break: break-word;
+}
+.role-dialog-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  width: min(520px, 100%);
   margin: 0 auto;
+  .el-button {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+.role-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 0;
+  .el-select {
+    width: 160px;
+  }
+}
+.role-filter-head {
+  justify-content: space-between;
+  margin-bottom: 14px;
+  color: #374151;
+  font-size: 20px;
+  font-weight: 700;
+}
+.role-filter-selects {
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f6fbff;
+}
+.role-category-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #edf4fb;
+}
+.role-category-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 64px;
+  padding: 14px 18px;
+  font-size: 17px;
+  color: #374151;
+  border: 1px solid #dcecff;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f4fbff 0%, #ffffff 100%);
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  &:hover {
+    border-color: #67bdff;
+    box-shadow: 0 10px 24px rgba(0, 120, 205, 0.1);
+    transform: translateY(-1px);
+  }
+}
+.role-category-arrow {
+  font-size: 24px;
+  color: #27a5ff;
 }
 .wrapper {
   width: 425px;
@@ -500,7 +714,7 @@ onMounted(() => {
 }
 .radio-wrap {
   width: 646px;
-  height: 442px;
+  max-height: 442px;
 }
 .radio-wrap::-webkit-scrollbar {
   width: 8px; /* 垂直滚动条宽度 */
@@ -781,5 +995,18 @@ onMounted(() => {
   text-align: right;
   white-space: nowrap;
   line-height: 19px;
+}
+
+@media (max-width: 640px) {
+  .role-dialog-actions {
+    grid-template-columns: 1fr;
+  }
+  .cancel,
+  .confirm {
+    width: 100%;
+  }
+  .role-filter .el-select {
+    width: 100%;
+  }
 }
 </style>

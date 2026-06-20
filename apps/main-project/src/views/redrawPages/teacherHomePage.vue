@@ -2,7 +2,7 @@
   <!-- <div style="width: 100vw; background-color: #eef7ff"> -->
   <div :style="{ width: '100vw', backgroundColor: 'var(--bg-color)' }">
     <el-container class="layout-container-demo">
-      <History :isOpen="isOpen" @close="handleClose" />
+      <!-- <History :isOpen="isOpen" @close="handleClose" /> -->
       <el-header
         style="
           background-color: var(--bg-title-bar);
@@ -137,12 +137,12 @@
                             >切换角色</el-dropdown-item
                           >
                           <el-dropdown-item @click="handleLogout">退出登录</el-dropdown-item>
-                          <el-dropdown-item v-if="!historyStore.nowUsr" @click="handleHistory"
+                          <!-- <el-dropdown-item v-if="!historyStore.nowUsr" @click="handleHistory"
                             >查看历史学期</el-dropdown-item
                           >
                           <el-dropdown-item v-else @click="backToNow"
                             >返回当前学期</el-dropdown-item
-                          >
+                          > -->
                         </template>
                         <template v-else>
                           <el-dropdown-item
@@ -184,14 +184,14 @@
                   <!-- 二级菜单 -->
                   <el-sub-menu
                     v-if="hasChildren(menu)"
-                    :index="menu.id"
+                    :index="menu.tabKey || menu.groupKey || menu.id"
                     :key="menu.id"
                     style="border-top: 1px solid #efefef; position: relative"
                   >
                     <template #title>
                       <!--0822有更改-->
                       <img src="@/assets/images/redraw-images/choseIcon.png" class="course-icon" />
-                      <div class="titleBox" @click="navigateTo(menu.url)">
+                      <div class="titleBox" @click="navigateTo(menu)">
                         {{ menu.name }}
                       </div>
                     </template>
@@ -199,7 +199,7 @@
                       <!-- 三级菜单 -->
                       <el-sub-menu
                         v-if="hasChildren(child)"
-                        :index="child.id"
+                        :index="child.tabKey || child.groupKey || child.id"
                         :key="child.id"
                         style="border-top: 1px solid #efefef; position: relative"
                       >
@@ -208,16 +208,16 @@
                             src="@/assets/images/redraw-images/choseSecond.png"
                             class="course-icon"
                           />
-                          <div class="childtitleBox" @click="navigateTo(child.url)">
+                          <div class="childtitleBox" @click="navigateTo(child)">
                             {{ child.name }}
                           </div>
                         </template>
                         <el-menu-item
                           v-for="grandchild in getChildrenMenus(child)"
-                          :index="grandchild.url"
+                          :index="grandchild.tabKey || grandchild.groupKey || grandchild.id"
                           :key="grandchild.id"
                           style="border-top: 1px solid #efefef"
-                          @click="navigateTo(grandchild.url)"
+                          @click="navigateTo(grandchild)"
                         >
                           <template #title>
                             <img
@@ -231,10 +231,10 @@
                       <!-- 无三级菜单 -->
                       <el-menu-item
                         v-else
-                        :index="child.url"
+                        :index="child.tabKey || child.groupKey || child.id"
                         :key="child.id"
                         style="border-top: 1px solid #efefef"
-                        @click="navigateTo(child.url)"
+                        @click="navigateTo(child)"
                       >
                         <template #title>
                           <img
@@ -249,9 +249,9 @@
                   <!-- 无二级菜单 -->
                   <el-menu-item
                     v-else
-                    :index="menu.url"
+                    :index="menu.tabKey || menu.groupKey || menu.id"
                     :key="menu.id"
-                    @click="navigateTo(menu.url)"
+                    @click="navigateTo(menu)"
                     style="border-top: 1px solid #efefef"
                   >
                     <img src="@/assets/images/redraw-images/choseIcon.png" class="course-icon" />
@@ -345,7 +345,7 @@
 </template>
 
 <script lang="ts" setup>
-import History from '../../components/History/History.vue';
+// import History from '../../components/History/History.vue';
 import '@/assets/css/taildwind.css';
 import intro from '@/utils/introConfigure.js';
 import { ref, reactive, computed, onMounted, toRaw, nextTick } from 'vue';
@@ -359,6 +359,7 @@ import introJs from 'intro.js';
 import useInstructor from '@/stores/InstructorStore.js';
 import { storeToRefs } from 'pinia';
 import useMain from '@/stores/useMain.js';
+import { getRoleMenus } from '@/router/roleTabs.js';
 import '@/assets/css/taildwind.css';
 import useHistory from '../../stores/useHistory';
 
@@ -494,6 +495,13 @@ const loginInfo = reactive({
 const homeurl = computed(() => profileStore.profilehomeurl);
 const excludedPids = ['0', '102'];
 
+const refreshVisibleMenus = () => {
+  menus.value = getRoleMenus({
+    rolehome: route.params.rolehome,
+    rolename: profileStore.profilerolename
+  });
+};
+
 //过滤器
 const filteredMenus = computed(() => {
   return (
@@ -517,12 +525,28 @@ const getChildrenMenus = menu => {
 };
 //路由导航
 const MainStore = useMain();
-const navigateTo = url => {
-  //前面拼一个/表示绝对路径
-  if (!url) return;
-  console.log(homeurl.value + url);
-  MainStore.setSelectedRoute(homeurl.value + url);
-  router.push(homeurl.value + url);
+const getMenuIndex = menu => menu?.tabKey || menu?.routeName || menu?.url || '';
+
+const navigateTo = menu => {
+  if (!menu) return;
+
+  if (menu.routeName) {
+    const routeLocation = {
+      name: menu.routeName,
+      params: { rolehome: route.params.rolehome }
+    };
+    const resolvedRoute = router.resolve(routeLocation);
+    defaultActive.value = getMenuIndex(menu);
+    MainStore.setSelectedRoute(resolvedRoute.fullPath);
+    router.push(routeLocation);
+    return;
+  }
+
+  if (!menu.url) return;
+  const targetPath = homeurl.value + menu.url;
+  defaultActive.value = getMenuIndex(menu);
+  MainStore.setSelectedRoute(targetPath);
+  router.push(targetPath);
 };
 
 const roleList = ref([]);
@@ -729,6 +753,7 @@ onMounted(() => {
     loginInfo.username = profileStore.profilename;
     loginInfo.rolename = profileStore.profilerolename;
     loginInfo.catelog = profileStore.profilecatelog;
+    refreshVisibleMenus();
   } else {
     // 如果没有存储的用户信息，可以重定向到登录页面或显示提示信息
 
@@ -744,27 +769,7 @@ onMounted(() => {
   //获取完pinia中的数据后重新重定向到父页面
   // router.push(homeurl.value);
 
-  // request.admin.post(`${homeurl}`,loginInfo)
-  // console.log(1111)
-  //获取菜单栏的数据
-  request.admin
-    .post(`/homes/teacherhome`)
-    .then(res => {
-      console.log(res);
-      console.log('defaultActive', defaultActive.value);
-      // 登录成功
-
-      if (res.code === 200 && res.data.length > 0) {
-        menus.value = res.data;
-      }
-    })
-    .catch(error => {
-      // 获取失败
-      ElMessage({
-        type: 'error',
-        message: '获取导航失败'
-      });
-    });
+  if (menus.value.length === 0) refreshVisibleMenus();
 });
 </script>
 
@@ -840,6 +845,136 @@ onMounted(() => {
 
   :deep(.el-avatar):hover {
     outline: none !important;
+  }
+}
+
+.header .inner {
+  width: min(78.125rem, calc(100vw - 3rem)) !important;
+  max-width: 100%;
+  gap: 24px;
+}
+
+.header .icon {
+  min-width: 0;
+  flex: 1;
+  justify-content: flex-start;
+}
+
+.header .icon .term {
+  width: auto !important;
+  max-width: 34vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header .right {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.header .right > img {
+  flex: 0 0 auto;
+}
+
+.mainner {
+  min-width: 0;
+  max-width: min(26.875rem, 42vw);
+  gap: 10px;
+}
+
+.mainner .avatar {
+  flex: 0 0 2.875rem;
+  width: 2.875rem !important;
+  height: 2.875rem !important;
+  margin-left: 12px !important;
+}
+
+.mainner .text {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.group_4,
+.top,
+.bottom {
+  min-width: 0;
+}
+
+.top span {
+  display: block;
+  width: auto !important;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bottom {
+  justify-content: flex-start !important;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.bottom > div {
+  width: auto !important;
+  height: auto !important;
+  max-width: 100%;
+  overflow: visible !important;
+  text-align: left !important;
+  line-height: 1 !important;
+}
+
+.bottom :deep(.el-tag) {
+  max-width: 100%;
+  height: auto;
+  min-height: 24px;
+  white-space: normal;
+  line-height: 18px;
+  padding: 2px 8px;
+}
+
+.drop-down-icon {
+  flex: 0 0 auto;
+  margin-left: 8px !important;
+}
+
+.layout-container-demo > .el-container {
+  width: min(78.125rem, calc(100vw - 3rem)) !important;
+  max-width: 100%;
+}
+
+.layout-container-demo .el-main {
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.layout-container-demo .el-main :deep(.el-card) {
+  max-width: none !important;
+  width: calc(100% - 30px);
+  margin-right: 0;
+}
+
+@media (max-width: 900px) {
+  .header .inner {
+    width: calc(100vw - 1.5rem) !important;
+    gap: 12px;
+  }
+  .header .icon img:nth-of-type(2) {
+    display: none;
+  }
+  .header .icon .term {
+    max-width: 28vw;
+    margin-left: 8px !important;
+    font-size: 20px !important;
+  }
+  .mainner {
+    max-width: 58vw;
+  }
+  .mainner .avatar {
+    margin-left: 8px !important;
+    margin-right: 0 !important;
+  }
+  .layout-container-demo > .el-container {
+    width: calc(100vw - 1.5rem) !important;
   }
 }
 
