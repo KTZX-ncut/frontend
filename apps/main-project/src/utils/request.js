@@ -8,6 +8,7 @@ const WDD_HOST = import.meta.env.VITE_WDD_HOST;
 const HOST_ADMIN = import.meta.env.VITE_API_HOST_ADMIN;
 const HOST_COURSE = import.meta.env.VITE_API_HOST_COURSE;
 const HOST_EVALUATION = import.meta.env.VITE_API_HOST_EVALUATION;
+const HOST_EXAM = import.meta.env.VITE_API_HOST_EXAM;
 const HOST_AI = import.meta.env.VITE_API_VOLTAGENT;
 const BFF_API = import.meta.env.VITE_API_BFF;
 // 图片上传用到的域名
@@ -16,6 +17,7 @@ const request = {
   admin: createAPI(`${HOST_ADMIN}`),
   course: createAPI(`${HOST_COURSE}`),
   evaluation: createAPI(`${HOST_EVALUATION}`),
+  exam: createAPI(`${HOST_EXAM}`),
   page: createAPI(`${WDD_HOST}/page`),
   fork: createAPI(`${WDD_HOST}/fork`),
   common: createAPI(`${WDD_HOST}/common`),
