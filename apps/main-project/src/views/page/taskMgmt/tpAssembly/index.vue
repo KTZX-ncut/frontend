@@ -16,6 +16,7 @@
       <el-checkbox label="全选" @change="handleSelectAll"></el-checkbox>
       <div>
         <el-button type="primary" :icon="Plus" style="margin-left: 10px;" @click="openSearch">添加题目</el-button>
+        <el-button type="success" @click="openAiPaper">AI智能组卷</el-button>
         <el-button type="danger" :icon="Delete" @click="allDel">批量删除</el-button>
         <el-button type="primary" @click="save">保存</el-button>
       </div>
@@ -77,6 +78,21 @@
       </template>
     </vuedraggable>
 
+    <!-- AI智能组卷弹窗 -->
+    <el-dialog v-model="aiPaperVisible" title="AI智能组卷" width="500px">
+      <el-form :model="aiPaperForm" label-width="100px">
+        <el-form-item label="试卷名称" required><el-input v-model="aiPaperForm.name" placeholder="请输入试卷名称" /></el-form-item>
+        <el-form-item label="目标难度" required><el-rate v-model="aiPaperForm.targetDifficulty" :max="3" show-text :texts="['简单','中等','困难']" /></el-form-item>
+        <el-form-item label="客观题数量" required><el-input-number v-model="aiPaperForm.objectiveCount" :min="0" :max="50" /></el-form-item>
+        <el-form-item label="主观题数量" required><el-input-number v-model="aiPaperForm.subjectiveCount" :min="0" :max="50" /></el-form-item>
+        <el-form-item label="类型" required><el-radio-group v-model="aiPaperForm.catelog"><el-radio label="1">作业</el-radio><el-radio label="2">考试</el-radio></el-radio-group></el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="aiPaperVisible = false">取消</el-button>
+        <el-button type="primary" :loading="aiPaperLoading" @click="handleAiPaper">生成试卷</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 无权限显示 -->
     <NoAccessPermission v-if="privilege === 'none'" />
     <Search ref="searchRef" @save="(() => {
@@ -93,6 +109,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Top, Bottom, Delete, Plus } from '@element-plus/icons-vue'
 // import { courseLibTypeSetStatus } from '@/api/courseLib.js'
 import { previewDetail, taskSave, taskdel, courseLiWR } from '@/api/taskMgmt.js'
+import { autoGeneratePaper, getCourseId } from '@/api/exam.js'
 import Header from '@/views/page/components/header/index.vue'
 import Search from './components/search/index.vue'
 import NoAccessPermission from '@/views/page/components/noAccessPermission/index.vue'
@@ -118,6 +135,24 @@ const pathData = [
     path: ''
   },
 ]
+
+// ===== AI智能组卷 =====
+const aiPaperVisible = ref(false)
+const aiPaperLoading = ref(false)
+const aiPaperForm = ref({ name: '', targetDifficulty: 2, objectiveCount: 5, subjectiveCount: 3, catelog: '1' })
+const openAiPaper = () => { aiPaperForm.value = { name: taskName.value || '', targetDifficulty: 2, objectiveCount: 5, subjectiveCount: 3, catelog: '1' }; aiPaperVisible.value = true }
+const handleAiPaper = async () => {
+  if (!aiPaperForm.value.name) { ElMessage.warning('请输入试卷名称'); return }
+  aiPaperLoading.value = true
+  try {
+    const cRes = await getCourseId()
+    const cid = (cRes.code == '200' || cRes.code === 200) ? (cRes.data?.courseId || '') : ''
+    if (!cid) { ElMessage.error('无法获取课程ID'); aiPaperLoading.value = false; return }
+    const res = await autoGeneratePaper({ ...aiPaperForm.value, courseId: cid })
+    if (res.code == '200' || res.code === 200) { ElMessage.success('AI组卷成功'); aiPaperVisible.value = false; router.push('/homes/courseteacherhome/exam/test/testmangt') }
+    else ElMessage.error(res.msg || '组卷失败')
+  } finally { aiPaperLoading.value = false }
+}
 
 const getWR = () => {
   courseLiWR().then(res => {
