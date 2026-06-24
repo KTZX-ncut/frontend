@@ -23,6 +23,11 @@
           </el-popover>
         </template>
       </el-table-column>
+      <el-table-column label="KWA" min-width="120">
+        <template #default="{ row }">
+          <el-tag v-for="k in (row.kwas||[])" :key="k" size="small" style="margin:1px 2px">{{ k }}</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="题型" width="80">
         <template #default="{ row }">{{ { '0201':'单选','0202':'多选','0203':'判断','0204':'填空','0205':'简答' }[row.questionTypeId] || row.questionTypeId }}</template>
       </el-table-column>
