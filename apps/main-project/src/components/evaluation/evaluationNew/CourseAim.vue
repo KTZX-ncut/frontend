@@ -27,9 +27,9 @@
       <!-- <el-input v-model="addData.weight" placeholder="权重" /> -->
     </el-popover>
     <el-button @click="handleDelAll" type="danger" style="margin-left: 0.8vw">删除</el-button>
-    <el-button type="warning" style="margin-left: 0.8vw" @click="openCopyDialog">复制达成性评价建模</el-button>
+    <el-button type="warning" style="margin-left: 0.8vw" @click="openCopyDialog">复制课程目标</el-button>
   </el-header>
-  <CopyModelDialog ref="copyDialogRef" copy-type="achievement" @copy-success="() => fetchAim({ courseId, current: 1, size: -1 })" />
+  <CopyModelDialog ref="copyDialogRef" copy-type="courseObjective" @copy-success="() => fetchAim({ courseId, current: 1, size: -1 })" />
 
   <div v-if="!aimList.length">暂无数据</div>
   <div v-else>

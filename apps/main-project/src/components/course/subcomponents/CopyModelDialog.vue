@@ -51,9 +51,10 @@ const selectedTermId = ref('');
 const courseList = ref([]);
 const selectedRows = ref([]);
 
-// 判断是否显示学期选择器（keyword和ability类型不需要学期选择）
+// 判断是否显示学期选择器（关键字/能力/课程目标/考核项设计 类型直接展示全部课程，不需要学期选择）
+const noTermTypes = ['keyword', 'ability', 'courseObjective', 'assessmentCategory'];
 const showTermSelector = computed(() => {
-  return props.copyType !== 'keyword' && props.copyType !== 'ability';
+  return !noTermTypes.includes(props.copyType);
 });
 
 const titleMap = {
@@ -64,6 +65,8 @@ const titleMap = {
   ideology: '复制思政价值评价建模',
   keyword: '复制关键字',
   ability: '复制能力',
+  courseObjective: '复制课程目标',
+  assessmentCategory: '复制考核项设计',
 };
 const dialogTitle = titleMap[props.copyType] || '从历史课程复制';
 
@@ -172,6 +175,10 @@ async function doCopy(pastCourseId) {
       return request.course.post(`/coursemangt/course/copyFormative?pastId=${pastCourseId}`);
     case 'achievement':
       return request.evaluation.post(`/fe/achievement/copy?${params}`);
+    case 'courseObjective':
+      return request.evaluation.post(`/fe/course-objectives/copy?${params}`);
+    case 'assessmentCategory':
+      return request.evaluation.post(`/fe/assessment-categories/copy?${params}`);
     case 'ideology':
       return request.evaluation.post(`/evaluation/ideology/value/copy?${params}`);
     default:
