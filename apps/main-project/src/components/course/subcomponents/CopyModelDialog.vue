@@ -11,7 +11,7 @@
       <span style="font-size: 15px; font-weight: bold;">{{ dialogTitle }}</span>
     </template>
 
-    <div style="margin-bottom: 12px;">
+    <div v-if="showTermSelector" style="margin-bottom: 12px;">
       <span style="font-size: 14px; margin-right: 8px;">学期</span>
       <el-select v-model="selectedTermId" placeholder="请选择历史学期" style="width: 240px;" @change="fetchCourses">
         <el-option v-for="term in termList" :key="term.id" :label="term.termname" :value="term.id" />
@@ -35,7 +35,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import request from '../../../utils/request.js';
 
@@ -51,18 +51,31 @@ const selectedTermId = ref('');
 const courseList = ref([]);
 const selectedRows = ref([]);
 
+// 判断是否显示学期选择器（keyword和ability类型不需要学期选择）
+const showTermSelector = computed(() => {
+  return props.copyType !== 'keyword' && props.copyType !== 'ability';
+});
+
 const titleMap = {
   syllabus: '从历史课程复制教学大纲',
   resource: '从历史课程复制课程资源',
   formative: '复制形成性评价建模',
   achievement: '复制达成性评价建模',
   ideology: '复制思政价值评价建模',
+  keyword: '复制关键字',
+  ability: '复制能力',
 };
 const dialogTitle = titleMap[props.copyType] || '从历史课程复制';
 
-function init() {
+async function init() {
   visible.value = true;
-  loadTermList();
+  if (showTermSelector.value) {
+    // 需要学期选择器的类型：先加载学期列表
+    await loadTermList();
+  } else {
+    // keyword和ability类型：直接加载所有课程
+    await fetchAllCourses();
+  }
 }
 defineExpose({ init });
 
@@ -88,6 +101,17 @@ async function fetchCourses(termId) {
     else ElMessage.error(res.msg || '获取课程失败');
   } catch (e) {
     ElMessage.error('获取历史课程失败');
+  }
+}
+
+// 获取所有课程（不按学期过滤）
+async function fetchAllCourses() {
+  try {
+    const res = await request.course.get('/coursemangt/course/getAllCourses');
+    if (res.code === 200) courseList.value = res.data || [];
+    else ElMessage.error(res.msg || '获取课程失败');
+  } catch (e) {
+    ElMessage.error('获取课程失败');
   }
 }
 
@@ -143,6 +167,8 @@ async function doCopy(pastCourseId) {
     case 'resource':
       return request.course.post(`/coursemangt/courseresources/copy?${params}`);
     case 'formative':
+    case 'keyword':
+    case 'ability':
       return request.course.post(`/coursemangt/course/copyFormative?pastId=${pastCourseId}`);
     case 'achievement':
       return request.evaluation.post(`/fe/achievement/copy?${params}`);

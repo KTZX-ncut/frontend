@@ -67,9 +67,9 @@ const courseId = ref('');
 const barFCmp = ref(null);
 const radarCmp = ref(null);
 const barSCmp = ref(null);
-const barFInstance = barFCmp.value?.getChartInstance();
-const radarInstance = radarCmp.value?.getChartInstance();
-const barSInstance = barSCmp.value?.getChartInstance();
+let barFInstance = barFCmp.value?.getChartInstance();
+let radarInstance = radarCmp.value?.getChartInstance();
+let barSInstance = barSCmp.value?.getChartInstance();
 
 const stuInfo = reactive({
   stuId: 0, //学生id
