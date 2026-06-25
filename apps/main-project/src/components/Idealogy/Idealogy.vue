@@ -24,11 +24,11 @@
       type="warning"
       style="margin-left: 0.8vw"
       @click="openCopyDialog"
-      >复制思政价值评价建模</el-button
+      >复制价值标签</el-button
     >
     <!-- <el-button @click="handleDelAll" type="danger" style="margin-left: 0.8vw">删除</el-button> -->
   </el-header>
-  <CopyModelDialog ref="copyDialogRef" copy-type="ideology" @copy-success="fetchList" />
+  <CopyModelDialog ref="copyDialogRef" copy-type="ideologyValue" @copy-success="fetchList" />
   <div v-if="!Llist">暂无数据，请联系课程负责人创建</div>
   <div v-else>
     <el-tree

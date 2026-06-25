@@ -52,7 +52,7 @@ const courseList = ref([]);
 const selectedRows = ref([]);
 
 // 判断是否显示学期选择器（关键字/能力/课程目标/考核项设计 类型直接展示全部课程，不需要学期选择）
-const noTermTypes = ['keyword', 'ability', 'courseObjective', 'assessmentCategory'];
+const noTermTypes = ['keyword', 'ability', 'courseObjective', 'assessmentCategory', 'ideologyValue', 'ideologyUnit'];
 const showTermSelector = computed(() => {
   return !noTermTypes.includes(props.copyType);
 });
@@ -67,6 +67,8 @@ const titleMap = {
   ability: '复制能力',
   courseObjective: '复制课程目标',
   assessmentCategory: '复制考核项设计',
+  ideologyValue: '复制价值标签',
+  ideologyUnit: '复制思政知识单元',
 };
 const dialogTitle = titleMap[props.copyType] || '从历史课程复制';
 
@@ -183,6 +185,10 @@ async function doCopy(pastCourseId) {
       return request.evaluation.post(`/fe/assessment-categories/copy?${params}`);
     case 'ideology':
       return request.evaluation.post(`/evaluation/ideology/value/copy?${params}`);
+    case 'ideologyValue':
+      return request.evaluation.post(`/evaluation/ideology/value/copyValues?${params}`);
+    case 'ideologyUnit':
+      return request.evaluation.post(`/evaluation/ideology/value/copyKnowledgeUnit?${params}`);
     default:
       throw new Error('未知的复制类型');
   }
