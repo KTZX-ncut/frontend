@@ -170,9 +170,11 @@ async function doCopy(pastCourseId) {
     case 'resource':
       return request.course.post(`/coursemangt/courseresources/copy?${params}`);
     case 'formative':
-    case 'keyword':
-    case 'ability':
       return request.course.post(`/coursemangt/course/copyFormative?pastId=${pastCourseId}`);
+    case 'keyword':
+      return request.course.post(`/coursemangt/course/copyKeyword?pastId=${pastCourseId}`);
+    case 'ability':
+      return request.course.post(`/coursemangt/course/copyAbility?pastId=${pastCourseId}`);
     case 'achievement':
       return request.evaluation.post(`/fe/achievement/copy?${params}`);
     case 'courseObjective':
