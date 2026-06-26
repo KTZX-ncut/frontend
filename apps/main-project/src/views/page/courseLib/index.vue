@@ -2,125 +2,53 @@
   <div class="cpirse-lib">
     <Header title="课程题库" :pathData="pathData" />
 
-    <Kwa type="courseLibSearch" @kwa-event="handleKwaEvent" />
-
     <div class="cpirse-lib-btn flex-between">
       <el-checkbox label="全选" @change="handleSelectAll"></el-checkbox>
       <div>
-        <template v-if="!(privilege === 'read')">
-          <!-- <el-button type="primary" :icon="Plus" @click="add">新增题目</el-button> -->
-          <el-dropdown placement="bottom" style="margin-right: 10px;">
-            <el-button type="primary" :icon="Plus">新增题目</el-button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item v-for="(item,i) in libTypeList" :key="i"  @click="handleLibTypeConfirm(item)">{{ item.name }}</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-          <el-button type="danger" :icon="Delete" @click="batchDel">批量删除</el-button>
-          <el-button type="primary" :icon="Upload">批量导入</el-button>
-        </template>
+        <el-button type="success" @click="openAiDialog">AI生成题目</el-button>
+        <el-button type="danger" :icon="Delete" @click="batchDel" :disabled="!selectedIds.length">批量删除</el-button>
       </div>
     </div>
 
-    <Topic
-      v-if="topicFlag"
-      :item="item"
-      @save="
-        () => {
-          getCourseLibList();
-          topicFlag = false;
-        }
-      "
-      @close="
-        () => {
-          topicFlag = false;
-        }
-      "
-    />
-
-    <el-collapse v-model="activeNames">
-      <el-collapse-item v-for="(course, i) in courseList" :key="course.id" :name="course.id">
-        <template #title>
-          <div class="flex-start flex-start1" style="flex-wrap: wrap; height: 50px; width: 100% ; text-align: left">
-            <el-checkbox @click.stop label="" v-model="course.isChecked"></el-checkbox>
-            <div style="width: calc(100% - 30px)">
-              <div class="topic-kwa wdd-ellipsis" v-if="course.answers">
-                <span class="topic-kwa-item" style="margin-right: 10px" v-for="(kwa, kwaIdx) in course.kwas" :key="kwaIdx">{{ kwa.kwaName }}</span>
-                <span class="topic-kwa-item">{{ `${TOPICTYPE[course?.questionTypeId] ?? "预留题"}` }}</span>
-              </div>
-              <div class="topic-header wdd-ellipsis">
-                {{ `${i + 1}、${course.title}` }}
-              </div>
-            </div>
-          </div>
+    <el-table :data="courseList" stripe border style="margin-top:16px">
+      <el-table-column type="selection" width="50" />
+      <el-table-column type="index" label="序号" width="60" />
+      <el-table-column prop="content" label="题目内容" min-width="300">
+        <template #default="{ row }">
+          <el-popover trigger="hover" placement="top" width="500">
+            <div v-html="renderLatex(row.content)"></div>
+            <template #reference>
+              <span class="text-ellipsis" v-html="renderLatex(row.content || '')"></span>
+            </template>
+          </el-popover>
         </template>
-        <Topic
-          v-if="course.topicFlag"
-          :item="course"
-          @save="
-            () => {
-              getCourseLibList();
-              course.topicFlag = false;
-            }
-          "
-          @close="
-            () => {
-              course.topicFlag = false;
-            }
-          "
-        />
+      </el-table-column>
+      <el-table-column label="KWA" min-width="120">
+        <template #default="{ row }">
+          <el-tag v-for="k in (row.kwas||[])" :key="k" size="small" style="margin:1px 2px">{{ k }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="题型" width="80">
+        <template #default="{ row }">{{ { '0201':'单选','0202':'多选','0203':'判断','0204':'填空','0205':'简答' }[row.questionTypeId] || row.questionTypeId }}</template>
+      </el-table-column>
+      <el-table-column label="难度" width="80">
+        <template #default="{ row }">
+          <el-tag size="small" :type="row.difficultyLevel == 1 ? 'success' : row.difficultyLevel == 3 ? 'danger' : 'warning'">
+            {{ row.difficultyLevel == 1 ? '简单' : row.difficultyLevel == 3 ? '困难' : '中等' }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" width="80" fixed="right">
+        <template #default="{ row }">
+          <el-button type="danger" size="small" text @click="del(row)">删除</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
 
-        <div class="topic-item">
-          <div v-if="course.content !== '<p><br></p>'" class="flex-start topic-course-content" v-html="course.content"></div>
-          <div v-if="['单选题', '多选题', '判断题'].includes(TOPICTYPE[course.questionTypeId])" class="topic-answer-item" v-for="(answer, answerIdx) in course.answers" :key="answerIdx">
-            {{ String.fromCharCode("A".charCodeAt() + answerIdx) }}: {{ answer.itemContent }}
-            <span v-if="answer.isAnswer">正确答案</span>
-          </div>
+    <div v-if="!courseList || !courseList.length" style="text-align:center;padding:40px;color:#999">暂无题目</div>
 
-          <el-input
-            v-if="['编程题', '简答题'].includes(TOPICTYPE[course.questionTypeId]) && course.answer"
-            placeholder="请输入建议答案"
-            v-model="course.answer"
-            disabled
-            style="width: 100%; margin-bottom: 10px; margin-top: 10px"
-            :rows="4"
-            type="textarea"
-            maxlength="3000"
-          />
-          <div class="topic-item-icon flex-between cursor-pointer" v-if="!(privilege === 'read')">
-            <template v-if="course.status === 4">
-              <!-- 锁定状态 -->
-              <span class="topic-item-icon-item"> 
-                <el-icon title="当前题型已被锁定" style="color: red"><Lock /></el-icon>
-              </span>
-            </template>
-            <template v-else>
-              <span class="topic-item-icon-item">
-                <el-icon title="编辑" @click="edit(course)">
-                  <Edit />
-                </el-icon>
-              </span>
-              <span class="topic-item-icon-item">
-                <el-icon title="复制" @click="copy(course)">
-                  <DocumentCopy />
-                </el-icon>
-              </span>
-              <span class="topic-item-icon-item topic-item-icon-item-delete">
-                <el-icon title="删除" @click="del(course)">
-                  <Delete />
-                </el-icon>
-              </span>
-            </template>
-          </div>
-        </div>
-      </el-collapse-item>
-    </el-collapse>
-
-    <div v-if="!courseList || !courseList.length">暂无数据</div>
-
-    <div class="pagination flex-end">
-      <!-- <el-pagination
+    <div class="pagination flex-end" style="margin-top:16px">
+      <el-pagination
         v-model:currentPage="params.pageIndex"
         v-model:page-size="params.pageSize"
         :page-sizes="[10, 20, 30, 40]"
@@ -128,368 +56,137 @@
         :total="total"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
-      /> -->
-      <Pagination :pageIndex="params.pageIndex" :pageSize="params.pageSize" :total="total" @update:pageIndex="handleCurrentChange" />
+      />
     </div>
 
-    <!-- 选择题类型弹窗 -->
-    <optionTopic ref="optionTopicRef" @childData="handleChildData" />
-    <!-- 无权限显示 -->
-    <NoAccessPermission v-if="privilege === 'none'" />
+    <!-- AI出题弹窗 -->
+    <el-dialog v-model="aiDialogVisible" title="AI生成题目" width="600px">
+      <div v-loading="aiKwaLoading">
+        <el-empty v-if="!aiKwaLoading && aiKwaList.length === 0" description="暂无KWA数据" />
+        <div v-else>
+          <p style="margin-bottom:12px;color:#606266">选择知识点（KWA）以生成题目：</p>
+          <el-checkbox-group v-model="aiSelectedKwas">
+            <el-checkbox v-for="kwa in aiKwaList" :key="kwa.kwaId" :label="kwa.kwaId" style="margin:0 16px 8px 0">{{ kwa.kwaName }}</el-checkbox>
+          </el-checkbox-group>
+          <div style="margin-top:16px;display:flex;align-items:center">
+            <span>生成数量：</span><el-input-number v-model="aiQuestionCount" :min="1" :max="100" />
+            <el-button type="primary" :loading="aiGenerating" @click="handleAiGenerate" style="margin-left:16px">开始生成</el-button>
+          </div>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { defineComponent, ref, onMounted } from "vue";
-import { Edit, DocumentCopy, Delete, Lock, Upload, Plus } from "@element-plus/icons-vue";
+import { defineComponent, ref, onMounted, computed } from "vue";
+import { Delete } from "@element-plus/icons-vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import Kwa from "@/components/kwa/index.vue";
 import Header from "../components/header/index.vue";
-import Pagination from "@/views/page/components/pagination/index.vue";
-import Topic from "./components/topic/index.vue";
-import optionTopic from "./components/optionTopic/index.vue";
-import NoAccessPermission from "@/views/page/components/noAccessPermission/index.vue";
-import { courseLibList, courseLibCopy, courseLibDel, courseLibWR } from "@/api/courseLib.js";
-import { TOPICTYPE } from "@/utils/consts";
-import { courseLibType } from '@/api/courseLib.js' 
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
+import { getKwaList, generateQuestions, getQuestionGenPage, deleteQuestions } from "@/api/exam.js";
+
+// 渲染文本中的 $...$ LaTeX公式
+const renderLatex = (text) => {
+  if (!text) return '';
+  return text.replace(/\$([\s\S]+?)\$/g, (_, formula) => {
+    // 清理公式：双反斜杠→单，中文括号→英文，去掉多余换行
+    let f = formula.replace(/\\\\/g, '\\').replace(/（/g, '(').replace(/）/g, ')').trim();
+    let displayMode = /\\begin|\\frac|\\\\/.test(f);
+    try { return katex.renderToString(f, { throwOnError: false, displayMode }); }
+    catch (e) { console.warn('KaTeX:', e.message, f.substring(0,50)); return f; }
+  });
+};
 
 export default defineComponent({
-  components: {
-    Kwa,
-    Lock,
-    Topic,
-    Header,
-    optionTopic,
-    Edit,
-    DocumentCopy,
-    Delete,
-    NoAccessPermission,
-    Upload,
-    Plus,
-    Pagination
-  },
+  components: { Header, Delete },
   setup() {
-    onMounted(() => {
-      getCourseLibList();
-      getCourseLibWR();
-      getCourseLibTypeList();
-    });
-    const item = ref({});
-    const topicFlag = ref(false);
-    const activeNames = ref([]);
-    const optionTopicRef = ref(null);
-    const courseList = ref(null);
+    const courseList = ref([]);
     const total = ref(0);
-    const privilege = ref("");
-    const params = ref({
-      pageIndex: 1,
-      pageSize: 20,
-    });
+    const activeNames = ref([]);
+    const params = ref({ pageIndex: 1, pageSize: 20 });
 
-    const pathData = [
-      {
-        name: "课程题库",
-        path: "",
-      },
-    ];
-    const libTypeList = ref([])
-    const getCourseLibTypeList = () => {
-      courseLibType().then(res => {
-        if (res.code === '200') {
-          libTypeList.value = res?.data.filter((item) => item.status)
-        }
-      })
-    }
+    const pathData = [{ name: "课程题库", path: "" }];
 
-    const handleLibTypeConfirm = (libType) => {
-      item.value = {
-        questionTypeId: libType.queTypeId,
-      };
-      topicFlag.value = true;
-    }
+    const selectedIds = computed(() =>
+      (courseList.value || []).filter(q => q.isChecked).map(q => q.id)
+    );
 
-    const getCourseLibWR = () => {
-      courseLibWR().then((res) => {
-        if (res.code === "200") {
-          privilege.value = res.data;
+    const getCourseLibList = () => {
+      getQuestionGenPage({ pageIndex: params.value.pageIndex, pageSize: params.value.pageSize }).then(res => {
+        // 兼容 code 是字符串 "200" 或数字 200
+        if (res.code == '200' || res.code === 200) {
+          courseList.value = (res.data?.data || []).map(q => ({ ...q, isChecked: false }));
+          total.value = res.data?.recordSize || 0;
+          activeNames.value = courseList.value.map(q => q.id);
         }
       });
     };
 
-    const handleSelectAll = (val) => {
-      courseList.value?.forEach((course) => {
-        course.isChecked = val;
-      });
-    };
+    onMounted(() => getCourseLibList());
 
-    const edit = (answer) => {
-      // item.value = answer
-      answer.topicFlag = true;
-    };
-    const del = (answer, allIds) => {
-      ElMessageBox.confirm(`${allIds && allIds.length ? "确定批量删除?" : "确定删除此题型?"}`, "提示", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning",
-      })
-        .then(() => {
-          console.log("courseLibDel", answer);
-          courseLibDel(allIds ?? [answer.id]).then((res) => {
-            if (res.code === "200") {
-              ElMessage({
-                type: "success",
-                message: "删除成功",
-              });
-              getCourseLibList();
-            }
-          });
-        })
-        .catch((err) => {
-          console.log(err);
+    const handleSelectAll = (val) => courseList.value.forEach(q => q.isChecked = val);
+    const handleSizeChange = (val) => { params.value.pageSize = val; getCourseLibList(); };
+    const handleCurrentChange = (val) => { params.value.pageIndex = val; getCourseLibList(); };
+
+    const del = (row) => {
+      ElMessageBox.confirm("确定删除？", "提示", { type: "warning" }).then(() => {
+        deleteQuestions([row.id]).then(res => {
+          if (res.code == '200' || res.code === 200) { ElMessage.success("已删除"); getCourseLibList(); }
         });
-    };
-    const copy = (answer) => {
-      ElMessageBox.confirm("确定复制此题型?", "提示", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning",
-      })
-        .then(() => {
-          courseLibCopy(answer.id).then((res) => {
-            if (res.code === "200") {
-              ElMessage({
-                type: "success",
-                message: "复制成功",
-              });
-              getCourseLibList();
-            }
-          });
-        })
-        .catch(() => {});
-    };
-    const add = () => {
-      topicFlag.value = false;
-      if (optionTopicRef.value) {
-        optionTopicRef.value.init();
-      }
+      }).catch(() => {});
     };
 
     const batchDel = () => {
-      const ids = courseList.value.filter((course) => course.isChecked)?.map((course) => course.id);
-      if (ids && ids.length) {
-        del(null, ids);
-      } else {
-        ElMessage.error("请选择要删除的题");
-      }
+      if (!selectedIds.value.length) return ElMessage.warning("请勾选题目");
+      ElMessageBox.confirm(`确定删除 ${selectedIds.value.length} 道题？`, "提示", { type: "warning" }).then(() => {
+        deleteQuestions(selectedIds.value).then(res => {
+          if (res.code == '200' || res.code === 200) { ElMessage.success("已删除"); getCourseLibList(); }
+        });
+      }).catch(() => {});
     };
 
-    const handleChildData = (questionTypeId) => {
-      item.value = {
-        questionTypeId,
-      };
-      topicFlag.value = true;
-      console.log("topicFlag", topicFlag);
+    // ===== AI出题 =====
+    const aiDialogVisible = ref(false);
+    const aiKwaList = ref([]);
+    const aiKwaLoading = ref(false);
+    const aiSelectedKwas = ref([]);
+    const aiQuestionCount = ref(20);
+    const aiGenerating = ref(false);
+
+    const openAiDialog = () => {
+      aiDialogVisible.value = true;
+      aiSelectedKwas.value = [];
+      aiQuestionCount.value = 20;
+      aiKwaLoading.value = true;
+      getKwaList().then(res => {
+        if (res.code == '200' || res.code === 200) aiKwaList.value = res.data || [];
+      }).finally(() => { aiKwaLoading.value = false });
     };
 
-    const handleSizeChange = (val) => {
-      params.value.pageSize = val;
-      handleKwaEvent();
-      console.log(`${val} items per page`);
+    const handleAiGenerate = () => {
+      if (!aiSelectedKwas.value.length) return ElMessage.warning("请至少选择一个KWA");
+      aiGenerating.value = true;
+      generateQuestions({ selectedKwaIds: aiSelectedKwas.value, questionCount: aiQuestionCount.value }).then(res => {
+        if (res.code == '200' || res.code === 200) { ElMessage.success(res.msg || "生成成功"); aiDialogVisible.value = false; getCourseLibList(); }
+        else ElMessage.error(res.msg || "生成失败");
+      }).finally(() => { aiGenerating.value = false });
     };
 
-    const handleCurrentChange = (val) => {
-      params.value.pageIndex = val;
-      handleKwaEvent();
-      console.log(`current page: ${val}`);
-    };
-
-    const handleKwaEvent = (obj) => {
-      params.value = {
-        ...params.value,
-        ...obj,
-      };
-      getCourseLibList();
-    };
-
-    const getCourseLibList = () => {
-      let paramsValue = { ...params.value }
-      if (paramsValue.queTypeIds && paramsValue.queTypeIds.includes("0")) {
-        paramsValue.queTypeIds = [];
-      }
-      courseLibList(paramsValue).then((res) => {
-        if (res.code === "200") {
-          total.value = res?.data?.recordSize ?? 0;
-          courseList.value = res?.data?.data ?? [];
-          console.log("courseList.value", courseList.value);
-          // 折叠面板默认全部展开
-          activeNames.value = courseList.value.map((item) => item.id);
-        }
-      });
-    };
     return {
-      item,
-      total,
-      params,
-      topicFlag,
-      courseList,
-      activeNames,
-      optionTopicRef,
-      handleSelectAll,
-      add,
-      del,
-      edit,
-      copy,
-      batchDel,
-      handleKwaEvent,
-      handleChildData,
-      handleSizeChange,
-      getCourseLibList,
-      handleCurrentChange,
-      TOPICTYPE,
-      privilege,
-      Plus,
-      Upload,
-      Delete,
-      pathData,
-      libTypeList,
-      handleLibTypeConfirm,
+      courseList, total, activeNames, params, pathData, selectedIds,
+      handleSelectAll, handleSizeChange, handleCurrentChange, del, batchDel,
+      aiDialogVisible, aiKwaList, aiKwaLoading, aiSelectedKwas, aiQuestionCount, aiGenerating,
+      openAiDialog, handleAiGenerate, Delete, renderLatex,
     };
   },
 });
 </script>
-<style>
-.cpirse-lib .el-collapse-item__header {
-  height: 60px !important;
-}
-.cpirse-lib .el-collapse-item__wrap {
-  margin-top: 10px;
-}
-.cpirse-lib .el-collapse-item__wrap {
-  /* border-bottom: none; */
-  padding-bottom: 20px;
-}
-.cpirse-lib .el-collapse-item__header {
-  border-bottom: none;
-}
-.cpirse-lib .el-collapse {
-  border-top: 2px solid rgba(39, 165, 255, 0.5);
-}
-.cpirse-lib .el-collapse-item__arrow {
-  background: #eeeeee;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-}
-.cpirse-lib .el-collapse-item__arrow svg {
-  color: #313131;
-  font-size: 10px;
-}
-.cpirse-lib .el-collapse-item__content .bgd-kwa {
- border: none;
-}
 
-</style>
-<style lang="scss" scoped>
-.cpirse-lib {
-  padding: 0 20px 20px 20px;
-  background: #fff;
-  position: relative;
-  box-sizing: border-box;
-  height: 100%;
-}
-
-.topic-header {
-  text-align: left;
-  line-height: 30px;
-  width: 98%;
-  height: 25px;
-  font-family: MicrosoftYaHei;
-  font-size: 16px;
-  color: #1b1b1b;
-  font-weight: normal;
-}
-
-.topic-kwa {
-  width: 98%;
-  height: 25px;
-  line-height: 25px;
-  transform: translateY(5px);
-  margin-bottom: 10px;
-}
-
-.topic-kwa-item {
-  background: #dff2ff;
-  border-radius: 5px;
-  padding: 3px 10px;
-  margin-right: 10px;
-  color: #0078cd;
-  font-size: 14px;
-}
-
-.cpirse-lib-btn {
-  padding: 30px 0 10px;
-}
-
-.topic-item {
-  text-align: left;
-  padding: 0 10px;
-  border-radius: 5px;
-  position: relative;
-  margin-left: 11px;
-  padding-left: 35px;
-
-  .topic-title {
-    font-size: 14px;
-  }
-
-  .topic-item-icon {
-    position: absolute;
-    right: 0;
-    // width: 60px;
-    font-size: 18px;
-    color: #103ccc;
-  }
-
-  .topic-answer-item {
-    font-family: MicrosoftYaHei;
-    font-size: 16px;
-    color: #1b1b1b;
-    line-height: 30px;
-
-    span {
-      font-size: 12px;
-      margin-left: 8px;
-      color: #019a48;
-      background: rgba(50, 177, 108, 0.15);
-      border-radius: 5px;
-      padding: 3px 10px;
-    }
-  }
-  .topic-course-content {
-    font-family: MicrosoftYaHei;
-    font-size: 16px;
-    color: #1b1b1b;
-    line-height: 30px;
-  }
-}
-.flex-start1 {
-  align-items: flex-start;
-}
-.pagination {
-  margin-top: 10px;
-}
-.topic-item-icon-item {
-  font-size: 16px;
-  color: #fff;
-  width: 26px;
-  height: 26px;
-  text-align: center;
-  background: #27a5ff;
-  border-radius: 5px;
-  display: inline-block;
-  margin-left: 10px;
-}
-.topic-item-icon-item-delete {
-  background: #ff4c48;
-}
+<style scoped>
+.cpirse-lib { padding: 0 20px 20px 20px; background: #fff; min-height: 100%; box-sizing: border-box; }
+.cpirse-lib-btn { padding: 10px 0; }
+.topic-item { text-align: left; padding: 0 10px; }
+.pagination { margin-top: 10px; }
 </style>
