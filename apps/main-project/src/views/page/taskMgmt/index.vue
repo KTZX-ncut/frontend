@@ -14,24 +14,24 @@
     <el-table ref="multipleTableRef" :data="tableData" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" />
       <el-table-column property="name" label="名称" />
-      <el-table-column property="questionsCount" label="题数" width="80" />
-      <el-table-column property="totalScore" label="总分" width="80" />
-      <el-table-column label="类型" width="80">
+      <el-table-column property="questionsCount" label="题数" width="70" />
+      <el-table-column property="totalScore" label="总分" width="70" />
+      <el-table-column label="类型" width="70">
         <template #default="{ row }">{{ row.catelog === '1' ? '作业' : row.catelog === '2' ? '考试' : '--' }}</template>
       </el-table-column>
-      <el-table-column label="状态" width="100">
+      <el-table-column label="状态" width="90">
         <template #default="{ row }">
           <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small">{{ row.status === 1 ? '已发布' : '未发布' }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column property="createTime" label="创建时间" width="170" />
-      <el-table-column fixed="right" label="操作" width="300">
+      <el-table-column property="createTime" label="创建时间" width="160" />
+      <el-table-column fixed="right" label="操作" width="340">
         <template #default="{ row }">
-          <el-button text @click="viewPaper(row)">查看</el-button>
+          <el-button text @click="viewPaper(row)">查看试卷</el-button>
           <el-button text type="primary" v-if="row.status !== 1" @click="publish(row)">发布</el-button>
-          <el-button text type="success" v-if="row.status === 1" @click="openScoreSim(row)">模拟得分</el-button>
           <el-button text v-if="row.status === 1" @click="openScoreResult(row)">查看成绩</el-button>
           <el-button text type="danger" @click="del(row)">删除</el-button>
+          <el-button text type="success" v-if="row.status === 1" @click="openScoreSim(row)">模拟得分</el-button>
         </template>
       </el-table-column>
     </el-table>
