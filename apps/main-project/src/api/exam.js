@@ -5,6 +5,7 @@ export const getCourseId = () => request.exam.get('/exam/meta/courseId')
 
 export const getKwaList = (courseId) => request.exam.get('/exam/questiongen/kwa', { params: courseId ? { courseId } : {} })
 export const generateQuestions = (data) => request.exam.post('/exam/questiongen/generate', data)
+export const getGenerateProgress = (taskId) => request.exam.get('/exam/questiongen/generate/progress', { params: { taskId } })
 export const getQuestionGenPage = (params = {}) => request.exam.get('/exam/questiongen/page', { params })
 export const deleteQuestions = (data) => request.exam.post('/exam/questiongen/delete', data)
 export const autoGeneratePaper = (data) => request.exam.post('/exam/paper/autoGenerate', data)
