@@ -12,6 +12,7 @@
       ></el-input>
       <el-button type="primary" @click="querySearch">搜索</el-button>
     </div>
+    <el-button type="warning" style="margin-left: 0.8vw" @click="openCopyDialog">复制考核项设计</el-button>
     <el-popover
       class="box-item"
       content="Left Top prompts info"
@@ -36,6 +37,7 @@
       </span>
     </div>
   </el-header>
+  <CopyModelDialog ref="copyDialogRef" copy-type="assessmentCategory" @copy-success="handleRefresh" />
 
   <div v-if="!exemList.length">暂无数据</div>
   <div v-else>
@@ -134,6 +136,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { message } from 'ant-design-vue';
 import { storeToRefs } from 'pinia';
 import _, { update } from 'lodash';
+import CopyModelDialog from '../../../course/subcomponents/CopyModelDialog.vue';
 
 /* ********************变量定义******************** */
 // props定义
@@ -613,6 +616,11 @@ const handleRefresh = async () => {
     loading.value = false;
   }
 };
+
+const copyDialogRef = ref(null);
+function openCopyDialog() {
+  copyDialogRef.value?.init();
+}
 
 onMounted(async () => {
   await fetchType({ courseId, current: 1, size: -1 });

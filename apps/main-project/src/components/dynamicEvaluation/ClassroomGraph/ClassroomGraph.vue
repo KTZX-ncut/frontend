@@ -67,9 +67,9 @@ const courseId = ref('');
 const radarCmp = ref(null);
 const wordmapCmp = ref(null);
 const treeCmp = ref(null);
-const radarInstance = radarCmp.value?.getChartInstance();
-const wordInstance = wordmapCmp.value?.getChartInstance();
-const treeInstance = treeCmp.value?.getChartInstance();
+let radarInstance = radarCmp.value?.getChartInstance();
+let wordInstance = wordmapCmp.value?.getChartInstance();
+let treeInstance = treeCmp.value?.getChartInstance();
 
 const courseInfo = reactive({
   courseName: '',

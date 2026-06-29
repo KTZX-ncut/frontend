@@ -19,8 +19,16 @@
       style="margin-left: 0.8vw !important"
       >新增一级节点</el-button
     >
+    <el-button
+      v-if="char.rolename === '课程负责人'"
+      type="warning"
+      style="margin-left: 0.8vw"
+      @click="openCopyDialog"
+      >复制价值标签</el-button
+    >
     <!-- <el-button @click="handleDelAll" type="danger" style="margin-left: 0.8vw">删除</el-button> -->
   </el-header>
+  <CopyModelDialog ref="copyDialogRef" copy-type="ideologyValue" @copy-success="fetchList" />
   <div v-if="!Llist">暂无数据，请联系课程负责人创建</div>
   <div v-else>
     <el-tree
@@ -141,6 +149,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import parseJWT from '@/utils/parseJWT.js';
 import useIdealogyNew from '../../stores/idealogyNewStore';
 import { storeToRefs } from 'pinia';
+import CopyModelDialog from '../course/subcomponents/CopyModelDialog.vue';
 /* ********************变量定义******************** */
 const elRef = ref(null);
 const search = ref('');
@@ -416,6 +425,9 @@ const handleHide = async scope => {
   if (code === 200) return ElMessage.success('修改成功');
   ElMessage.error(msg);
 };
+
+const copyDialogRef = ref(null);
+function openCopyDialog() { copyDialogRef.value?.init(); }
 
 onMounted(async () => {
   const token = parseJWT(sessionStorage.getItem('token'));

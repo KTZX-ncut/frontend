@@ -27,7 +27,9 @@
       <!-- <el-input v-model="addData.weight" placeholder="权重" /> -->
     </el-popover>
     <el-button @click="handleDelAll" type="danger" style="margin-left: 0.8vw">删除</el-button>
+    <el-button type="warning" style="margin-left: 0.8vw" @click="openCopyDialog">复制课程目标</el-button>
   </el-header>
+  <CopyModelDialog ref="copyDialogRef" copy-type="courseObjective" @copy-success="() => fetchAim({ courseId, current: 1, size: -1 })" />
 
   <div v-if="!aimList.length">暂无数据</div>
   <div v-else>
@@ -97,6 +99,7 @@ import { ElMessage } from 'element-plus';
 import { storeToRefs } from 'pinia';
 import _ from 'lodash';
 import useCourseAim from '../../../stores/useCourseAim';
+import CopyModelDialog from '../../course/subcomponents/CopyModelDialog.vue';
 
 /* ********************变量定义******************** */
 // props定义
@@ -239,6 +242,9 @@ const handelAdd = async () => {
   }
   await fetchAim({ courseId, current: 1, size: -1 });
 };
+
+const copyDialogRef = ref(null);
+function openCopyDialog() { copyDialogRef.value?.init(); }
 
 onMounted(async () => {
   await fetchAim({ courseId, current: 1, size: -1 });
