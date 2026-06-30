@@ -263,11 +263,6 @@ const resetForm = () => {
 const submitForm = async () => {
   try {
     await formRef.value?.validate();
-    if (form.term === '默认学期') {
-      ElMessage.warning('创建课程前，请先创建学期');
-      return;
-    }
-
     await ElMessageBox.confirm('是否确认新增课程？', '提示', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',

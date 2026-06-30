@@ -16,9 +16,9 @@
         </el-header>
         <el-main>
           <el-form ref="formRef" :model="newform" :rules="rules" label-width="120px">
-            <el-form-item label="学期" prop="term">
+            <!-- <el-form-item label="学期" prop="term">
               <el-input disabled v-model="newform.term"></el-input>
-            </el-form-item>
+            </el-form-item> -->
             <el-form-item label="课程名称(中文)" prop="courseChineseName">
               <el-input
                 v-model="newform.courseChineseName"
@@ -220,13 +220,6 @@ const formattedData = computed(() => {
 });
 
 async function submitForm() {
-  if (newform.term === '默认学期') {
-    ElMessage({
-      message: '创建课程前，请先创建学期!',
-      type: 'warning'
-    });
-    return;
-  }
   try {
     // 显示确认对话框
     await ElMessageBox.confirm('是否确认新增', '提示', {

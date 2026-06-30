@@ -27,9 +27,9 @@
             >
           </div>
 
-          <div style="flex-grow: 2; text-align: center">
+          <!-- <div style="flex-grow: 2; text-align: center">
             <el-text style="font-size: calc(1.5vw + 6px); color: white">{{ currentterm }}</el-text>
-          </div>
+          </div> -->
 
           <div
             class="right-div"
