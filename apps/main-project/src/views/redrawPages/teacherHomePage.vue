@@ -721,13 +721,14 @@ const handleVisibleChange = visible => {
 //钩子函数用来刷新后重新获取数据
 onMounted(() => {
   // guide();
-  nextTick(() => {
-    if (isDefaultTerm.value && route.fullPath === '/homes/secretariatehome') {
-      guide();
-    } else {
-      isSHow.value = false;
-    }
-  });
+  // nextTick(() => {
+  //   if (isDefaultTerm.value && route.fullPath === '/homes/secretariatehome') {
+  //     guide();
+  //   } else {
+  //     isSHow.value = false;
+  //   }
+  // });
+  isSHow.value = false;
   defaultActive.value = 'not-selected';
   const role = route.params.rolehome; // 获取当前路由参数中的 rolehome 值
   const basePath = `/homes/${role}`;
