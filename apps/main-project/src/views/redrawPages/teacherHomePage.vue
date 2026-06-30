@@ -35,7 +35,7 @@
                   />
                   <span class="text-gray-100" v-if="historyStore.nowUsr">当前为历史学期</span>
                 </div>
-                <span
+                <!-- <span
                   class="term"
                   style="
                     font-size: 24px;
@@ -48,7 +48,7 @@
                     margin-left: 33px;
                   "
                   >{{ currentterm }}</span
-                >
+                > -->
               </div>
               <div class="right flex justify-center items-center" style="height: 100%">
                 <img referrerpolicy="no-referrer" src="@/assets/images/redraw-images/divider.png" />
