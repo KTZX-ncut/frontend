@@ -404,10 +404,9 @@ const handleConfirm = async () => {
 
   // 思政价值
   if (MainStore.selectedRoute === '/homes/courseteacherhome/sizheng/portraitList') {
-    console.log('此为思政价值');
-    console.log('rest', [...resetList.value.values()]);
-    await fetchStudentState(Array.from(resetList.value.values()));
-    // TODO：思政价值对接画像接口
+    if (resetList.value.size > 0) {
+      await fetchStudentState(Array.from(resetList.value.values()));
+    }
     const { code, msg } = await fetchCalc(classroomId.value);
     if (code === 200) {
       ElMessage.success('评价成功');
@@ -421,9 +420,9 @@ const handleConfirm = async () => {
 
   // 达成性评价
   if (MainStore.selectedRoute !== '/homes/courseteacherhome/dynamicmodel/graphlist') {
-    console.log('此为达成性评价');
-    console.log('rest', [...resetList.value.values()]);
-    await TeacherInClassStore.putAttendEvaluationAchievement(Array.from(resetList.value.values()));
+    if (resetList.value.size > 0) {
+      await TeacherInClassStore.putAttendEvaluationAchievement(Array.from(resetList.value.values()));
+    }
     const { code, msg } = await fetchExternalAssessmenCalc(classroomId.value);
     if (code === 200) {
       ElMessage.success('评价成功');
@@ -447,6 +446,7 @@ const handleConfirm = async () => {
       type: 'error',
       message: msg
     });
+    creating.value = false;
     return;
   } else {
     ElMessage({
@@ -455,8 +455,9 @@ const handleConfirm = async () => {
     });
     portraitStore.setTaskId(data);
   }
-  // TODO：统一修改取消评价学生状态
-  await TeacherInClassStore.putAttendEvaluation(Array.from(resetList.value.values()));
+  if (resetList.value.size > 0) {
+    await TeacherInClassStore.putAttendEvaluation(Array.from(resetList.value.values()));
+  }
 
   handleBack();
   creating.value = false;
