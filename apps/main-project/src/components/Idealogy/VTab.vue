@@ -8,9 +8,11 @@
 				<el-button type="danger" @click="deleteSel">删除</el-button>
 				<el-button type="success" @click="">保存</el-button>
 				<el-button v-if="selParent" type="primary" @click="createChildrenData">新增小节</el-button>
+				<el-button type="warning" style="margin-left: 0.8vw;" @click="openCopyDialog">复制思政知识单元</el-button>
 			</template>
 			<div class="flex-container" style="width: 100%;font-weight: bold; font-size: 25px;">课程名称</div>
 		</el-header>
+		<CopyModelDialog ref="copyDialogRef" copy-type="ideologyUnit" @copy-success="handleCopySuccess" />
 		<el-main style="padding: 0; background-color: white;">
 			<el-table class="uniqueTable" ref="sortableInstance" :data="tableData" v-loading="tableLoading"
 				element-loading-background="rgba(0, 0, 0, 0.2)" style="height: 100%; width: 100%;" row-key="id"
@@ -94,11 +96,22 @@ import request from "../../utils/request";
 import Sortable from 'sortablejs';
 import _ from 'lodash';
 import { TableInstance } from 'element-plus';
+import CopyModelDialog from '../course/subcomponents/CopyModelDialog.vue';
+import parseJWT from '../../utils/parseJWT';
 
 //-------------------------缓存数据变量
 //应该存储真正的课程ID
-const courseid = "2c918af681fa6ea7018209a505c30672";
+// 当前课程ID：从登录 token 解析出 obsid（不再写死，否则复制到当前课程后页面读取的是固定课程导致看不到数据）
+const courseid = parseJWT(sessionStorage.getItem('token'))?.obsid || "";
 const isCourseManager = ref(false);
+const copyDialogRef = ref(null);
+const openCopyDialog = () => {
+	copyDialogRef.value?.init();
+};
+const handleCopySuccess = async () => {
+	await loadVValueData();
+	await loadData();
+};
 var multipleSelection = [];
 var selParent = ref(null);
 const editRef = ref(new Map());

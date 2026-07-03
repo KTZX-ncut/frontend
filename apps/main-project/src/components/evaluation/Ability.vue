@@ -8,6 +8,7 @@
         background-color: #deebf7;
       ">
       <!-- <el-button type="success" style="margin-left: 0.8vw; cursor: not-allowed;">新增</el-button> -->
+      <el-button v-if="roleName === '课程负责人'" type="warning" style="margin-left: 0.8vw" @click="openCopyDialog">复制能力</el-button>
       <el-button type="primary" style="margin-left: 0.8vw" @click="openDictionary">从能力字典选择</el-button>
       <el-button type="danger" @click="openDeleteDialog">删除</el-button>
       <el-button type="primary">保存</el-button>
@@ -15,6 +16,7 @@
         <template #append><el-button :icon="Search" /></template>
       </el-input>
     </el-header>
+    <CopyModelDialog ref="copyDialogRef" copy-type="ability" @copy-success="getAbility" />
     <el-main style="padding: 0">
       <!----------------------------------确认删除的弹框-------------------------------------->
       <el-dialog v-model="deleteDialogVisible" width="450" destroy-on-close>
@@ -107,6 +109,11 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import _ from 'lodash';
 import request from '../../utils/request';
+import CopyModelDialog from '../course/subcomponents/CopyModelDialog.vue';
+
+const roleName = JSON.parse(sessionStorage.getItem('users'))?.rolename;
+const copyDialogRef = ref(null);
+function openCopyDialog() { copyDialogRef.value?.init(); }
 
 const courseid = ref('2c918af681fa6ea7018209a505c30672');
 

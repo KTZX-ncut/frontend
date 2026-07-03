@@ -30,12 +30,14 @@
     <!-- <el-button @click="handleDelAll" type="danger" style="margin-left: 0.8vw">删除</el-button> -->
     <el-button @click="handleSave" type="primary" style="margin-left: 0.8vw">保存</el-button>
     <el-button @click="handleRefresh" type="default" style="margin-left: 0.8vw">刷新</el-button>
+    <el-button v-if="roleName === '课程负责人'" type="warning" style="margin-left: 0.8vw" @click="openCopyDialog">复制考核项设计</el-button>
     <div style="margin-left: auto; display: flex; align-items: center">
       <span :style="{ color: isPercentValid ? '#67C23A' : '#F56C6C' }">
         百分比总和: {{ totalPercent }}%
       </span>
     </div>
   </el-header>
+  <CopyModelDialog ref="copyDialogRef" copy-type="assessmentCategory" @copy-success="handleRefresh" />
 
   <div v-if="!exemList.length">暂无数据</div>
   <div v-else>
@@ -134,6 +136,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { message } from 'ant-design-vue';
 import { storeToRefs } from 'pinia';
 import _, { update } from 'lodash';
+import CopyModelDialog from '../../../course/subcomponents/CopyModelDialog.vue';
 
 /* ********************变量定义******************** */
 // props定义
@@ -146,6 +149,9 @@ const evaluationStore = useEvaluationNew();
 const { fetchType, fetchAddType, fetchDelList, fuzzyQuery, fetchUpdateType } = evaluationStore;
 const { typeList } = storeToRefs(evaluationStore);
 const courseId = parseJWT(sessionStorage.getItem('token')).obsid;
+const roleName = JSON.parse(sessionStorage.getItem('users'))?.rolename;
+const copyDialogRef = ref(null);
+function openCopyDialog() { copyDialogRef.value?.init(); }
 
 const generateUUI = () => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {

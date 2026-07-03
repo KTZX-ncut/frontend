@@ -27,7 +27,9 @@
       <!-- <el-input v-model="addData.weight" placeholder="权重" /> -->
     </el-popover>
     <el-button @click="handleDelAll" type="danger" style="margin-left: 0.8vw">删除</el-button>
+    <el-button v-if="roleName === '课程负责人'" type="warning" style="margin-left: 0.8vw" @click="openCopyDialog">复制课程目标</el-button>
   </el-header>
+  <CopyModelDialog ref="copyDialogRef" copy-type="courseObjective" @copy-success="() => fetchAim({ courseId, current: 1, size: -1 })" />
 
   <div v-if="!aimList.length">暂无数据</div>
   <div v-else>
@@ -97,6 +99,7 @@ import { ElMessage } from 'element-plus';
 import { storeToRefs } from 'pinia';
 import _ from 'lodash';
 import useCourseAim from '../../../stores/useCourseAim';
+import CopyModelDialog from '../../course/subcomponents/CopyModelDialog.vue';
 
 /* ********************变量定义******************** */
 // props定义
@@ -109,6 +112,9 @@ const aimStore = useCourseAim();
 const { fetchAim, fetchAddAim, fetchDelList, fuzzyQuery, fetchUpdateAim } = aimStore;
 const { aimList } = storeToRefs(aimStore);
 const courseId = parseJWT(sessionStorage.getItem('token')).obsid;
+const roleName = JSON.parse(sessionStorage.getItem('users'))?.rolename;
+const copyDialogRef = ref(null);
+function openCopyDialog() { copyDialogRef.value?.init(); }
 const addData = reactive({
   courseId: '', // 课程ID（必填）
   objectiveName: '', // 目标名称（必填）
