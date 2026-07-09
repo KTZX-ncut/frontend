@@ -83,10 +83,14 @@ jobs:
             echo "上传前删除旧 dist 与临时包，避免磁盘占满"
             rm -rf ./dist
             rm -rf ./temp/*
-            mkdir -p ./temp
+            mkdir -p ./temp ./scp-tmp
+            rm -f ./scp-tmp/*.tar.gz
             echo "temp 目录状态:"
             ls -ld ./temp
             df -h ./temp
+            echo "scp-tmp 目录状态:"
+            ls -ld ./scp-tmp
+            df -h ./scp-tmp
 
       - name: Upload new dist
         uses: appleboy/scp-action@v0.1.7
@@ -101,6 +105,7 @@ jobs:
           # Final static files: host /vdbdata/smarttt_frontend_dist/dist, container /var/www/dist.
           source: 'apps/main-project/dist/*'
           target: ${{ secrets.HW_MAIN_DEPLOY_PATH }}/temp
+          tar_tmp_path: ${{ secrets.HW_MAIN_DEPLOY_PATH }}/scp-tmp/
           strip_components: 3
           overwrite: true
           rm: true
