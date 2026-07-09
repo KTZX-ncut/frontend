@@ -29,7 +29,7 @@
         <el-button style="margin-left: 10px" @click="cancelEdit"> 取消 </el-button>
         <el-button
           type="success"
-          :disabled="calcFooter2Data() !== 100"
+          :disabled="!isNearlyEqual(calcFooter2Data(), 100)"
           style="margin-left: 10px"
           @click="saveEdit"
         >
@@ -312,6 +312,12 @@ import { storeToRefs } from 'pinia';
 import parseJWT from '../../../utils/parseJWT';
 import { Category, AimType, newInfo, collumnItem } from './type';
 import useLabel from '../../../stores/useLabel';
+const FLOAT_TOLERANCE = 0.000001;
+
+const isNearlyEqual = (value: number, expected: number, epsilon = FLOAT_TOLERANCE) => {
+  return Math.abs(Number(value) - Number(expected)) <= epsilon;
+};
+
 interface Footer2Row {
   name: string;
   edit: Record<string, boolean>;
@@ -390,7 +396,9 @@ const saveEdit = async () => {
       if (hasValue) totalMap[categoryId] = total;
     });
 
-    const invalidColumns = Object.entries(totalMap).filter(([_, total]) => total !== 100);
+    const invalidColumns = Object.entries(totalMap).filter(
+      ([_, total]) => !isNearlyEqual(total, 100)
+    );
     if (invalidColumns.length > 0) {
       ElMessage.error('有填写的考核项分数合计不为100，请检查！');
       return;
@@ -466,7 +474,7 @@ const saveEdit = async () => {
 
 // 保存修改（调用 /api/objective-category/batch-save）
 const savePercent = async () => {
-  if (calcFooter2Data() !== 100) {
+  if (!isNearlyEqual(calcFooter2Data(), 100)) {
     ElMessage.error('各列总评占比之和必须为 100%');
     return;
   }
@@ -499,7 +507,7 @@ const calc = async () => {
   info.value?.head.forEach(h => {
     totalPercent += Number(h.percent);
   });
-  if (totalPercent !== 1) {
+  if (!isNearlyEqual(totalPercent, 1)) {
     ElMessage.error('各列总评占比之和必须为 100%');
     pageLoading.value = false;
     return;
@@ -832,8 +840,8 @@ const calcFooter2Data = () => {
 const save = async () => {
   if (Object.keys(postData.value).length === 0) return; // 未改变任何值则不执行
   if (
-    info.value!.head.every(item => footer1Data.value[0][item.id] === 100) ||
-    calcFooter2Data() !== 100
+    !info.value!.head.every(item => isNearlyEqual(footer1Data.value[0][item.id], 100)) ||
+    !isNearlyEqual(calcFooter2Data(), 100)
   ) {
     ElMessage.error('数据不合法，无法保存');
     return;
