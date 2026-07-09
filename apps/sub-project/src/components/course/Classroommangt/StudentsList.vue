@@ -220,7 +220,7 @@ import { exportTableToCSV } from '../../../utils/exportTableToCSV';
 import useTeacherStuGra from '../../../stores/dynamicEvaluation/TeacherStuGraStore';
 
 /* ********************变量定义******************** */
-const unitName = ref('默认班级');
+const unitName = ref('默认专业');
 
 const selectedData = ref([]);
 
@@ -235,7 +235,7 @@ const TeacherStuGraStore = useTeacherStuGra();
 const titleList = [
   { prop: 'stuno', label: '学号' },
   { prop: 'userName', label: '姓名' },
-  { prop: 'obsName', label: '班级' }
+  { prop: 'obsName', label: '专业' }
 ];
 
 const createReport = ref(false);
@@ -375,7 +375,7 @@ const columns = ref([
   },
   {
     prop: 'obsName',
-    label: '班级'
+    label: '专业'
   }
 ]);
 const exportData = () => {

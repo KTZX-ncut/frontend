@@ -23,6 +23,9 @@
       <!-- 新增修改功能按钮组 -->
       <template v-if="!isEditMode && roleName === '课程负责人'">
         <el-button type="primary" style="margin-left: 10px" @click="enterEdit"> 修改 </el-button>
+        <el-button type="warning" style="margin-left: 10px" @click="openCopyDialog">
+          复制考核方案
+        </el-button>
       </template>
 
       <template v-else-if="isEditMode && isCourseManager">
@@ -37,6 +40,8 @@
         </el-button>
       </template>
     </el-header>
+
+    <CopyModelDialog ref="copyDialogRef" copy-type="assessmentPlan" @copy-success="getData" />
 
     <div v-loading="pageLoading" element-loading-background="rgba(0, 0, 0, 0.2)">
       <div id="container" style="height: calc(92vh - 130px); width: 100%">
@@ -294,6 +299,7 @@ import Test from './Test.vue';
 import type { VxeGridProps } from 'vxe-table';
 import { nextTick, onMounted, reactive, ref } from 'vue';
 import request from '@/utils/request.js';
+import CopyModelDialog from '@/components/course/subcomponents/CopyModelDialog.vue';
 import { ElMessage, genFileId } from 'element-plus';
 import type { TableInstance } from 'element-plus';
 import _ from 'lodash';
@@ -558,6 +564,10 @@ const { typeList } = storeToRefs(typeStore);
 const { aimList } = storeToRefs(aimStore);
 const roleName = JSON.parse(sessionStorage!.getItem('users')).rolename;
 const classroomId = roleName === '任课教师' ? parseJWT(sessionStorage.getItem('token')).obsid : '';
+const copyDialogRef = ref(null);
+function openCopyDialog() {
+  copyDialogRef.value?.init();
+}
 
 const rightClickItem = ref(); // 存储被右键的考核项
 const category = reactive<{ name: string; id: string }>({

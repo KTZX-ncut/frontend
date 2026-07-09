@@ -11,7 +11,7 @@ export const radarOption = (options, indicator, expected) => ({
   toolbox,
   // 图例
   legend: {
-    data: ['班级平均值', '个人评价值'],
+    data: ['专业平均值', '个人评价值'],
     left: 'center' // 图例水平居中
   },
   // 时间轴
@@ -39,7 +39,7 @@ export const radarOption = (options, indicator, expected) => ({
       data: [
         {
           value: expected,
-          name: '班级平均值',
+          name: '专业平均值',
           areaStyle: {
             color: 'rgba(0, 0, 255, 0.4)' // 期望值的颜色
           }
@@ -56,7 +56,7 @@ export const radarOption = (options, indicator, expected) => ({
   ]
   // series: [
   //   {
-  //     name: '班级平均值',
+  //     name: '专业平均值',
   //     type: 'radar',
   //     data: expected,
   //     areaStyle: {
