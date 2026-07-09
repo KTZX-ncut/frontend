@@ -95,6 +95,10 @@ jobs:
           username: ${{ secrets.HW_MAIN_SERVER_USER }}
           key: ${{ secrets.HW_MAIN_SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_PORT }}
+          # 120 nginx-ui container mount: host /vdbdata/smarttt_frontend_dist -> container /var/www.
+          # HW_MAIN_DEPLOY_PATH should be /vdbdata/smarttt_frontend_dist.
+          # Upload lands in ${HW_MAIN_DEPLOY_PATH}/temp first; Deploy copies it to ${HW_MAIN_DEPLOY_PATH}/dist.
+          # Final static files: host /vdbdata/smarttt_frontend_dist/dist, container /var/www/dist.
           source: 'apps/main-project/dist/*'
           target: ${{ secrets.HW_MAIN_DEPLOY_PATH }}/temp
           strip_components: 3
