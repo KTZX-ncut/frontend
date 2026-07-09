@@ -36,6 +36,21 @@ jobs:
       - name: Build
         working-directory: apps/main-project
         run: pnpm run build --mode prod.hw120
+
+      - name: Inspect local dist before upload
+        run: |
+          set -x
+          pwd
+          echo "dist real path:"
+          realpath apps/main-project/dist
+          echo "dist summary:"
+          du -sh apps/main-project/dist || true
+          echo "dist file count:"
+          find apps/main-project/dist -type f | wc -l
+          echo "top dist files:"
+          find apps/main-project/dist -type f -printf '%s %p\n' | sort -nr | head -n 20
+          echo "runner disk:"
+          df -h
       # - name: Create test dist
       #   run: |
       #     mkdir -p apps/main-project/dist
@@ -55,10 +70,23 @@ jobs:
           script: |
             set -e
             cd ${{ secrets.HW_MAIN_DEPLOY_PATH }}
+            echo "部署目录逻辑路径:"
+            pwd
+            echo "部署目录物理路径:"
+            pwd -P
+            echo "部署目录磁盘:"
+            df -h .
+            echo "部署目录 inode:"
+            df -ih .
+            echo "部署目录内容:"
+            ls -la
             echo "上传前删除旧 dist 与临时包，避免磁盘占满"
             rm -rf ./dist
             rm -rf ./temp/*
             mkdir -p ./temp
+            echo "temp 目录状态:"
+            ls -ld ./temp
+            df -h ./temp
 
       - name: Upload new dist
         uses: appleboy/scp-action@v0.1.7
@@ -72,6 +100,31 @@ jobs:
           strip_components: 3
           overwrite: true
           rm: true
+          debug: true
+
+      - name: Inspect remote temp after upload failure
+        if: failure()
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HW_MAIN_SERVER_HOST }}
+          username: ${{ secrets.HW_MAIN_SERVER_USER }}
+          key: ${{ secrets.HW_MAIN_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          script: |
+            set -x
+            cd ${{ secrets.HW_MAIN_DEPLOY_PATH }}
+            pwd
+            pwd -P
+            df -h .
+            df -ih .
+            ls -la
+            mkdir -p ./temp
+            echo "temp summary:"
+            ls -la ./temp
+            du -sh ./temp 2>/dev/null || true
+            find ./temp -maxdepth 2 -type f -printf '%s %p\n' 2>/dev/null | sort -nr | head -n 20 || true
+            echo "recent oom logs:"
+            dmesg -T 2>/dev/null | egrep -i "out of memory|oom|killed process|cannot allocate" | tail -n 50 || true
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v1.2.0
@@ -83,6 +136,14 @@ jobs:
           script: |
             set -e  # 只要有一个命令失败，整个脚本立即退出
             cd ${{ secrets.HW_MAIN_DEPLOY_PATH }}
+            echo "部署前目录状态:"
+            pwd
+            pwd -P
+            df -h .
+            df -ih .
+            echo "temp 内容:"
+            ls -la ./temp
+            du -sh ./temp 2>/dev/null || true
             mkdir -p ./dist
             echo "从临时文件夹中复制到目标文件夹"
             if [ -z "$(ls -A ${{ secrets.HW_MAIN_DEPLOY_PATH }}/temp 2>/dev/null)" ]; then
