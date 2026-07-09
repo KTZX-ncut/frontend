@@ -115,7 +115,7 @@
                             <td style="width: 50px;">序号</td>
                             <td style="width: 120px;">学号</td>
                             <td style="width: 80px;">姓名</td>
-                            <td style="width: 120px;">班级</td>
+                            <td style="width: 120px;">专业</td>
                             <td v-for="t of courseTargetData" :key="t.id">{{ t.name }}</td>
                         </tr>
                         <tr v-for="s of studentList" :key="s.stuno">
@@ -482,7 +482,7 @@ const initialize = () => {
                     return '序号：' + info.rowNo + '<br>' +
                         '姓名：' + info.username + '<br>' +
                         '学号：' + info.stuno + '<br>' +
-                        '班级：' + info.className + '<br>' +
+                        '专业：' + info.className + '<br>' +
                         '达成度: ' + params.value[1] + '<br>' +
                         '课程目标: ' + courseTargetData.value[i].name;
                 }

@@ -41,7 +41,7 @@
         </el-table-column>
         <el-table-column property="loginname" label="登录名称" width="120" />
         <el-table-column property="username" label="姓名" width="240" show-overflow-tooltip />
-        <el-table-column property="obsname" label="班级" />
+        <el-table-column property="obsname" label="专业" />
       </el-table>
     </div>
     <el-button style="margin-right: 10px" @click="closeInserStudent">关闭</el-button>
@@ -84,7 +84,7 @@ const filteredData = ref([]);
 
 const currentobsname = ref('');
 
-// TODO:在异步处理时，应将currentobsID获取以便找到对应班级的学生
+// TODO:在异步处理时，应将currentobsID获取以便找到对应专业的学生
 const nodeClick = (data, node, event) => {
   node.checked = !node.checked;
   currentobsId.value = data.id;

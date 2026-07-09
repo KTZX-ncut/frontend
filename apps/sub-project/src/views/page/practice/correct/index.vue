@@ -32,7 +32,7 @@
             <span class="item-value" :title="dataStudentCorrect?.courseName">{{ dataStudentCorrect?.courseName }}</span>
           </div>
           <div class="item">
-            <span class="item-name">班级:</span>
+            <span class="item-name">专业:</span>
             <span class="item-value" :title="dataStudentCorrect?.stu?.className">{{ dataStudentCorrect?.stu?.className }}</span>
           </div>
           <div class="item">

@@ -499,7 +499,7 @@ import AddPeopleDialog from './subcomponents/AddPeopleDialog.vue';
 import EditRoleList from './subcomponents/EditRoleList.vue';
 import _ from 'lodash';
 
-const unitName = ref('默认班级');
+const unitName = ref('默认专业');
 
 //tab显示，学生-1，老师-2，默认为老师
 const activeTab = ref('2');

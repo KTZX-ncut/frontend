@@ -106,7 +106,7 @@ const lists = ref([]);
 const studentTitles = [
   { prop: 'userName', label: '姓名' },
   { prop: 'stuNo', label: '学号' },
-  { prop: 'obsName', label: '班级' }
+  { prop: 'obsName', label: '专业' }
 ];
 
 const studentLists = ref([]);

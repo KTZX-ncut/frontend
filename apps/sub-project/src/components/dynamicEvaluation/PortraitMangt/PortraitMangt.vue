@@ -71,7 +71,7 @@ const myArray = ref([
 const titleList = [
   { prop: 'name', label: '姓名' },
   { prop: 'stuno', label: '学号' },
-  { prop: 'classno', label: '班级' }
+  { prop: 'classno', label: '专业' }
 ];
 
 // pinia状态管理

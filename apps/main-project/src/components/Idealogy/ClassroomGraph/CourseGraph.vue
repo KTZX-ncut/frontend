@@ -13,7 +13,7 @@
             <td style="width: 50px">序号</td>
             <td style="width: 120px">学号</td>
             <td style="width: 80px">姓名</td>
-            <td style="width: 120px">班级</td>
+            <td style="width: 120px">专业</td>
             <td v-for="(v, index) in values" :key="index" :title="v.name">
               <el-tooltip :content="v.name" placement="top">
                 <span>{{ v.name }}</span>
