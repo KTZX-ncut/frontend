@@ -74,6 +74,7 @@
  *     - 知识能力图谱
  *     - 画像名单
  *     - 画像数据管理
+ *     - 知识能力图谱（旧）
  *   - 达成性评价模型（组）
  *     - 考核方案
  *     - 画像名单
@@ -81,7 +82,6 @@
  *     - 画像名单
  *     - 价值标签
  *     - 画像数据管理
- *   - 图谱
  *   - 评估与画像（组）
  *     - 形成性评价（子组）：学生报告、学生画像、课堂画像
  *     - 达成性评价（子组）：评价结果、生成报告
@@ -261,7 +261,7 @@ export const APP_TAB_CONFIG = Object.freeze({
   [AppTabEnum.FORMATIVE_PORTRAIT_MANAGEMENT]: { name: '画像数据管理', routeName: 'portraitmangt' },
   [AppTabEnum.FORMATIVE_GRAPH_LIST]: { name: '画像名单', routeName: 'GraphList' },
   [AppTabEnum.FORMATIVE_KWA_GRAPH]: { name: '知识能力图谱', routeName: 'KWAgraph' },
-  [AppTabEnum.FORMATIVE_GRAPH]: { name: '图谱', routeName: 'graph' },
+  [AppTabEnum.FORMATIVE_GRAPH]: { name: '知识能力图谱（旧）', routeName: 'graph' },
   [AppTabEnum.FORMATIVE_COURSE_TARGET]: { name: '课程目标', routeName: 'FormativeCourseTarget' },
   [AppTabEnum.FORMATIVE_IDEALOGY]: { name: '思政价值', routeName: 'Idealogy-dy' },
   [AppTabEnum.VALUE_LABEL]: { name: '价值标签', routeName: 'Idealogy' },
@@ -380,7 +380,8 @@ const FORMATIVE_EVALUATION_MODEL_FOR_TEACHER = group(
     AppTabEnum.FORMATIVE_KNOWLEDGE_UNIT,
     AppTabEnum.FORMATIVE_KWA_GRAPH,
     AppTabEnum.FORMATIVE_GRAPH_LIST,
-    AppTabEnum.FORMATIVE_PORTRAIT_MANAGEMENT
+    AppTabEnum.FORMATIVE_PORTRAIT_MANAGEMENT,
+    AppTabEnum.FORMATIVE_GRAPH
   ]
 );
 
@@ -529,7 +530,6 @@ export const ROLE_MENU_TREE_CONFIG = Object.freeze({
     FORMATIVE_EVALUATION_MODEL_FOR_TEACHER,
     ATTAINMENT_EVALUATION_MODEL_FOR_TEACHER,
     IDEOLOGY_EVALUATION_FOR_TEACHER,
-    AppTabEnum.FORMATIVE_GRAPH,
     EVALUATION_AND_PORTRAIT_FOR_TEACHER
   ],
   [RoleHomeEnum.TEACHER]: [
@@ -546,7 +546,6 @@ export const ROLE_MENU_TREE_CONFIG = Object.freeze({
     FORMATIVE_EVALUATION_MODEL_FOR_TEACHER,
     ATTAINMENT_EVALUATION_MODEL_FOR_TEACHER,
     IDEOLOGY_EVALUATION_FOR_TEACHER,
-    AppTabEnum.FORMATIVE_GRAPH,
     EVALUATION_AND_PORTRAIT_FOR_TEACHER
   ],
   [RoleHomeEnum.TEACHER_LEGACY]: [
@@ -563,7 +562,6 @@ export const ROLE_MENU_TREE_CONFIG = Object.freeze({
     FORMATIVE_EVALUATION_MODEL_FOR_TEACHER,
     ATTAINMENT_EVALUATION_MODEL_FOR_TEACHER,
     IDEOLOGY_EVALUATION_FOR_TEACHER,
-    AppTabEnum.FORMATIVE_GRAPH,
     EVALUATION_AND_PORTRAIT_FOR_TEACHER
   ],
   [RoleHomeEnum.DEFAULT]: []
